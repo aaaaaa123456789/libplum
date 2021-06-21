@@ -24,10 +24,10 @@ struct plum_image * plum_load_image (const void * restrict buffer, size_t size, 
   else
     throw(&context, PLUM_ERR_INVALID_FILE_FORMAT);
   if (flags & PLUM_ALPHA_REMOVE) plum_remove_alpha(context.image);
-  // PLUM_FORCE_PALETTE == PLUM_LOAD_PALETTE | PLUM_GENERATE_PALETTE
-  if ((flags & PLUM_GENERATE_PALETTE) && !(context.image -> palette)) {
+  // PLUM_PALETTE_FORCE == PLUM_PALETTE_LOAD | PLUM_PALETTE_GENERATE
+  if ((flags & PLUM_PALETTE_GENERATE) && !(context.image -> palette)) {
     generate_palette(&context);
-    if (!(context.image -> palette) && (flags & PLUM_LOAD_PALETTE))
+    if (!(context.image -> palette) && (flags & PLUM_PALETTE_LOAD))
       throw(&context, PLUM_ERR_TOO_MANY_COLORS);
   } else if (context.image -> palette && !(flags & PLUM_PALETTE_MASK))
     remove_palette(&context);

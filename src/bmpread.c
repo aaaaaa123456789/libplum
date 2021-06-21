@@ -17,7 +17,7 @@ void load_BMP_data (struct context * context, unsigned flags) {
     context -> image -> height = -context -> image -> height;
     inverted = 0;
   }
-  if (!(context -> image -> width && context -> image -> height)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  if (!(context -> image -> width && context -> image -> height)) throw(context, PLUM_ERR_NO_DATA);
   if (read_le16((const uint16_t *) (context -> data + 26)) != 1) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   uint_fast16_t bits = read_le16((const uint16_t *) (context -> data + 28));
   uint_fast32_t compression = read_le32_unaligned(context -> data + 30);
