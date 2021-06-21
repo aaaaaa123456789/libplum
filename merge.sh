@@ -4,7 +4,7 @@ declare -Ag files
 addblank=false
 
 function append_file {
-  file=`realpath "$1"`
+  local file=`realpath "$1"`
   if [[ "${files[$file]}" ]]; then return 0; fi
   if $addblank; then echo; fi
   addblank=false

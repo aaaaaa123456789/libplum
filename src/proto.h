@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <setjmp.h>
 
-#include "libplum.h"
+#include "../header/libplum.h"
 #include "defs.h"
 #include "struct.h"
 

@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include <setjmp.h>
 
-#include "libplum.h"
+#include "../header/libplum.h"
 
 union allocator_node {
   max_align_t alignment;

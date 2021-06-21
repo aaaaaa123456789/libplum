@@ -9,16 +9,16 @@ all: build/libplum.c build/libplum.h
 clean:
 	rm -rf build
 
-build/libplum.c: $(wildcard src/*.c) $(wildcard src/*.h) merge.sh
+build/libplum.c: $(wildcard src/*.c) $(wildcard src/*.h) $(wildcard header/*.h) merge.sh
 	mkdir -p build
 	./merge.sh $(wildcard src/*.c) > $@
 
 debug: build/libplum-debug.so build/libplum.h
 
-build/libplum-debug.so: $(wildcard src/*.c) $(wildcard src/*.h)
+build/libplum-debug.so: $(wildcard src/*.c) $(wildcard src/*.h) $(wildcard header/*.h)
 	mkdir -p build
 	$(CC) -shared -ggdb -fPIC -DPLUM_DEBUG $(wildcard src/*.c) -o $@
 
-build/libplum.h: src/libplum.h $(wildcard src/*.h) merge.sh
+build/libplum.h: $(wildcard header/*.h) merge.sh
 	mkdir -p build
-	./merge.sh $< > $@
+	./merge.sh header/libplum.h > $@
