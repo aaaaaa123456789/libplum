@@ -2,14 +2,8 @@
 
 int plum_check_valid_image_size (uint32_t width, uint32_t height, uint32_t frames) {
   if (!(width && height && frames)) return 0;
-  uint64_t p = width;
+  size_t p = width;
   const size_t limit = SIZE_MAX / sizeof(uint64_t);
-  if (SIZE_MAX <= UINT32_MAX) {
-    p *= height;
-    if (p > limit) return 0;
-    p *= frames;
-    return p <= limit;
-  }
   if ((p * height / height) != p) return 0;
   p *= height;
   if ((p * frames / frames) != p) return 0;
