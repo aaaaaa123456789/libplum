@@ -32,46 +32,14 @@ void remove_palette (struct context * context) {
   context -> image -> max_palette_index = 0;
 }
 
-void remove_alpha (struct plum_image * image) {
-  void * buffer;
-  size_t count;
-  if (image -> palette) {
-    buffer = image -> palette;
-    count = image -> max_palette_index + 1;
-  } else {
-    buffer = image -> data;
-    count = (size_t) image -> width * image -> height * image -> frames;
-  }
-  switch (image -> color_format & PLUM_COLOR_MASK) {
-    case PLUM_COLOR_32: {
-      uint32_t * p = buffer;
-      if (image -> color_format & PLUM_ALPHA_INVERT)
-        while (count --) *(p ++) |= 0xff000000u;
-      else
-        while (count --) *(p ++) &= 0xffffffu;
-    } break;
-    case PLUM_COLOR_64: {
-      uint64_t * p = buffer;
-      if (image -> color_format & PLUM_ALPHA_INVERT)
-        while (count --) *(p ++) |= 0xffff000000000000u;
-      else
-        while (count --) *(p ++) &= 0xffffffffffffu;
-    } break;
-    case PLUM_COLOR_16: {
-      uint16_t * p = buffer;
-      if (image -> color_format & PLUM_ALPHA_INVERT)
-        while (count --) *(p ++) |= 0x8000u;
-      else
-        while (count --) *(p ++) &= 0x7fffu;
-    } break;
-    case PLUM_COLOR_32X: {
-      uint32_t * p = buffer;
-      if (image -> color_format & PLUM_ALPHA_INVERT)
-        while (count --) *(p ++) |= 0xc0000000u;
-      else
-        while (count --) *(p ++) &= 0x3fffffffu;
-    }
-  }
+const uint8_t * plum_validate_palette_indexes (const struct plum_image * image) {
+  // NULL if OK, address of first error if failed
+  if (!(image -> palette)) return NULL;
+  if (image -> max_palette_index == 0xff) return NULL;
+  size_t count = (size_t) image -> width * image -> height * image -> frames;
+  const uint8_t * ptr = image -> data8;
+  for (; count; ptr ++, count --) if (*ptr > image -> max_palette_index) return ptr;
+  return NULL;
 }
 
 int plum_convert_colors_to_indexes (uint8_t * restrict destination, const void * restrict source, void * restrict palette, size_t count, unsigned flags) {

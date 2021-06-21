@@ -38,3 +38,16 @@ static inline void append_metadata (struct plum_image * image, struct plum_metad
   metadata -> next = image -> metadata;
   image -> metadata = metadata;
 }
+
+static inline void * append_output_node (struct context * context, size_t size) {
+  struct data_node * node = ctxmalloc(context, sizeof *node + size);
+  *node = (struct data_node) {.size = size, .previous = context -> output, .next = NULL};
+  if (context -> output) context -> output -> next = node;
+  context -> output = node;
+  return node -> data;
+}
+
+static inline int bit_depth_less_than (uint32_t depth, uint32_t target) {
+  // formally "less than or equal to", but that would be a very long name
+  return !((target - depth) & 0x80808080u);
+}

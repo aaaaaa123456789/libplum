@@ -10,7 +10,10 @@ const char * plum_get_error_text (unsigned error) {
     [PLUM_ERR_OUT_OF_MEMORY]       = "out of memory",
     [PLUM_ERR_TOO_MANY_COLORS]     = "too many colors in image",
     [PLUM_ERR_INVALID_COLOR_INDEX] = "invalid palette index",
-    [PLUM_ERR_IMAGE_TOO_LARGE]     = "image dimensions too large"
+    [PLUM_ERR_IMAGE_TOO_LARGE]     = "image dimensions too large",
+    [PLUM_ERR_INVALID_IMAGE_DATA]  = "invalid image data",
+    [PLUM_ERR_NO_MULTI_FRAME]      = "multiple frames not supported",
+    [PLUM_ERR_INVALID_METADATA]    = "invalid image metadata"
   };
   if (error >= PLUM_NUM_ERRORS) return NULL;
   return messages[error];

@@ -1,9 +1,11 @@
-#ifndef LIBPLUM_H
+#ifndef PLUM_HEADER
 
-#define LIBPLUM_H
+#define PLUM_HEADER
 
-#include <stdint.h>
 #include <stddef.h>
+#ifndef PLUM_NO_STDINT
+#include <stdint.h>
+#endif
 
 #if !defined(__cplusplus) && (__STDC_VERSION__ >= 199901L)
 /* C99 or later, not C++, we can use restrict, and check for VLAs and anonymous struct members (C11) */
@@ -12,7 +14,6 @@
 #define PLUM_ANON_MEMBERS (__STDC_VERSION__ >= 201112L)
 /* protect against really broken preprocessor implementations */
 #define PLUM_VLA_SUPPORT (!defined(__STDC_NO_VLA__) || !(__STDC_NO_VLA__ + 0))
-/* ... */
 #else
 /* C89 or C++ (or, if we're really unlucky, non-standard C), so don't use any "advanced" C features */
 #define PLUM_RESTRICT
@@ -78,12 +79,14 @@ struct plum_image * plum_new_image(void);
 struct plum_image * plum_copy_image(const struct plum_image * image);
 void plum_destroy_image(struct plum_image * image);
 struct plum_image * plum_load_image(const void * restrict buffer, size_t size, unsigned flags, unsigned * restrict error);
-unsigned plum_store_image(const struct plum_image * image, void * restrict buffer, size_t size);
+size_t plum_store_image(const struct plum_image * image, void * restrict buffer, size_t size, unsigned * restrict error);
 const char * plum_get_error_text(unsigned error);
 int plum_check_valid_image_size(uint32_t width, uint32_t height, uint32_t frames);
 size_t plum_color_buffer_size(size_t size, unsigned flags);
 void plum_convert_colors(void * restrict destination, const void * restrict source, size_t count, unsigned to, unsigned from);
 uint64_t plum_convert_color(uint64_t color, unsigned from, unsigned to);
+void plum_remove_alpha(struct plum_image * image);
+const uint8_t * plum_validate_palette_indexes(const struct plum_image * image);
 int plum_convert_colors_to_indexes(uint8_t * restrict destination, const void * restrict source, void * restrict palette, size_t count, unsigned flags);
 void plum_convert_indexes_to_colors(void * restrict destination, const uint8_t * restrict source, const void * restrict palette, size_t count, unsigned flags);
 void * plum_malloc(struct plum_image * image, size_t size);

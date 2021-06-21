@@ -23,7 +23,7 @@ struct plum_image * plum_load_image (const void * restrict buffer, size_t size, 
     load_BMP_data(&context, flags);
   else
     throw(&context, PLUM_ERR_INVALID_FILE_FORMAT);
-  if (flags & PLUM_ALPHA_REMOVE) remove_alpha(context.image);
+  if (flags & PLUM_ALPHA_REMOVE) plum_remove_alpha(context.image);
   // PLUM_FORCE_PALETTE == PLUM_LOAD_PALETTE | PLUM_GENERATE_PALETTE
   if ((flags & PLUM_GENERATE_PALETTE) && !(context.image -> palette)) {
     generate_palette(&context);

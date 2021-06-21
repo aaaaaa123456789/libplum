@@ -17,18 +17,15 @@ enum plum_flags {
   PLUM_GENERATE_PALETTE = 0x20,
   PLUM_FORCE_PALETTE    = 0x30,
   PLUM_PALETTE_MASK     = 0x30
-  /* ... */
 };
 
 enum plum_image_types {
   PLUM_IMAGE_BMP = 1
-  /* ... */
 };
 
 enum plum_metadata_types {
   PLUM_METADATA_NONE,
   PLUM_METADATA_COLOR_DEPTH
-  /* ... */
 };
 
 enum plum_errors {
@@ -41,6 +38,8 @@ enum plum_errors {
   PLUM_ERR_TOO_MANY_COLORS,
   PLUM_ERR_INVALID_COLOR_INDEX,
   PLUM_ERR_IMAGE_TOO_LARGE,
-  /* ... */
+  PLUM_ERR_INVALID_IMAGE_DATA,
+  PLUM_ERR_NO_MULTI_FRAME,
+  PLUM_ERR_INVALID_METADATA,
   PLUM_NUM_ERRORS
 };
