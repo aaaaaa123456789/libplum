@@ -31,6 +31,7 @@ void plum_convert_colors (void * restrict destination, const void * restrict sou
 }
 
 uint64_t plum_convert_color (uint64_t color, unsigned from, unsigned to) {
+  // here be dragons
   uint64_t result;
   if ((from & PLUM_COLOR_MASK) == PLUM_COLOR_16)
     from &= 0xffffu;

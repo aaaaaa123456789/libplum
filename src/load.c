@@ -38,11 +38,11 @@ struct plum_image * plum_load_image (const void * restrict buffer, size_t size, 
 
 void load_image_buffer_data (struct context * context, unsigned flags) {
   if (context -> size < 8) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  if (!memcmp(context -> data, (unsigned char []) {0x42, 0x4d}, 2))
+  if (bytematch(context -> data, 0x42, 0x4d))
     load_BMP_data(context, flags);
-  else if (!memcmp(context -> data, (unsigned char []) {0x47, 0x49, 0x46, 0x38, 0x39, 0x61}, 6))
+  else if (bytematch(context -> data, 0x47, 0x49, 0x46, 0x38, 0x39, 0x61))
     load_GIF_data(context, flags);
-  else if (!memcmp(context -> data, (unsigned char []) {0x47, 0x49, 0x46, 0x38, 0x37, 0x61}, 6))
+  else if (bytematch(context -> data, 0x47, 0x49, 0x46, 0x38, 0x37, 0x61))
     // treat GIF87a as GIF89a for compatibility, since it's a strict subset anyway
     load_GIF_data(context, flags);
   else

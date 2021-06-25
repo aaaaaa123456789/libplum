@@ -2,8 +2,8 @@
 
 struct plum_image * plum_new_image (void) {
   union allocator_node * allocator = NULL;
-  struct plum_image * image = clear_allocate(&allocator, sizeof *image);
-  if (image) image -> allocator = allocator;
+  struct plum_image * image = allocate(&allocator, sizeof *image);
+  if (image) *image = (struct plum_image) {.allocator = allocator};
   return image;
 }
 

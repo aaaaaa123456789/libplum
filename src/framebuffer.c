@@ -20,10 +20,11 @@ size_t plum_color_buffer_size (size_t count, unsigned flags) {
     return count * sizeof(uint32_t);
 }
 
-void allocate_framebuffers (struct context * context, unsigned flags) {
+void allocate_framebuffers (struct context * context, unsigned flags, int palette) {
   if (!plum_check_valid_image_size(context -> image -> width, context -> image -> height, context -> image -> frames))
     throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
-  size_t size = plum_color_buffer_size((size_t) context -> image -> width * context -> image -> height * context -> image -> frames, flags);
+  size_t size = (size_t) context -> image -> width * context -> image -> height * context -> image -> frames;
+  if (!palette) size = plum_color_buffer_size(size, flags);
   if (!(context -> image -> data = plum_malloc(context -> image, size))) throw(context, PLUM_ERR_OUT_OF_MEMORY);
   context -> image -> color_format = flags & (PLUM_COLOR_MASK | PLUM_ALPHA_INVERT);
 }

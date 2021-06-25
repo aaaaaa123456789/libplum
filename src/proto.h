@@ -49,7 +49,7 @@ internal void generate_BMP_RGB_data(struct context *, unsigned char *);
 internal uint32_t get_true_color_depth(struct context *);
 
 // framebuffer.c
-internal void allocate_framebuffers(struct context *, unsigned);
+internal void allocate_framebuffers(struct context *, unsigned, int);
 internal void write_framebuffer_to_image(struct plum_image *, const uint64_t *, uint32_t, unsigned);
 internal void write_palette_framebuffer_to_image(struct context *, const uint8_t *, const uint64_t *, uint32_t, unsigned, uint8_t);
 internal void write_palette_to_image(struct context *, const uint64_t *, unsigned);

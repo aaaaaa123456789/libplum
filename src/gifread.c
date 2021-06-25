@@ -10,7 +10,7 @@ void load_GIF_data (struct context * context, unsigned flags) {
   uint64_t transparent = 0xffff000000000000u;
   uint64_t ** palettes = load_GIF_palettes(context, flags, &offset, &transparent); // will be leaked (collected at the end)
   load_GIF_loop_count(context, &offset);
-  allocate_framebuffers(context, flags);
+  allocate_framebuffers(context, flags, !!(context -> image -> palette));
   uint64_t * durations;
   uint8_t * disposals;
   add_animation_metadata(context, &durations, &disposals);
@@ -192,7 +192,7 @@ void load_GIF_loop_count (struct context * context, size_t * offset) {
   size_t newoffset = *offset + 2;
   size_t size;
   unsigned char * data = load_GIF_data_blocks(context, &newoffset, &size);
-  if ((size == 14) && !memcmp(data, (unsigned char []) {0x4e, 0x45, 0x54, 0x53, 0x43, 0x41, 0x50, 0x45, 0x32, 0x2e, 0x30, 0x01}, 12)) {
+  if ((size == 14) && bytematch(data, 0x4e, 0x45, 0x54, 0x53, 0x43, 0x41, 0x50, 0x45, 0x32, 0x2e, 0x30, 0x01)) {
     add_loop_count_metadata(context, read_le16_unaligned(data + 12));
     *offset = newoffset;
   } else

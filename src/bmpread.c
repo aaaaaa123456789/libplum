@@ -22,7 +22,7 @@ void load_BMP_data (struct context * context, unsigned flags) {
   uint_fast16_t bits = read_le16((const uint16_t *) (context -> data + 28));
   uint_fast32_t compression = read_le32_unaligned(context -> data + 30);
   if ((bits > 32) || (compression > 3)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  allocate_framebuffers(context, flags);
+  allocate_framebuffers(context, flags, bits <= 8);
   void * frame;
   uint8_t bitmasks[8];
   uint64_t palette[256];
