@@ -18,11 +18,7 @@ struct plum_image * plum_load_image (const void * restrict buffer, size_t size, 
     context.data = buffer;
     context.size = size;
   }
-  if (context.size < 8) throw(&context, PLUM_ERR_INVALID_FILE_FORMAT);
-  if (!memcmp(context.data, (unsigned char []) {0x42, 0x4d}, 2))
-    load_BMP_data(&context, flags);
-  else
-    throw(&context, PLUM_ERR_INVALID_FILE_FORMAT);
+  load_image_buffer_data(&context, flags);
   if (flags & PLUM_ALPHA_REMOVE) plum_remove_alpha(context.image);
   // PLUM_PALETTE_FORCE == PLUM_PALETTE_LOAD | PLUM_PALETTE_GENERATE
   if ((flags & PLUM_PALETTE_GENERATE) && !(context.image -> palette)) {
@@ -38,6 +34,19 @@ struct plum_image * plum_load_image (const void * restrict buffer, size_t size, 
   destroy_allocator_list(context.allocator);
   if (error) *error = context.status;
   return NULL;
+}
+
+void load_image_buffer_data (struct context * context, unsigned flags) {
+  if (context -> size < 8) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  if (!memcmp(context -> data, (unsigned char []) {0x42, 0x4d}, 2))
+    load_BMP_data(context, flags);
+  else if (!memcmp(context -> data, (unsigned char []) {0x47, 0x49, 0x46, 0x38, 0x39, 0x61}, 6))
+    load_GIF_data(context, flags);
+  else if (!memcmp(context -> data, (unsigned char []) {0x47, 0x49, 0x46, 0x38, 0x37, 0x61}, 6))
+    // treat GIF87a as GIF89a for compatibility, since it's a strict subset anyway
+    load_GIF_data(context, flags);
+  else
+    throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
 }
 
 void load_file (struct context * context, const char * filename) {

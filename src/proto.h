@@ -54,12 +54,31 @@ internal void write_framebuffer_to_image(struct plum_image *, const uint64_t *, 
 internal void write_palette_framebuffer_to_image(struct context *, const uint8_t *, const uint64_t *, uint32_t, unsigned, uint8_t);
 internal void write_palette_to_image(struct context *, const uint64_t *, unsigned);
 
+// gifcompress.c
+internal void decompress_GIF_data(struct context *, unsigned char * restrict, const unsigned char *, size_t, size_t, unsigned);
+internal void initialize_GIF_compression_codes(struct compressed_GIF_code *, unsigned);
+internal uint8_t find_leading_GIF_code(const struct compressed_GIF_code *, unsigned);
+internal void emit_GIF_data(struct context *, const struct compressed_GIF_code *, unsigned, unsigned char **, unsigned char *);
+
+// gifread.c
+internal void load_GIF_data(struct context *, unsigned);
+internal uint64_t ** load_GIF_palettes(struct context *, unsigned, size_t *, uint64_t *);
+internal void load_GIF_palette(struct context *, uint64_t *, size_t *, unsigned);
+internal void * load_GIF_data_blocks(struct context *, size_t *, size_t *);
+internal void skip_GIF_data_blocks(struct context *, size_t *);
+internal void load_GIF_loop_count(struct context *, size_t *);
+internal void load_GIF_frame(struct context *, size_t *, unsigned, uint32_t, const uint64_t *, uint64_t, uint64_t * restrict, uint8_t * restrict);
+
 // load.c
+internal void load_image_buffer_data(struct context *, unsigned);
 internal void load_file(struct context *, const char *);
 
 // metadata.c
 internal struct plum_metadata * find_metadata(struct context *, int);
 internal void add_color_depth_metadata(struct context *, unsigned, unsigned, unsigned, unsigned, unsigned);
+internal void add_background_color_metadata(struct context *, uint64_t, unsigned);
+internal void add_loop_count_metadata(struct context *, uint32_t);
+internal void add_animation_metadata(struct context *, uint64_t **, uint8_t **);
 
 // palette.c
 internal void generate_palette(struct context *);

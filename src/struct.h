@@ -37,3 +37,9 @@ struct context {
   };
   jmp_buf target;
 };
+
+struct compressed_GIF_code {
+  signed reference: 16;
+  unsigned value:    8;
+  unsigned type:     8;
+};
