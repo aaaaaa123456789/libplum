@@ -1,6 +1,7 @@
 CC ?= gcc
 OUTPUT ?= libplum.so
 OPTFLAGS = -march=native -mtune=native
+DEBUGFLAGS =
 
 CFLAGS = -Ofast -fomit-frame-pointer -fno-asynchronous-unwind-tables -fno-exceptions -Wl,-S -Wl,-x -Wl,--gc-sections \
          -Wl,--no-eh-frame-hdr $(OPTFLAGS)
@@ -21,7 +22,7 @@ build/libplum.c: $(wildcard src/*.c) $(wildcard src/*.h) $(wildcard header/*.h) 
 
 build/libplum-debug.so: $(wildcard src/*.c) $(wildcard src/*.h) $(wildcard header/*.h)
 	mkdir -p build
-	$(CC) -shared -ggdb -fPIC -DPLUM_DEBUG $(wildcard src/*.c) -o $@
+	$(CC) -shared -ggdb -fPIC -DPLUM_DEBUG $(DEBUGFLAGS) $(wildcard src/*.c) -o $@
 
 build/libplum.h: $(wildcard header/*.h) merge.sh
 	mkdir -p build

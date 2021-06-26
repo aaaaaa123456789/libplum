@@ -53,6 +53,17 @@ internal void allocate_framebuffers(struct context *, unsigned, int);
 internal void write_framebuffer_to_image(struct plum_image *, const uint64_t *, uint32_t, unsigned);
 internal void write_palette_framebuffer_to_image(struct context *, const uint8_t *, const uint64_t *, uint32_t, unsigned, uint8_t);
 internal void write_palette_to_image(struct context *, const uint64_t *, unsigned);
+internal void rotate_frame_8(uint8_t * restrict, uint8_t * restrict, size_t, size_t, size_t (*) (size_t, size_t, size_t, size_t));
+internal void rotate_frame_16(uint16_t * restrict, uint16_t * restrict, size_t, size_t, size_t (*) (size_t, size_t, size_t, size_t));
+internal void rotate_frame_32(uint32_t * restrict, uint32_t * restrict, size_t, size_t, size_t (*) (size_t, size_t, size_t, size_t));
+internal void rotate_frame_64(uint64_t * restrict, uint64_t * restrict, size_t, size_t, size_t (*) (size_t, size_t, size_t, size_t));
+internal size_t rotate_left_coordinate(size_t, size_t, size_t, size_t);
+internal size_t rotate_right_coordinate(size_t, size_t, size_t, size_t);
+internal size_t rotate_both_coordinate(size_t, size_t, size_t, size_t);
+internal size_t flip_coordinate(size_t, size_t, size_t, size_t);
+internal size_t rotate_left_flip_coordinate(size_t, size_t, size_t, size_t);
+internal size_t rotate_right_flip_coordinate(size_t, size_t, size_t, size_t);
+internal size_t rotate_both_flip_coordinate(size_t, size_t, size_t, size_t);
 
 // gifcompress.c
 internal void decompress_GIF_data(struct context *, unsigned char * restrict, const unsigned char *, size_t, size_t, unsigned);
@@ -72,6 +83,7 @@ internal void load_GIF_frame(struct context *, size_t *, unsigned, uint32_t, con
 // load.c
 internal void load_image_buffer_data(struct context *, unsigned);
 internal void load_file(struct context *, const char *);
+internal void load_from_callback(struct context *, const struct plum_callback *);
 
 // metadata.c
 internal struct plum_metadata * find_metadata(struct context *, int);
@@ -88,6 +100,7 @@ internal int compare64(const void *, const void *);
 
 // store.c
 internal void write_generated_image_data_to_file(struct context *, const char *);
+internal void write_generated_image_data_to_callback(struct context *, const struct plum_callback *);
 internal void write_generated_image_data(void * restrict, const struct data_node *);
 internal size_t get_total_output_size(struct context *);
 

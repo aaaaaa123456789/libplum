@@ -9,14 +9,20 @@ struct plum_image * plum_load_image (const void * restrict buffer, size_t size, 
   }
   if (setjmp(context.target)) goto errexit;
   if (!(context.image = plum_new_image())) throw(&context, PLUM_ERR_OUT_OF_MEMORY);
-  if (size == PLUM_FILENAME)
-    load_file(&context, buffer);
-  else if (size == PLUM_BUFFER) {
-    context.data = ((struct plum_buffer *) buffer) -> data;
-    context.size = ((struct plum_buffer *) buffer) -> size;
-  } else {
-    context.data = buffer;
-    context.size = size;
+  switch (size) {
+    case PLUM_FILENAME:
+      load_file(&context, buffer);
+      break;
+    case PLUM_BUFFER:
+      context.data = ((struct plum_buffer *) buffer) -> data;
+      context.size = ((struct plum_buffer *) buffer) -> size;
+      break;
+    case PLUM_CALLBACK:
+      load_from_callback(&context, buffer);
+      break;
+    default:
+      context.data = buffer;
+      context.size = size;
   }
   load_image_buffer_data(&context, flags);
   if (flags & PLUM_ALPHA_REMOVE) plum_remove_alpha(context.image);
@@ -69,4 +75,18 @@ void load_file (struct context * context, const char * filename) {
   fclose(fp);
   context -> data = buffer;
   context -> size = size;
+}
+
+void load_from_callback (struct context * context, const struct plum_callback * callback) {
+  char * buffer = ctxmalloc(context, 0x4000 - sizeof(union allocator_node)); // keep the buffer aligned to memory pages
+  int iteration = callback -> callback(callback -> userdata, buffer, 0x4000 - sizeof(union allocator_node));
+  if (iteration < 0) throw(context, PLUM_ERR_FILE_ERROR);
+  context -> size = iteration;
+  while (iteration) {
+    buffer = ctxrealloc(context, buffer, context -> size + 0x4000);
+    iteration = callback -> callback(callback -> userdata, buffer + context -> size, 0x4000);
+    if (iteration < 0) throw(context, PLUM_ERR_FILE_ERROR);
+    context -> size += iteration;
+  }
+  context -> data = buffer;
 }

@@ -3,6 +3,11 @@ struct plum_buffer {
   void * data;
 };
 
+struct plum_callback {
+  int (* callback) (void * userdata, void * buffer, int size);
+  void * userdata;
+};
+
 struct plum_metadata {
   int type;
   size_t size;

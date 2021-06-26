@@ -24,6 +24,9 @@ size_t plum_store_image (const struct plum_image * image, void * restrict buffer
       *(struct plum_buffer *) buffer = (struct plum_buffer) {.size = output_size, .data = out};
       write_generated_image_data(out, context.output);
     } break;
+    case PLUM_CALLBACK:
+      write_generated_image_data_to_callback(&context, buffer);
+      break;
     default:
       if (output_size > size) throw(&context, PLUM_ERR_IMAGE_TOO_LARGE);
       write_generated_image_data(buffer, context.output);
@@ -56,6 +59,22 @@ void write_generated_image_data_to_file (struct context * context, const char * 
     node = node -> next;
   }
   fclose(fp);
+}
+
+void write_generated_image_data_to_callback (struct context * context, const struct plum_callback * callback) {
+  struct data_node * node;
+  for (node = context -> output; node -> previous; node = node -> previous);
+  while (node) {
+    char * data = node -> data;
+    size_t size = node -> size;
+    while (size) {
+      int count = callback -> callback(callback -> userdata, data, (size > 0x4000) ? 0x4000 : size);
+      if (count < 0) throw(context, PLUM_ERR_FILE_ERROR);
+      data += count;
+      size -= count;
+    }
+    node = node -> next;
+  }
 }
 
 void write_generated_image_data (void * restrict buffer, const struct data_node * data) {

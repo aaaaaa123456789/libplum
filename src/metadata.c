@@ -14,6 +14,13 @@ struct plum_metadata * plum_allocate_metadata (struct plum_image * image, size_t
   return &(result -> result);
 }
 
+struct plum_metadata * plum_find_metadata (const struct plum_image * image, int type) {
+  if (!image) return NULL;
+  struct context context = {.source = image};
+  if (setjmp(context.target)) return NULL;
+  return find_metadata(&context, type);
+}
+
 struct plum_metadata * find_metadata (struct context * context, int type) {
   struct plum_metadata * metadata;
   struct plum_metadata * result = NULL;

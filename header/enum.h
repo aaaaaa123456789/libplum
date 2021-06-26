@@ -1,5 +1,6 @@
 #define PLUM_FILENAME (-(size_t) 1)
 #define PLUM_BUFFER   (-(size_t) 2)
+#define PLUM_CALLBACK (-(size_t) 3)
 
 enum plum_flags {
   /* color formats */

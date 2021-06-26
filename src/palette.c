@@ -165,3 +165,17 @@ void plum_convert_indexes_to_colors (void * restrict destination, const uint8_t 
     while (count --) *(dp ++) = pal[*(source ++)];
   }
 }
+
+void plum_sort_colors (const void * restrict colors, uint8_t max_index, unsigned flags, uint8_t * restrict result) {
+  if (!(colors && result)) return;
+  uint64_t keys[256]; // allocate on stack to avoid dealing with malloc() failure
+  unsigned p;
+  if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_64)
+    for (p = 0; p <= max_index; p ++) keys[p] = p | (get_color_sorting_score(p[(const uint64_t *) colors], flags) << 8);
+  else if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_16)
+    for (p = 0; p <= max_index; p ++) keys[p] = p | (get_color_sorting_score(p[(const uint16_t *) colors], flags) << 8);
+  else
+    for (p = 0; p <= max_index; p ++) keys[p] = p | (get_color_sorting_score(p[(const uint32_t *) colors], flags) << 8);
+  qsort(keys, max_index + 1, sizeof *keys, &compare64);
+  for (p = 0; p <= max_index; p ++) result[p] = keys[p];
+}

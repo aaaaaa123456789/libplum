@@ -54,3 +54,85 @@ void write_palette_to_image (struct context * context, const uint64_t * palette,
   if (!(context -> image -> palette = plum_malloc(context -> image, size))) throw(context, PLUM_ERR_OUT_OF_MEMORY);
   plum_convert_colors(context -> image -> palette, palette, context -> image -> max_palette_index + 1, flags, PLUM_COLOR_64);
 }
+
+unsigned plum_rotate_image (struct plum_image * image, unsigned count, int flip) {
+  if (!image) return PLUM_ERR_INVALID_ARGUMENTS;
+  if (!(image -> width && image -> height && image -> frames)) return PLUM_ERR_NO_DATA;
+  if (!plum_check_valid_image_size(image -> width, image -> height, image -> frames)) return PLUM_ERR_IMAGE_TOO_LARGE;
+  count &= 3;
+  if (!(count || flip)) return 0;
+  size_t framesize = (size_t) image -> width * image -> height;
+  void * buffer;
+  if (image -> palette)
+    buffer = malloc(framesize);
+  else
+    buffer = malloc(plum_color_buffer_size(framesize, image -> color_format));
+  if (!buffer) return PLUM_ERR_OUT_OF_MEMORY;
+  if (count & 1) {
+    uint_fast32_t temp = image -> width;
+    image -> width = image -> height;
+    image -> height = temp;
+  }
+  size_t (* coordinate) (size_t, size_t, size_t, size_t);
+  switch (count) {
+    case 0: coordinate = flip_coordinate; break; // we know flip has to be enabled because null rotations were excluded already
+    case 1: coordinate = flip ? rotate_right_flip_coordinate : rotate_right_coordinate; break;
+    case 2: coordinate = flip ? rotate_both_flip_coordinate : rotate_both_coordinate; break;
+    case 3: coordinate = flip ? rotate_left_flip_coordinate : rotate_left_coordinate;
+  }
+  uint_fast32_t frame;
+  if (image -> palette)
+    for (frame = 0; frame < image -> frames; frame ++) rotate_frame_8(image -> data8 + framesize * frame, buffer, image -> width, image -> height, coordinate);
+  else if ((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_64)
+    for (frame = 0; frame < image -> frames; frame ++) rotate_frame_64(image -> data64 + framesize * frame, buffer, image -> width, image -> height, coordinate);
+  else if ((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_16)
+    for (frame = 0; frame < image -> frames; frame ++) rotate_frame_16(image -> data16 + framesize * frame, buffer, image -> width, image -> height, coordinate);
+  else
+    for (frame = 0; frame < image -> frames; frame ++) rotate_frame_32(image -> data32 + framesize * frame, buffer, image -> width, image -> height, coordinate);
+  free(buffer);
+  return 0;
+}
+
+#define ROTATE_FRAME_FUNCTION(bits) \
+void rotate_frame_ ## bits (uint ## bits ## _t * restrict frame, uint ## bits ## _t * restrict buffer, size_t width, size_t height, \
+                            size_t (* coordinate) (size_t, size_t, size_t, size_t)) {                                               \
+  size_t row, col;                                                                                                                  \
+  for (row = 0; row < height; row ++) for (col = 0; col < width; col ++)                                                            \
+    buffer[row * width + col] = frame[coordinate(row, col, width, height)];                                                         \
+  memcpy(frame, buffer, sizeof *frame * width * height);                                                                            \
+}
+
+ROTATE_FRAME_FUNCTION(8)
+ROTATE_FRAME_FUNCTION(16)
+ROTATE_FRAME_FUNCTION(32)
+ROTATE_FRAME_FUNCTION(64)
+
+#undef ROTATE_FRAME_FUNCTION
+
+size_t rotate_left_coordinate (size_t row, size_t col, size_t width, size_t height) {
+  return (col + 1) * height - (row + 1);
+}
+
+size_t rotate_right_coordinate (size_t row, size_t col, size_t width, size_t height) {
+  return (width - 1 - col) * height + row;
+}
+
+size_t rotate_both_coordinate (size_t row, size_t col, size_t width, size_t height) {
+  return height * width - 1 - (row * width + col);
+}
+
+size_t flip_coordinate (size_t row, size_t col, size_t width, size_t height) {
+  return (height - 1 - row) * width + col;
+}
+
+size_t rotate_left_flip_coordinate (size_t row, size_t col, size_t width, size_t height) {
+  return col * height + row;
+}
+
+size_t rotate_right_flip_coordinate (size_t row, size_t col, size_t width, size_t height) {
+  return height * width - 1 - (col * height + row);
+}
+
+size_t rotate_both_flip_coordinate (size_t row, size_t col, size_t width, size_t height) {
+  return (row + 1) * width - (col + 1);
+}
