@@ -39,7 +39,7 @@ struct context {
 };
 
 struct compressed_GIF_code {
-  signed reference: 16;
-  unsigned value:    8;
-  unsigned type:     8;
+  alignas(uint32_t) int16_t reference; // align the first member to align the struct
+  unsigned char value;
+  unsigned char type;
 };
