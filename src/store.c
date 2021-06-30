@@ -5,11 +5,12 @@ size_t plum_store_image (const struct plum_image * image, void * restrict buffer
   context.source = image;
   if (setjmp(context.target)) goto done;
   if (!(image && buffer && size)) throw(&context, PLUM_ERR_INVALID_ARGUMENTS);
-  if (!(image -> width && image -> height && image -> frames)) throw(&context, PLUM_ERR_NO_DATA);
+  if (!(image -> width && image -> height && image -> frames && image -> data)) throw(&context, PLUM_ERR_NO_DATA);
   if (!plum_check_valid_image_size(image -> width, image -> height, image -> frames)) throw(&context, PLUM_ERR_IMAGE_TOO_LARGE);
   if (plum_validate_palette_indexes(image)) throw(&context, PLUM_ERR_INVALID_COLOR_INDEX);
   switch (image -> type) {
     case PLUM_IMAGE_BMP: generate_BMP_data(&context); break;
+    case PLUM_IMAGE_GIF: generate_GIF_data(&context); break;
     default: throw(&context, PLUM_ERR_INVALID_FILE_FORMAT);
   }
 	size_t output_size = get_total_output_size(&context);

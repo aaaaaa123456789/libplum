@@ -18,5 +18,7 @@
 #endif
 
 #define bytematch(address, ...) (!memcmp((address), (unsigned char []) {__VA_ARGS__}, sizeof (unsigned char []) {__VA_ARGS__}))
+#define byteoutput(context, ...) (memcpy(append_output_node((context), sizeof (unsigned char []) {__VA_ARGS__}), \
+                                         (unsigned char []) {__VA_ARGS__}, sizeof (unsigned char []) {__VA_ARGS__}))
 
 #endif

@@ -66,6 +66,7 @@ internal size_t rotate_right_flip_coordinate(size_t, size_t, size_t, size_t);
 internal size_t rotate_both_flip_coordinate(size_t, size_t, size_t, size_t);
 
 // gifcompress.c
+internal unsigned char * compress_GIF_data(struct context *, const unsigned char * restrict, size_t, size_t *, unsigned);
 internal void decompress_GIF_data(struct context *, unsigned char * restrict, const unsigned char *, size_t, size_t, unsigned);
 internal void initialize_GIF_compression_codes(struct compressed_GIF_code *, unsigned);
 internal uint8_t find_leading_GIF_code(const struct compressed_GIF_code *, unsigned);
@@ -79,6 +80,19 @@ internal void * load_GIF_data_blocks(struct context *, size_t *, size_t *);
 internal void skip_GIF_data_blocks(struct context *, size_t *);
 internal void load_GIF_loop_count(struct context *, size_t *);
 internal void load_GIF_frame(struct context *, size_t *, unsigned, uint32_t, const uint64_t *, uint64_t, uint64_t * restrict, uint8_t * restrict);
+
+// gifwrite.c
+internal void generate_GIF_data(struct context *);
+internal void generate_GIF_data_with_palette(struct context *, unsigned char *);
+internal void generate_GIF_data_from_raw(struct context *, unsigned char *);
+internal void generate_GIF_frame_data(struct context *, uint32_t * restrict, unsigned char * restrict, uint32_t, const struct plum_metadata *,
+                                      const struct plum_metadata *);
+internal int_fast32_t get_GIF_background_color(struct context *);
+internal void write_GIF_palette(struct context *, const uint32_t *, unsigned);
+internal void write_GIF_loop_info(struct context *);
+internal void write_GIF_frame(struct context *, const unsigned char * restrict, const uint32_t *, unsigned, int, uint32_t, unsigned, unsigned, unsigned,
+                              unsigned, const struct plum_metadata *, const struct plum_metadata *);
+internal void write_GIF_data_blocks(struct context *, const unsigned char * restrict, size_t);
 
 // load.c
 internal void load_image_buffer_data(struct context *, unsigned);

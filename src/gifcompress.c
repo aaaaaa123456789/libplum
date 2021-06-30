@@ -1,5 +1,65 @@
 #include "proto.h"
 
+unsigned char * compress_GIF_data (struct context * context, const unsigned char * restrict data, size_t count, size_t * length, unsigned codesize) {
+  struct compressed_GIF_code * codes = ctxmalloc(context, sizeof *codes * 4097);
+  initialize_GIF_compression_codes(codes, codesize);
+  *length = 0;
+  size_t allocated = 254;
+  unsigned char * output = ctxmalloc(context, allocated);
+  unsigned current_codesize = codesize + 1, bits = current_codesize, max_code = (1 << codesize) + 1, current_code = *(data ++);
+  count --;
+  uint_fast32_t chain = 1, codeword = 1 << codesize;
+  uint_fast16_t p;
+  uint_fast8_t search, shortchains = 0;
+  while (count --) {
+    search = *(data ++);
+    for (p = 0; p <= max_code; p ++) if (!codes[p].type && (codes[p].reference == current_code) && (codes[p].value == search)) break;
+    if (p <= max_code) {
+      current_code = p;
+      chain ++;
+    } else {
+      codeword |= current_code << bits;
+      bits += current_codesize;
+      codes[++ max_code] = (struct compressed_GIF_code) {.type = 0, .reference = current_code, .value = search};
+      current_code = search;
+      if (current_codesize > (codesize + 2))
+        if (chain <= (current_codesize / codesize))
+          shortchains ++;
+        else if (shortchains)
+          shortchains --;
+      chain = 1;
+      if (shortchains > 8) {
+        codeword |= 1 << (bits + codesize);
+        bits += current_codesize;
+        max_code = (1 << codesize) + 1;
+        current_codesize = codesize + 1;
+        shortchains = 0;
+      } else {
+        if (max_code > 4095) max_code = 4095;
+        if (max_code == (1 << current_codesize)) current_codesize ++;
+      }
+    }
+    while (bits >= 8) {
+      if (allocated == *length) output = ctxrealloc(context, output, allocated <<= 1);
+      output[(*length) ++] = codeword;
+      codeword >>= 8;
+      bits -= 8;
+    }
+  }
+  codeword |= current_code << bits;
+  bits += current_codesize;
+  codeword |= ((1 << codesize) + 1) << bits;
+  bits += current_codesize;
+  while (bits) {
+    if (allocated == *length) output = ctxrealloc(context, output, allocated += 4);
+    output[(*length) ++] = codeword;
+    codeword >>= 8;
+    bits = (bits > 8) ? bits - 8 : 0;
+  }
+  ctxfree(context, codes);
+  return output;
+}
+
 void decompress_GIF_data (struct context * context, unsigned char * restrict result, const unsigned char * source, size_t expected_length,
                           size_t length, unsigned codesize) {
   struct compressed_GIF_code * codes = ctxmalloc(context, sizeof *codes * 4097);
