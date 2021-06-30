@@ -80,6 +80,7 @@ internal void * load_GIF_data_blocks(struct context *, size_t *, size_t *);
 internal void skip_GIF_data_blocks(struct context *, size_t *);
 internal void load_GIF_loop_count(struct context *, size_t *);
 internal void load_GIF_frame(struct context *, size_t *, unsigned, uint32_t, const uint64_t *, uint64_t, uint64_t * restrict, uint8_t * restrict);
+internal void deinterlace_GIF_frame(struct context *, unsigned char * restrict, uint16_t, uint16_t);
 
 // gifwrite.c
 internal void generate_GIF_data(struct context *);

@@ -71,11 +71,11 @@ void add_animation_metadata (struct context * context, uint64_t ** durations, ui
   metadata -> type = PLUM_METADATA_FRAME_DISPOSAL;
   memset(metadata -> data, 0, metadata -> size);
   append_metadata(context -> image, metadata);
-  *durations = metadata -> data;
+  *disposals = metadata -> data;
   metadata = plum_allocate_metadata(context -> image, sizeof **durations * context -> image -> frames);
   if (!metadata) throw(context, PLUM_ERR_OUT_OF_MEMORY);
   metadata -> type = PLUM_METADATA_FRAME_DURATION;
   memset(metadata -> data, 0, metadata -> size);
   append_metadata(context -> image, metadata);
-  *disposals = metadata -> data;
+  *durations = metadata -> data;
 }
