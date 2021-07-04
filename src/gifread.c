@@ -212,6 +212,7 @@ void load_GIF_frame (struct context * context, size_t * offset, unsigned flags, 
     }
     unsigned char * extdata = load_GIF_data_blocks(context, offset, NULL);
     *duration = (uint64_t) 10000000 * read_le16_unaligned(extdata + 1);
+    if (!*duration) *duration = 1;
     uint_fast8_t dispindex = (*extdata >> 2) & 7;
     if (dispindex > 3) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     if (dispindex) *disposal = dispindex - 1;
