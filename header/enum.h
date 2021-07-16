@@ -21,8 +21,12 @@ enum plum_flags {
 };
 
 enum plum_image_types {
-  PLUM_IMAGE_BMP = 1,
-  PLUM_IMAGE_GIF = 2
+  PLUM_IMAGE_NONE,
+  PLUM_IMAGE_BMP,
+  PLUM_IMAGE_GIF,
+  PLUM_IMAGE_PNG,
+  PLUM_IMAGE_APNG,
+  PLUM_NUM_IMAGE_TYPES
 };
 
 enum plum_metadata_types {
@@ -37,7 +41,10 @@ enum plum_metadata_types {
 enum plum_frame_disposal_methods {
   PLUM_DISPOSAL_NONE,
   PLUM_DISPOSAL_BACKGROUND,
-  PLUM_DISPOSAL_PREVIOUS
+  PLUM_DISPOSAL_PREVIOUS,
+  PLUM_DISPOSAL_REPLACE,
+  PLUM_DISPOSAL_BACKGROUND_REPLACE,
+  PLUM_DISPOSAL_PREVIOUS_REPLACE
 };
 
 enum plum_errors {

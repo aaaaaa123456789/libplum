@@ -45,6 +45,10 @@ internal size_t compress_BMP_byte_row(uint8_t *, const uint8_t *, size_t);
 internal void append_BMP_palette(struct context *);
 internal void generate_BMP_RGB_data(struct context *, unsigned char *);
 
+// checksum.c
+internal uint32_t compute_PNG_CRC(const unsigned char *, size_t);
+internal uint32_t compute_Adler32_checksum(const unsigned char *, size_t);
+
 // color.c
 internal uint32_t get_true_color_depth(struct context *);
 
@@ -107,11 +111,44 @@ internal void add_background_color_metadata(struct context *, uint64_t, unsigned
 internal void add_loop_count_metadata(struct context *, uint32_t);
 internal void add_animation_metadata(struct context *, uint64_t **, uint8_t **);
 
+// misc.c
+internal int compare64(const void *, const void *);
+
 // palette.c
 internal void generate_palette(struct context *);
 internal void remove_palette(struct context *);
 internal uint64_t get_color_sorting_score(uint64_t, unsigned);
-internal int compare64(const void *, const void *);
+
+// pngdecompress.c
+internal void * decompress_PNG_data(struct context *, const unsigned char *, size_t, size_t);
+internal void extract_PNG_code_table(struct context *, const unsigned char **, size_t * restrict, unsigned char [restrict static 0x140], uint32_t * restrict,
+                                     uint8_t * restrict);
+internal void decompress_PNG_block(struct context *, const unsigned char **, unsigned char * restrict, size_t * restrict, size_t * restrict, size_t,
+                                   uint32_t * restrict, uint8_t * restrict, const unsigned char [restrict static 0x140]);
+internal short * decode_PNG_Huffman_tree(struct context *, const unsigned char *, unsigned);
+internal uint16_t next_PNG_Huffman_code(struct context *, const short *, const unsigned char **, size_t * restrict, uint32_t * restrict, uint8_t * restrict);
+
+// pngread.c
+internal void load_PNG_data(struct context *, unsigned);
+internal struct PNG_chunk_locations * load_PNG_chunk_locations(struct context *);
+internal void append_PNG_chunk_location(struct context *, size_t **, size_t, size_t *);
+internal void sort_PNG_animation_chunks(struct context *, struct PNG_chunk_locations *, const size_t *, size_t, size_t);
+internal uint8_t load_PNG_palette(struct context *, const struct PNG_chunk_locations *, uint8_t, uint64_t * restrict);
+internal void add_PNG_bit_depth_metadata(struct context *, const struct PNG_chunk_locations *, uint8_t, uint8_t);
+internal uint64_t add_PNG_background_metadata(struct context *, const struct PNG_chunk_locations *, const uint64_t *, uint8_t, uint8_t, uint8_t, unsigned);
+internal uint64_t load_PNG_transparent_color(struct context *, size_t, uint8_t, uint8_t);
+internal int check_PNG_reduced_frames(struct context *, const struct PNG_chunk_locations *);
+internal int load_PNG_animation_frame_metadata(struct context *, size_t, uint64_t * restrict, uint8_t * restrict);
+
+// pngreadframe.c
+internal void load_PNG_frame(struct context *, const size_t *, uint32_t, const uint64_t *, uint8_t, uint8_t, uint8_t, int, uint64_t, uint64_t);
+internal void * load_PNG_frame_part(struct context *, const size_t *, int, uint8_t, uint8_t, int, uint32_t, uint32_t, size_t);
+internal uint8_t * load_PNG_palette_frame(struct context *, const void *, size_t, uint32_t, uint32_t, uint8_t, uint8_t, int);
+internal uint64_t * load_PNG_raw_frame(struct context *, const void *, size_t, uint32_t, uint32_t, uint8_t, uint8_t, int);
+internal void load_PNG_raw_frame_pass(struct context *, unsigned char * restrict, uint64_t * restrict, uint32_t, uint32_t, uint32_t, uint8_t, uint8_t,
+                                      unsigned char, unsigned char, unsigned char, unsigned char);
+internal void expand_bitpacked_PNG_data(unsigned char * restrict, const unsigned char * restrict, size_t, uint8_t);
+internal void remove_PNG_filter(struct context *, unsigned char * restrict, uint32_t, uint32_t, uint8_t, uint8_t);
 
 // store.c
 internal void write_generated_image_data_to_file(struct context *, const char *);

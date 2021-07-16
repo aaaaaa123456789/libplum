@@ -51,6 +51,9 @@ void load_image_buffer_data (struct context * context, unsigned flags) {
   else if (bytematch(context -> data, 0x47, 0x49, 0x46, 0x38, 0x37, 0x61))
     // treat GIF87a as GIF89a for compatibility, since it's a strict subset anyway
     load_GIF_data(context, flags);
+  else if (bytematch(context -> data, 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a))
+    // APNG files disguise as PNG files, so handle them all as PNG and split them later
+    load_PNG_data(context, flags);
   else
     throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
 }

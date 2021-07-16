@@ -143,12 +143,6 @@ uint64_t get_color_sorting_score (uint64_t color, unsigned flags) {
   return ~((luminance << 27) | (sum << 9) | (alpha >> 7)); // total: 53 bits
 }
 
-int compare64 (const void * first, const void * second) {
-  const uint64_t * p1 = first;
-  const uint64_t * p2 = second;
-  return (*p1 > *p2) - (*p1 < *p2);
-}
-
 void plum_convert_indexes_to_colors (void * restrict destination, const uint8_t * restrict source, const void * restrict palette, size_t count, unsigned flags) {
   if (!(destination && source && palette)) return;
   if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_16) {

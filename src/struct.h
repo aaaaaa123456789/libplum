@@ -43,3 +43,15 @@ struct compressed_GIF_code {
   unsigned char value;
   unsigned char type;
 };
+
+struct PNG_chunk_locations {
+  // includes APNG chunks; IHDR and IEND omitted because IHDR has a fixed offset and IEND contains no data
+  size_t palette; // PLTE
+  size_t bits; // sBIT
+  size_t background; // bKGD
+  size_t transparency; // tRNS
+  size_t animation; // acTL
+  size_t * data; // IDAT
+  size_t * frameinfo; // fcTL
+  size_t ** framedata; // fdAT
+};
