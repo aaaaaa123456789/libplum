@@ -12,6 +12,7 @@ void plum_convert_colors(void * restrict destination, const void * restrict sour
 uint64_t plum_convert_color(uint64_t color, unsigned from, unsigned to);
 void plum_remove_alpha(struct plum_image * image);
 const uint8_t * plum_validate_palette_indexes(const struct plum_image * image);
+int plum_get_highest_palette_index(const struct plum_image * image);
 int plum_convert_colors_to_indexes(uint8_t * restrict destination, const void * restrict source, void * restrict palette, size_t count, unsigned flags);
 void plum_convert_indexes_to_colors(void * restrict destination, const uint8_t * restrict source, const void * restrict palette, size_t count, unsigned flags);
 void plum_sort_colors(const void * restrict colors, uint8_t max_index, unsigned flags, uint8_t * restrict result);

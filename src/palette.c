@@ -42,6 +42,21 @@ const uint8_t * plum_validate_palette_indexes (const struct plum_image * image) 
   return NULL;
 }
 
+int plum_get_highest_palette_index (const struct plum_image * image) {
+  if (!image) return -PLUM_ERR_INVALID_ARGUMENTS;
+  if (!image -> palette) return -PLUM_ERR_UNDEFINED_PALETTE;
+  if (!(image -> width && image -> height && image -> frames)) return -PLUM_ERR_NO_DATA;
+  if (!plum_check_valid_image_size(image -> width, image -> height, image -> frames)) return -PLUM_ERR_IMAGE_TOO_LARGE;
+  uint_fast8_t result = *(image -> data8);
+  const uint8_t * data = image -> data8 + 1;
+  size_t count = (size_t) image -> width * image -> height * image -> frames - 1;
+  while (count --) {
+    if (*data > result) result = *data;
+    data ++;
+  }
+  return result;
+}
+
 int plum_convert_colors_to_indexes (uint8_t * restrict destination, const void * restrict source, void * restrict palette, size_t count, unsigned flags) {
   if (!(destination && source && palette && count)) return -PLUM_ERR_INVALID_ARGUMENTS;
   uint64_t * colors = malloc(0x800 * sizeof *colors);

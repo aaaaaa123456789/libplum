@@ -26,12 +26,17 @@ struct plum_image * plum_load_image (const void * restrict buffer, size_t size, 
   }
   load_image_buffer_data(&context, flags);
   if (flags & PLUM_ALPHA_REMOVE) plum_remove_alpha(context.image);
-  // PLUM_PALETTE_FORCE == PLUM_PALETTE_LOAD | PLUM_PALETTE_GENERATE
-  if ((flags & PLUM_PALETTE_GENERATE) && !(context.image -> palette)) {
-    generate_palette(&context);
-    if (!(context.image -> palette) && (flags & PLUM_PALETTE_LOAD))
-      throw(&context, PLUM_ERR_TOO_MANY_COLORS);
-  } else if (context.image -> palette && !(flags & PLUM_PALETTE_MASK))
+  if (flags & PLUM_PALETTE_GENERATE)
+    if (context.image -> palette) {
+      int colors = plum_get_highest_palette_index(context.image);
+      if (colors < 0) throw(&context, -colors);
+      context.image -> max_palette_index = colors;
+    } else {
+      generate_palette(&context);
+      // PLUM_PALETTE_FORCE == PLUM_PALETTE_LOAD | PLUM_PALETTE_GENERATE
+      if (!(context.image -> palette) && (flags & PLUM_PALETTE_LOAD)) throw(&context, PLUM_ERR_TOO_MANY_COLORS);
+    }
+  else if (context.image -> palette && !(flags & PLUM_PALETTE_MASK))
     remove_palette(&context);
   destroy_allocator_list(context.allocator);
   return context.image;
