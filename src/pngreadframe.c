@@ -3,7 +3,7 @@
 void load_PNG_frame (struct context * context, const size_t * chunks, uint32_t frame, const uint64_t * palette, uint8_t max_palette_index,
                      uint8_t imagetype, uint8_t bitdepth, int interlaced, uint64_t background, uint64_t transparent) {
   void * data = load_PNG_frame_part(context, chunks, palette ? max_palette_index : -1, imagetype, bitdepth, interlaced,
-                                    context -> image -> width, context -> image -> height, 0);
+                                    context -> image -> width, context -> image -> height, frame ? 4 : 0);
   if (palette)
     write_palette_framebuffer_to_image(context, data, palette, frame, context -> image -> color_format, 0xff); // 0xff to avoid a redundant range check
   else {
