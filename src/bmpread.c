@@ -295,7 +295,7 @@ uint8_t * load_byte_compressed_BMP (struct context * context, size_t offset, int
         break;
       default:
         if ((col + databyte) > context -> image -> width) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-        if (remaining < ((databyte + 1) & ~1)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+        if (remaining < ((1 + (size_t) databyte) & ~1)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         memcpy(frame + (size_t) row * context -> image -> width + col, data, databyte);
         data += (databyte + 1) & ~1;
         remaining -= (databyte + 1) & ~1;
