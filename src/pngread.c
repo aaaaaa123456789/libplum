@@ -198,6 +198,7 @@ struct PNG_chunk_locations * load_PNG_chunk_locations (struct context * context)
   if (!result -> data) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   append_PNG_chunk_location(context, &result -> data, 0, &data_count);
   append_PNG_chunk_location(context, &result -> frameinfo, 0, &frameinfo_count);
+  frameinfo_count --;
   if (invalid_animation) {
     ctxfree(context, result -> frameinfo);
     result -> animation = 0;
@@ -407,12 +408,12 @@ int load_PNG_animation_frame_metadata (struct context * context, size_t offset, 
   // returns if the previous frame should be replaced
   uint_fast16_t numerator = read_be16_unaligned(context -> data + offset + 20), denominator = read_be16_unaligned(context -> data + offset + 22);
   if ((*disposal = context -> data[offset + 24]) > 2) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  uint_fast8_t replace = context -> data[offset + 25];
-  if (replace > 1) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  uint_fast8_t blend = context -> data[offset + 25];
+  if (blend > 1) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   if (numerator) {
     if (!denominator) denominator = 100;
     *duration = ((uint64_t) numerator * 1000000000 + denominator / 2) / denominator;
   } else
     *duration = 1;
-  return replace;
+  return !blend;
 }
