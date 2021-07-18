@@ -3,6 +3,9 @@ struct plum_buffer {
   void * data;
 };
 
+#ifdef __cplusplus
+extern "C" /* function pointer member requires an explicit extern "C" declaration to be passed safely from C++ to C */
+#endif
 struct plum_callback {
   int (* callback) (void * userdata, void * buffer, int size);
   void * userdata;
@@ -44,4 +47,7 @@ struct plum_image {
   };
 #endif
   void * user;
+#ifdef __cplusplus
+#include "accessors.hpp"
+#endif
 };

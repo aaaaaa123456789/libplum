@@ -14,8 +14,13 @@
 #define PLUM_ANON_MEMBERS (__STDC_VERSION__ >= 201112L)
 /* protect against really broken preprocessor implementations */
 #define PLUM_VLA_SUPPORT (!defined(__STDC_NO_VLA__) || !(__STDC_NO_VLA__ + 0))
+#elif defined(__cplusplus)
+/* C++ allows anonymous unions as struct members, but not restrict or VLAs */
+#define PLUM_RESTRICT
+#define PLUM_ANON_MEMBERS 1
+#define PLUM_VLA_SUPPORT 0
 #else
-/* C89 or C++ (or, if we're really unlucky, non-standard C), so don't use any "advanced" C features */
+/* C89 (or, if we're really unlucky, non-standard C), so don't use any "advanced" C features */
 #define PLUM_RESTRICT
 #define PLUM_ANON_MEMBERS 0
 #define PLUM_VLA_SUPPORT 0
@@ -40,5 +45,11 @@ extern "C" {
 #endif
 
 #undef restrict
+
+/* if PLUM_UNPREFIXED_MACROS is defined, include shorter, unprefixed alternatives for some common macros */
+/* this requires an explicit opt-in because it violates the principle of a library prefix as a namespace */
+#ifdef PLUM_UNPREFIXED_MACROS
+#include "unprefixed.h"
+#endif
 
 #endif
