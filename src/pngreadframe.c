@@ -218,11 +218,7 @@ void expand_bitpacked_PNG_data (unsigned char * restrict result, const unsigned 
         *(result ++) = !!(*source & 2);
         *(result ++) = *(source ++) & 1;
       }
-      remainder = *source;
-      while (count --) {
-        *(result ++) = !!(remainder & 0x80);
-        remainder <<= 1;
-      }
+      if (count) for (remainder = *source; count; count --, remainder <<= 1) *(result ++) = remainder >> 7;
       break;
     case 2:
       for (; count > 3; count -= 4) {
@@ -231,11 +227,7 @@ void expand_bitpacked_PNG_data (unsigned char * restrict result, const unsigned 
         *(result ++) = (*source >> 2) & 3;
         *(result ++) = *(source ++) & 3;
       }
-      remainder = *source;
-      while (count --) {
-        *(result ++) = remainder >> 6;
-        remainder <<= 2;
-      }
+      if (count) for (remainder = *source; count; count --, remainder <<= 2) *(result ++) = remainder >> 6;
       break;
     case 4:
       for (; count > 1; count -= 2) {
