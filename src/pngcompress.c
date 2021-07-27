@@ -216,8 +216,7 @@ unsigned char * emit_PNG_compressed_block (struct context * context, const struc
              /* 0x0e0 */ 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
              /* 0x100 */ 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8
            }, sizeof codelengths);
-    memcpy(distlengths, (const unsigned char []) {5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
-                                                  5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5}, sizeof distlengths);
+    memset(distlengths, 5, sizeof distlengths);
   }
   // precalculate the output size and allocate enough space for the output (and a little extra); this must account for parameter size too
   outsize = 7; // for rounding up
