@@ -71,7 +71,14 @@ void decompress_GIF_data (struct context * context, unsigned char * restrict res
   unsigned char * limit = result + expected_length;
   while (1) {
     while (bits < current_codesize) {
-      if (!(length --)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+      if (!(length --)) {
+        if (current == limit) {
+          // handle images that are so broken that they never emit a stop code
+          ctxfree(context, codes);
+          return;
+        }
+        throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+      }
       codeword |= (uint_fast32_t) *(source ++) << bits;
       bits += 8;
     }
