@@ -34,7 +34,7 @@ void remove_palette (struct context * context) {
 
 const uint8_t * plum_validate_palette_indexes (const struct plum_image * image) {
   // NULL if OK, address of first error if failed
-  if (!(image -> palette)) return NULL;
+  if (!(image && image -> palette)) return NULL;
   if (image -> max_palette_index == 0xff) return NULL;
   size_t count = (size_t) image -> width * image -> height * image -> frames;
   const uint8_t * ptr = image -> data8;
@@ -43,11 +43,10 @@ const uint8_t * plum_validate_palette_indexes (const struct plum_image * image) 
 }
 
 int plum_get_highest_palette_index (const struct plum_image * image) {
-  if (!image) return -PLUM_ERR_INVALID_ARGUMENTS;
+  int result = plum_validate_image(image);
+  if (result) return -result;
   if (!image -> palette) return -PLUM_ERR_UNDEFINED_PALETTE;
-  if (!(image -> width && image -> height && image -> frames)) return -PLUM_ERR_NO_DATA;
-  if (!plum_check_valid_image_size(image -> width, image -> height, image -> frames)) return -PLUM_ERR_IMAGE_TOO_LARGE;
-  uint_fast8_t result = *(image -> data8);
+  result = *(image -> data8);
   const uint8_t * data = image -> data8 + 1;
   size_t count = (size_t) image -> width * image -> height * image -> frames - 1;
   while (count --) {

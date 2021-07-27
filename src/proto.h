@@ -52,6 +52,9 @@ internal uint32_t compute_Adler32_checksum(const unsigned char *, size_t);
 // color.c
 internal uint32_t get_true_color_depth(struct context *);
 
+// fractions.c
+internal void calculate_frame_duration_fraction(uint64_t, uint32_t, uint32_t * restrict, uint32_t * restrict);
+
 // framebuffer.c
 internal void allocate_framebuffers(struct context *, unsigned, int);
 internal void write_framebuffer_to_image(struct plum_image *, const uint64_t *, uint32_t, unsigned);
@@ -113,11 +116,29 @@ internal void add_animation_metadata(struct context *, uint64_t **, uint8_t **);
 
 // misc.c
 internal int compare64(const void *, const void *);
+internal int compare_index_value_pairs(const void *, const void *);
 
 // palette.c
 internal void generate_palette(struct context *);
 internal void remove_palette(struct context *);
 internal uint64_t get_color_sorting_score(uint64_t, unsigned);
+
+// pngcompress.c
+internal unsigned char * compress_PNG_data(struct context *, const unsigned char * restrict, size_t, size_t, size_t * restrict);
+internal struct compressed_PNG_code * generate_compressed_PNG_block(struct context *, const unsigned char * restrict, size_t, size_t, uint16_t * restrict,
+                                                                    size_t * restrict, size_t * restrict, int);
+internal size_t compute_uncompressed_PNG_block_size(const unsigned char * restrict, size_t, size_t, uint16_t * restrict);
+internal unsigned find_PNG_reference(const unsigned char *, const uint16_t *, size_t, size_t, size_t * restrict);
+internal void append_PNG_reference(const unsigned char * restrict, size_t, uint16_t * restrict);
+internal uint16_t compute_PNG_reference_key(const unsigned char * data);
+internal void emit_PNG_code(struct context *, struct compressed_PNG_code **, size_t * restrict, size_t * restrict, int, unsigned);
+internal unsigned char * emit_PNG_compressed_block(struct context *, const struct compressed_PNG_code * restrict, size_t, int, size_t * restrict,
+                                                   uint32_t * restrict, uint8_t * restrict);
+internal unsigned char * generate_PNG_Huffman_trees(struct context *, uint32_t * restrict, uint8_t * restrict, size_t * restrict,
+                                                    const size_t [restrict static 0x120], const size_t [restrict static 0x20],
+                                                    unsigned char [restrict static 0x120], unsigned char [restrict static 0x20]);
+internal void generate_PNG_Huffman_tree(struct context *, const size_t * restrict, unsigned char * restrict, size_t, unsigned char);
+internal void generate_PNG_Huffman_codes(unsigned short * restrict, unsigned, const unsigned char * restrict);
 
 // pngdecompress.c
 internal void * decompress_PNG_data(struct context *, const unsigned char *, size_t, size_t);
@@ -149,6 +170,21 @@ internal void load_PNG_raw_frame_pass(struct context *, unsigned char * restrict
                                       unsigned char, unsigned char, unsigned char, unsigned char);
 internal void expand_bitpacked_PNG_data(unsigned char * restrict, const unsigned char * restrict, size_t, uint8_t);
 internal void remove_PNG_filter(struct context *, unsigned char * restrict, uint32_t, uint32_t, uint8_t, uint8_t);
+
+// pngwrite.c
+internal void generate_PNG_data(struct context *);
+internal void generate_APNG_data(struct context *);
+internal unsigned generate_PNG_header(struct context *);
+internal void append_PNG_header_chunks(struct context *, unsigned, uint32_t);
+internal void append_PNG_palette_data(struct context *, int);
+internal void append_PNG_background_chunk(struct context *, const void * restrict, unsigned);
+internal void append_PNG_image_data(struct context *, const void * restrict, unsigned, uint32_t * restrict);
+internal void append_APNG_frame_header(struct context *, uint64_t, uint8_t, uint8_t, uint32_t * restrict);
+internal void output_PNG_chunk(struct context *, uint32_t, uint32_t, const void * restrict);
+internal unsigned char * generate_PNG_frame_data(struct context *, const void * restrict, unsigned, size_t * restrict);
+internal void generate_PNG_row_data(struct context *, const void * restrict, unsigned char * restrict, unsigned);
+internal void filter_PNG_rows(unsigned char * restrict, const unsigned char * restrict, size_t, unsigned);
+internal unsigned char select_PNG_filtered_row(const unsigned char *, size_t);
 
 // store.c
 internal void write_generated_image_data_to_file(struct context *, const char *);

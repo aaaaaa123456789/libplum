@@ -89,6 +89,7 @@ uint64_t plum_convert_color (uint64_t color, unsigned from, unsigned to) {
 void plum_remove_alpha (struct plum_image * image) {
   void * buffer;
   size_t count;
+  if (!(image && image -> data && plum_check_valid_image_size(image -> width, image -> height, image -> frames))) return;
   if (image -> palette) {
     buffer = image -> palette;
     count = image -> max_palette_index + 1;

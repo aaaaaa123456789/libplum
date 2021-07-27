@@ -55,3 +55,11 @@ struct PNG_chunk_locations {
   size_t * frameinfo; // fcTL
   size_t ** framedata; // fdAT
 };
+
+struct compressed_PNG_code {
+  // members declared as uint32_t to hint at compilers to use 32-bit integers
+  uint32_t datacode:   9;
+  uint32_t dataextra:  5;
+  uint32_t distcode:   5;
+  uint32_t distextra: 13;
+};

@@ -1,5 +1,21 @@
 #include "proto.h"
 
+unsigned plum_validate_image (const struct plum_image * image) {
+  if (!image) return PLUM_ERR_INVALID_ARGUMENTS;
+  if (!(image -> width && image -> height && image -> frames && image -> data)) return PLUM_ERR_NO_DATA;
+  if (!plum_check_valid_image_size(image -> width, image -> height, image -> frames)) return PLUM_ERR_IMAGE_TOO_LARGE;
+  if (image -> type >= PLUM_NUM_IMAGE_TYPES) return PLUM_ERR_INVALID_FILE_FORMAT;
+  const struct plum_metadata * metadata;
+  uint_fast8_t found[PLUM_NUM_METADATA_TYPES - 1] = {0};
+  for (metadata = image -> metadata; metadata; metadata = metadata -> next) {
+    if (metadata -> size && !metadata -> data) return PLUM_ERR_INVALID_METADATA;
+    if (metadata -> type <= 0) continue;
+    if ((metadata -> type >= PLUM_NUM_METADATA_TYPES) || found[metadata -> type - 1]) return PLUM_ERR_INVALID_METADATA;
+    found[metadata -> type - 1] = 1;
+  }
+  return 0;
+}
+
 const char * plum_get_error_text (unsigned error) {
   static const char * const messages[] = {
     [PLUM_OK]                      = "success",
@@ -36,5 +52,12 @@ const char * plum_get_file_format_name (unsigned format) {
 int compare64 (const void * first, const void * second) {
   const uint64_t * p1 = first;
   const uint64_t * p2 = second;
+  return (*p1 > *p2) - (*p1 < *p2);
+}
+
+int compare_index_value_pairs (const void * first, const void * second) {
+  const uint64_t * p1 = first;
+  const uint64_t * p2 = second;
+  if (p1[1] != p2[1]) return (p1[1] > p2[1]) - (p1[1] < p2[1]);
   return (*p1 > *p2) - (*p1 < *p2);
 }

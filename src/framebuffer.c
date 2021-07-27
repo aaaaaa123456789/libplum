@@ -56,9 +56,8 @@ void write_palette_to_image (struct context * context, const uint64_t * palette,
 }
 
 unsigned plum_rotate_image (struct plum_image * image, unsigned count, int flip) {
-  if (!image) return PLUM_ERR_INVALID_ARGUMENTS;
-  if (!(image -> width && image -> height && image -> frames)) return PLUM_ERR_NO_DATA;
-  if (!plum_check_valid_image_size(image -> width, image -> height, image -> frames)) return PLUM_ERR_IMAGE_TOO_LARGE;
+  unsigned error = plum_validate_image(image);
+  if (error) return error;
   count &= 3;
   if (!(count || flip)) return 0;
   size_t framesize = (size_t) image -> width * image -> height;
