@@ -7,7 +7,7 @@ void generate_BMP_data (struct context * context) {
   *header = 0x42;
   header[1] = 0x4d;
   memset(header + 2, 0, 8);
-  uint32_t depth = get_true_color_depth(context);
+  uint32_t depth = get_true_color_depth(context -> source);
   if (depth >= 0x1000000u)
     generate_BMP_bitmasked_data(context, depth, header + 10);
   else if (context -> source -> palette && (context -> source -> max_palette_index < 16))

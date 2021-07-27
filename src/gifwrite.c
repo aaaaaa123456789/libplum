@@ -7,7 +7,7 @@ void generate_GIF_data (struct context * context) {
   unsigned char * header = append_output_node(context, 7);
   write_le16((uint16_t *) header, context -> source -> width);
   write_le16((uint16_t *) (header + 2), context -> source -> height);
-  uint_fast32_t depth = get_true_color_depth(context);
+  uint_fast32_t depth = get_true_color_depth(context -> source);
   uint8_t overall = depth;
   if ((uint8_t) (depth >> 8) > overall) overall = depth >> 8;
   if ((uint8_t) (depth >> 16) > overall) overall = depth >> 16;
@@ -58,9 +58,8 @@ void generate_GIF_data_with_palette (struct context * context, unsigned char * h
   write_GIF_loop_info(context);
   size_t framesize = (size_t) context -> source -> width * context -> source -> height;
   unsigned char * framebuffer = ctxmalloc(context, framesize);
-  const struct plum_metadata * durations = find_metadata(context, PLUM_METADATA_FRAME_DURATION);
-  const struct plum_metadata * disposals = find_metadata(context, PLUM_METADATA_FRAME_DISPOSAL);
-  if (durations && (durations -> size % sizeof(uint64_t))) throw(context, PLUM_ERR_INVALID_METADATA);
+  const struct plum_metadata * durations = plum_find_metadata(context -> source, PLUM_METADATA_FRAME_DURATION);
+  const struct plum_metadata * disposals = plum_find_metadata(context -> source, PLUM_METADATA_FRAME_DISPOSAL);
   for (p = 0; p < context -> source -> frames; p ++) {
     if (mapping) {
       size_t pixel;
@@ -114,9 +113,8 @@ void generate_GIF_data_from_raw (struct context * context, unsigned char * heade
   uint32_t * colorbuffer = ctxmalloc(context, sizeof *colorbuffer * framesize);
   unsigned char * framebuffer = ctxmalloc(context, framesize);
   uint_fast32_t frame;
-  const struct plum_metadata * durations = find_metadata(context, PLUM_METADATA_FRAME_DURATION);
-  const struct plum_metadata * disposals = find_metadata(context, PLUM_METADATA_FRAME_DISPOSAL);
-  if (durations && (durations -> size % sizeof(uint64_t))) throw(context, PLUM_ERR_INVALID_METADATA);
+  const struct plum_metadata * durations = plum_find_metadata(context -> source, PLUM_METADATA_FRAME_DURATION);
+  const struct plum_metadata * disposals = plum_find_metadata(context -> source, PLUM_METADATA_FRAME_DISPOSAL);
   for (frame = 0; frame < context -> source -> frames; frame ++) {
     if ((context -> source -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_64)
       plum_convert_colors(colorbuffer, context -> source -> data64 + framesize * frame, framesize, PLUM_COLOR_32, context -> source -> color_format);
@@ -182,9 +180,8 @@ void generate_GIF_frame_data (struct context * context, uint32_t * restrict pixe
 }
 
 int_fast32_t get_GIF_background_color (struct context * context) {
-  const struct plum_metadata * metadata = find_metadata(context, PLUM_METADATA_BACKGROUND);
+  const struct plum_metadata * metadata = plum_find_metadata(context -> source, PLUM_METADATA_BACKGROUND);
   if (!metadata) return -1;
-  if (metadata -> size < plum_color_buffer_size(1, context -> source -> color_format)) throw(context, PLUM_ERR_INVALID_METADATA);
   uint32_t converted;
   plum_convert_colors(&converted, metadata -> data, 1, PLUM_COLOR_32, context -> source -> color_format);
   return converted & 0xffffffu;
@@ -200,9 +197,8 @@ void write_GIF_palette (struct context * context, const uint32_t * palette, unsi
 }
 
 void write_GIF_loop_info (struct context * context) {
-  const struct plum_metadata * metadata = find_metadata(context, PLUM_METADATA_LOOP_COUNT);
+  const struct plum_metadata * metadata = plum_find_metadata(context -> source, PLUM_METADATA_LOOP_COUNT);
   if (!metadata) return;
-  if (metadata -> size != sizeof(uint32_t)) throw(context, PLUM_ERR_INVALID_METADATA);
   const uint32_t * count = metadata -> data;
   if (*count > 0xffff) throw(context, PLUM_ERR_INVALID_METADATA);
   if (*count == 1) return;
@@ -223,7 +219,7 @@ void write_GIF_frame (struct context * context, const unsigned char * restrict d
   }
   if (disposals && (disposals -> size > frame)) {
     disposal = frame[(const uint8_t *) disposals -> data];
-    if (disposal > 2) throw(context, PLUM_ERR_INVALID_METADATA);
+    if (disposal >= PLUM_DISPOSAL_REPLACE) throw(context, PLUM_ERR_INVALID_METADATA);
   }
   unsigned char extraflags = (disposal + 1) << 2;
   if (transparent >= 0) extraflags ++;

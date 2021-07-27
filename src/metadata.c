@@ -15,22 +15,9 @@ struct plum_metadata * plum_allocate_metadata (struct plum_image * image, size_t
 }
 
 struct plum_metadata * plum_find_metadata (const struct plum_image * image, int type) {
-  if (!image) return NULL;
-  struct context context = {.source = image};
-  if (setjmp(context.target)) return NULL;
-  return find_metadata(&context, type);
-}
-
-struct plum_metadata * find_metadata (struct context * context, int type) {
   struct plum_metadata * metadata;
-  struct plum_metadata * result = NULL;
-  for (metadata = context -> image -> metadata; metadata; metadata = metadata -> next)
-    if (metadata -> type == type)
-      if (result)
-        throw(context, PLUM_ERR_INVALID_METADATA);
-      else
-        result = metadata;
-  return result;
+  for (metadata = (struct plum_metadata *) image -> metadata; metadata; metadata = metadata -> next) if (metadata -> type == type) return metadata;
+  return NULL;
 }
 
 void add_color_depth_metadata (struct context * context, unsigned red, unsigned green, unsigned blue, unsigned alpha, unsigned gray) {

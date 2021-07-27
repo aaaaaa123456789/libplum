@@ -50,7 +50,7 @@ internal uint32_t compute_PNG_CRC(const unsigned char *, size_t);
 internal uint32_t compute_Adler32_checksum(const unsigned char *, size_t);
 
 // color.c
-internal uint32_t get_true_color_depth(struct context *);
+internal uint32_t get_true_color_depth(const struct plum_image *);
 
 // fractions.c
 internal void calculate_frame_duration_fraction(uint64_t, uint32_t, uint32_t * restrict, uint32_t * restrict);
@@ -108,7 +108,6 @@ internal void load_file(struct context *, const char *);
 internal void load_from_callback(struct context *, const struct plum_callback *);
 
 // metadata.c
-internal struct plum_metadata * find_metadata(struct context *, int);
 internal void add_color_depth_metadata(struct context *, unsigned, unsigned, unsigned, unsigned, unsigned);
 internal void add_background_color_metadata(struct context *, uint64_t, unsigned);
 internal void add_loop_count_metadata(struct context *, uint32_t);

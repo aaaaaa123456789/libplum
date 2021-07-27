@@ -11,21 +11,19 @@ void generate_APNG_data (struct context * context) {
   if (context -> source -> frames > 0x40000000u) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
   unsigned type = generate_PNG_header(context);
   uint32_t loops = 1;
-  const struct plum_metadata * metadata = find_metadata(context, PLUM_METADATA_LOOP_COUNT);
+  const struct plum_metadata * metadata = plum_find_metadata(context -> source, PLUM_METADATA_LOOP_COUNT);
   if (metadata) {
-    if (metadata -> size != sizeof(uint32_t)) throw(context, PLUM_ERR_INVALID_METADATA);
     loops = *(uint32_t *) metadata -> data;
     if (loops > 0x7fffffffu) throw(context, PLUM_ERR_INVALID_METADATA);
   }
   const uint64_t * durations = NULL;
   const uint8_t * disposals = NULL;
   size_t duration_count = 0, disposal_count = 0;
-  if (metadata = find_metadata(context, PLUM_METADATA_FRAME_DURATION)) {
-    if (metadata -> size % sizeof(uint64_t)) throw(context, PLUM_ERR_INVALID_METADATA);
+  if (metadata = plum_find_metadata(context -> source, PLUM_METADATA_FRAME_DURATION)) {
     durations = metadata -> data;
     duration_count = metadata -> size / sizeof(uint64_t);
   }
-  if (metadata = find_metadata(context, PLUM_METADATA_FRAME_DISPOSAL)) {
+  if (metadata = plum_find_metadata(context -> source, PLUM_METADATA_FRAME_DISPOSAL)) {
     disposals = metadata -> data;
     disposal_count = metadata -> size;
   }
@@ -60,7 +58,7 @@ unsigned generate_PNG_header (struct context * context) {
   // returns the selected type of image: 0, 1, 2, 3: paletted (1 << type bits), 4, 5: 8-bit RGB (without and with alpha), 6, 7: 16-bit RGB
   byteoutput(context, 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a);
   unsigned type;
-  uint32_t depth = get_true_color_depth(context);
+  uint32_t depth = get_true_color_depth(context -> source);
   if (context -> source -> palette)
     if (context -> source -> max_palette_index < 2)
       type = 0;
@@ -76,11 +74,8 @@ unsigned generate_PNG_header (struct context * context) {
     type = 6 + (depth >= 0x1000000u);
   append_PNG_header_chunks(context, type, depth);
   if (type < 4) append_PNG_palette_data(context, depth >= 0x1000000u);
-  const struct plum_metadata * background = find_metadata(context, PLUM_METADATA_BACKGROUND);
-  if (background) {
-    if (background -> size != plum_color_buffer_size(1, context -> source -> color_format)) throw(context, PLUM_ERR_INVALID_METADATA);
-    append_PNG_background_chunk(context, background -> data, type);
-  }
+  const struct plum_metadata * background = plum_find_metadata(context -> source, PLUM_METADATA_BACKGROUND);
+  if (background) append_PNG_background_chunk(context, background -> data, type);
   return type;
 }
 
@@ -178,7 +173,6 @@ void append_PNG_image_data (struct context * context, const void * restrict data
 }
 
 void append_APNG_frame_header (struct context * context, uint64_t duration, uint8_t disposal, uint8_t previous, uint32_t * restrict chunkID) {
-  if ((disposal > PLUM_DISPOSAL_PREVIOUS_REPLACE) || (previous > PLUM_DISPOSAL_PREVIOUS_REPLACE)) throw(context, PLUM_ERR_INVALID_METADATA);
   if (*chunkID > 0x7fffffffu) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
   uint32_t numerator, denominator;
   calculate_frame_duration_fraction(duration, 0xffffu, &numerator, &denominator);
