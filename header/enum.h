@@ -10,14 +10,14 @@ enum plum_flags {
   PLUM_COLOR_32X  = 3, /* RGBA 10.10.10.2 */
   PLUM_COLOR_MASK = 3,
   /* alpha */
-  PLUM_ALPHA_INVERT = 4,
-  PLUM_ALPHA_REMOVE = 8,
+  PLUM_ALPHA_INVERT =     4,
+  PLUM_ALPHA_REMOVE = 0x100,
   /* palettes */
-  PLUM_PALETTE_NONE     =    0,
-  PLUM_PALETTE_LOAD     = 0x10,
-  PLUM_PALETTE_GENERATE = 0x20,
-  PLUM_PALETTE_FORCE    = 0x30,
-  PLUM_PALETTE_MASK     = 0x30
+  PLUM_PALETTE_NONE     =     0,
+  PLUM_PALETTE_LOAD     = 0x200,
+  PLUM_PALETTE_GENERATE = 0x400,
+  PLUM_PALETTE_FORCE    = 0x600,
+  PLUM_PALETTE_MASK     = 0x600
 };
 
 enum plum_image_types {
