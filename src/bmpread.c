@@ -112,7 +112,6 @@ void load_BMP_bitmasks (struct context * context, size_t headersize, uint8_t * b
     count = 4;
   } else {
     if (context -> size <= (headersize + 26)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-    if (read_le32_unaligned(context -> data + 46) < 3) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     bp = context -> data + 14 + headersize;
     count = 3;
     bitmasks[6] = bitmasks[7] = 0;
@@ -151,7 +150,7 @@ uint8_t * load_monochrome_BMP (struct context * context, size_t offset, int inve
   size_t cell = 0;
   for (row = 0; row < context -> image -> height; row ++) {
     const unsigned char * pixeldata = rowdata;
-    for (pos = 0; pos < context -> image -> width; pos += 8, pixeldata ++) {
+    for (pos = (context -> image -> width >> 3); pos; pos --, pixeldata ++) {
       frame[cell ++] = !!(*pixeldata & 0x80);
       frame[cell ++] = !!(*pixeldata & 0x40);
       frame[cell ++] = !!(*pixeldata & 0x20);
@@ -162,7 +161,7 @@ uint8_t * load_monochrome_BMP (struct context * context, size_t offset, int inve
       frame[cell ++] = *pixeldata & 1;
     }
     unsigned char remainder = *pixeldata;
-    for (pos = 0; pos < (context -> image -> width & 7); pos ++, remainder <<= 1)
+    for (pos = context -> image -> width & 7; pos; pos --, remainder <<= 1)
       frame[cell ++] = !!(remainder & 0x80);
     if (inverted)
       rowdata -= rowsize;
@@ -182,7 +181,7 @@ uint8_t * load_halfbyte_BMP (struct context * context, size_t offset, int invert
   size_t cell = 0;
   for (row = 0; row < context -> image -> height; row ++) {
     const unsigned char * pixeldata = rowdata;
-    for (pos = 0; pos < context -> image -> width; pos += 2) {
+    for (pos = (context -> image -> width >> 1); pos; pos --) {
       frame[cell ++] = *pixeldata >> 4;
       frame[cell ++] = *(pixeldata ++) & 15;
     }
@@ -297,6 +296,7 @@ uint8_t * load_byte_compressed_BMP (struct context * context, size_t offset, int
         if ((col + databyte) > context -> image -> width) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         if (remaining < ((1 + (size_t) databyte) & ~1)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         memcpy(frame + (size_t) row * context -> image -> width + col, data, databyte);
+        col += databyte;
         data += (databyte + 1) & ~1;
         remaining -= (databyte + 1) & ~1;
     }
