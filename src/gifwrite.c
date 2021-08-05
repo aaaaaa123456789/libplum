@@ -219,7 +219,7 @@ void write_GIF_frame (struct context * context, const unsigned char * restrict d
   }
   if (disposals && (disposals -> size > frame)) {
     disposal = frame[(const uint8_t *) disposals -> data];
-    if (disposal >= PLUM_DISPOSAL_REPLACE) throw(context, PLUM_ERR_INVALID_METADATA);
+    if (disposal >= PLUM_DISPOSAL_REPLACE) disposal -= PLUM_DISPOSAL_REPLACE;
   }
   unsigned char extraflags = (disposal + 1) << 2;
   if (transparent >= 0) extraflags ++;
