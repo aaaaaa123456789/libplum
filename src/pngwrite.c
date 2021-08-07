@@ -14,7 +14,7 @@ void generate_APNG_data (struct context * context) {
   const struct plum_metadata * metadata = plum_find_metadata(context -> source, PLUM_METADATA_LOOP_COUNT);
   if (metadata) {
     loops = *(uint32_t *) metadata -> data;
-    if (loops > 0x7fffffffu) throw(context, PLUM_ERR_INVALID_METADATA);
+    if (loops > 0x7fffffffu) loops = 0; // too many loops, so just make it loop forever
   }
   const uint64_t * durations = NULL;
   const uint8_t * disposals = NULL;
@@ -176,8 +176,13 @@ void append_APNG_frame_header (struct context * context, uint64_t duration, uint
   if (*chunkID > 0x7fffffffu) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
   uint32_t numerator, denominator;
   calculate_frame_duration_fraction(duration, 0xffffu, &numerator, &denominator);
-  if (!denominator) throw(context, PLUM_ERR_INVALID_METADATA); // duration too large -- calculation returned infinity
-  if (!numerator) denominator = 0;
+  if (!numerator)
+    denominator = 0;
+  else if (!denominator) {
+    // duration too large (calculation returned infinity), so max it out
+    numerator = 0xffffu;
+    denominator = 1;
+  }
   unsigned char data[26];
   write_be32_unaligned(data, (*chunkID) ++);
   write_be32_unaligned(data + 4, context -> source -> width);
