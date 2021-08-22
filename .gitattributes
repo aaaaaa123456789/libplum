@@ -2,6 +2,7 @@
 
 *.c text
 *.h text linguist-language=C
+*.hpp text linguist-language=C++
 *.md text
 *.sh text
 LICENSE text
