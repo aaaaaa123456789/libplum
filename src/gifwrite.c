@@ -241,7 +241,7 @@ void write_GIF_frame (struct context * context, const unsigned char * restrict d
 void write_GIF_data_blocks (struct context * context, const unsigned char * restrict data, size_t size) {
   uint8_t remainder = size % 0xff;
   size /= 0xff;
-  char * output = append_output_node(context, size * 0x100 + remainder + !!remainder + 1);
+  unsigned char * output = append_output_node(context, size * 0x100 + remainder + !!remainder + 1);
   while (size --) {
     *(output ++) = 0xff;
     memcpy(output, data, 0xff);
