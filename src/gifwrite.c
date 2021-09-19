@@ -70,31 +70,30 @@ void generate_GIF_data_with_palette (struct context * context, unsigned char * h
     if (transparent >= 0) {
       size_t index;
       for (index = 0; index < framesize; index ++) if (framebuffer[index] != transparent) break;
-      if (index == framesize) {
+      if (index == framesize)
         width = height = 1;
-        goto checked;
+      else {
+        top = index / width;
+        height -= top;
+        for (index = 0; index < framesize; index ++) if (framebuffer[framesize - 1 - index] != transparent) break;
+        height -= index / width;
+        for (left = 0; left < width; left ++) for (index = top; index < (top + height); index ++)
+          if (framebuffer[index * context -> source -> width + left] != transparent) goto leftdone;
+        leftdone:
+        width -= left;
+        uint_fast16_t col;
+        for (col = 0; col < width; col ++) for (index = top; index < (top + height); index ++)
+          if (framebuffer[(index + 1) * context -> source -> width - 1 - col] != transparent) goto rightdone;
+        rightdone:
+        width -= col;
+        if (left || (width != context -> source -> width)) {
+          unsigned char * target = framebuffer;
+          for (index = 0; index < height; index ++) for (col = 0; col < width; col ++)
+            *(target ++) = framebuffer[(index + top) * context -> source -> width + col + left];
+        } else if (top)
+          memmove(framebuffer, framebuffer + context -> source -> width * top, context -> source -> width * height);
       }
-      top = index / width;
-      height -= top;
-      for (index = 0; index < framesize; index ++) if (framebuffer[framesize - 1 - index] != transparent) break;
-      height -= index / width;
-      for (left = 0; left < width; left ++) for (index = top; index < (top + height); index ++)
-        if (framebuffer[index * context -> source -> width + left] != transparent) goto leftdone;
-      leftdone:
-      width -= left;
-      uint_fast16_t col;
-      for (col = 0; col < width; col ++) for (index = top; index < (top + height); index ++)
-        if (framebuffer[(index + 1) * context -> source -> width - 1 - col] != transparent) goto rightdone;
-      rightdone:
-      width -= col;
-      if (left || (width != context -> source -> width)) {
-        unsigned char * target = framebuffer;
-        for (index = 0; index < height; index ++) for (col = 0; col < width; col ++)
-          *(target ++) = framebuffer[(index + top) * context -> source -> width + col + left];
-      } else if (top)
-        memmove(framebuffer, framebuffer + context -> source -> width * top, context -> source -> width * height);
     }
-    checked:
     write_GIF_frame(context, framebuffer, NULL, colors, transparent, p, left, top, width, height, durations, disposals);
   }
   if (mapping) ctxfree(context, mapping);
