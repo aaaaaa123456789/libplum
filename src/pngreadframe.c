@@ -23,7 +23,7 @@ void * load_PNG_frame_part (struct context * context, const size_t * chunks, int
   size_t p = 0, total_compressed_size = 0;
   const size_t * chunk;
   for (chunk = chunks; *chunk; chunk ++) total_compressed_size += read_be32_unaligned(context -> data + *chunk - 8) - chunkoffset;
-  void * compressed = ctxmalloc(context, total_compressed_size);
+  char * compressed = ctxmalloc(context, total_compressed_size);
   for (chunk = chunks; *chunk; chunk ++) {
     size_t current = read_be32_unaligned(context -> data + *chunk - 8) - chunkoffset;
     memcpy(compressed + p, context -> data + *chunk + chunkoffset, current);
