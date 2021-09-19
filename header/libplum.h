@@ -13,7 +13,11 @@
 #define PLUM_RESTRICT restrict
 #define PLUM_ANON_MEMBERS (__STDC_VERSION__ >= 201112L)
 /* protect against really broken preprocessor implementations */
-#define PLUM_VLA_SUPPORT (!defined(__STDC_NO_VLA__) || !(__STDC_NO_VLA__ + 0))
+#if !defined(__STDC_NO_VLA__) || !(__STDC_NO_VLA__ + 0)
+#define PLUM_VLA_SUPPORT 1
+#else
+#define PLUM_VLA_SUPPORT 0
+#endif
 #elif defined(__cplusplus)
 /* C++ allows anonymous unions as struct members, but not restrict or VLAs */
 #define PLUM_RESTRICT
