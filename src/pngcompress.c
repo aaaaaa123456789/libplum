@@ -102,7 +102,7 @@ struct compressed_PNG_code * generate_compressed_PNG_block (struct context * con
 }
 
 size_t compute_uncompressed_PNG_block_size (const unsigned char * restrict data, size_t offset, size_t size, uint16_t * restrict references) {
-  size_t backref, current_offset = offset;
+  size_t current_offset = offset;
   unsigned length, score = 0;
   for (; ((size - current_offset) >= 3) && ((size - current_offset) < 0xffffu); current_offset ++) {
     if (length = find_PNG_reference(data, references, current_offset, size, NULL)) {
