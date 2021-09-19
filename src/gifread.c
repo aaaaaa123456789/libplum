@@ -80,24 +80,23 @@ uint64_t ** load_GIF_palettes (struct context * context, unsigned flags, size_t 
         if (transparent_index < 0) transparent_index = next_transparent_index;
         if (global_palette_size && !result) {
           // check if the current palette is compatible with the global one; if so, don't add any per-frame palettes
-          if (smaller_size && (next_transparent_index == 256)) goto split;
-          if (transparent_index != next_transparent_index) goto split;
-          if (!local_palette_size) goto added;
-          unsigned min = (local_palette_size < global_palette_size) ? local_palette_size : global_palette_size;
-          // temporarily reset this location so it won't fail the check on that spot
-          if (next_transparent_index < min) local_palette[next_transparent_index] = global_palette[next_transparent_index];
-          int palcheck = memcmp(local_palette, global_palette, min * sizeof *global_palette);
-          if (next_transparent_index < min) local_palette[next_transparent_index] = *transparent_color;
-          if (!palcheck) {
-            if (local_palette_size > global_palette_size) {
-              memcpy(global_palette + global_palette_size, local_palette + global_palette_size,
-                     (local_palette_size - global_palette_size) * sizeof *global_palette);
-              global_palette_size = local_palette_size;
+          if (!(smaller_size && (next_transparent_index == 256)) && (transparent_index == next_transparent_index)) {
+            if (!local_palette_size) goto added;
+            unsigned min = (local_palette_size < global_palette_size) ? local_palette_size : global_palette_size;
+            // temporarily reset this location so it won't fail the check on that spot
+            if (next_transparent_index < min) local_palette[next_transparent_index] = global_palette[next_transparent_index];
+            int palcheck = memcmp(local_palette, global_palette, min * sizeof *global_palette);
+            if (next_transparent_index < min) local_palette[next_transparent_index] = *transparent_color;
+            if (!palcheck) {
+              if (local_palette_size > global_palette_size) {
+                memcpy(global_palette + global_palette_size, local_palette + global_palette_size,
+                       (local_palette_size - global_palette_size) * sizeof *global_palette);
+                global_palette_size = local_palette_size;
+              }
+              goto added;
             }
-            goto added;
           }
           // palettes are incompatible: break down the current global palette into per-frame copies
-          split:
           if (context -> image -> frames) {
             result = ctxmalloc(context, (context -> image -> frames - 1) * sizeof *result);
             uint64_t * palcopy = ctxcalloc(context, 256 * sizeof *palcopy);
