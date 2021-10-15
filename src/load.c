@@ -60,8 +60,15 @@ void load_image_buffer_data (struct context * context, unsigned flags) {
   else if (bytematch(context -> data, 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a))
     // APNG files disguise as PNG files, so handle them all as PNG and split them later
     load_PNG_data(context, flags);
-  else
-    throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  else {
+    // JPEG detection: one or more 0xff bytes followed by 0xd8
+    size_t position;
+    for (position = 0; (position < context -> size) && (context -> data[position] == 0xff); position ++);
+    if (position && (position < context -> size) && (context -> data[position] == 0xd8))
+      load_JPEG_data(context, flags);
+    else
+      throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  }
 }
 
 void load_file (struct context * context, const char * filename) {

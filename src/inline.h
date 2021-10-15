@@ -76,3 +76,41 @@ static inline uint32_t shift_in_left (struct context * context, unsigned count, 
   *bits -= count;
   return result;
 }
+
+static inline uint32_t shift_in_right_JPEG (struct context * context, unsigned count, uint32_t * restrict dataword, uint8_t * restrict bits,
+                                            const unsigned char ** data, size_t * restrict size) {
+  // unlike shift_in_left above, this function has to account for stuffed bytes (any number of 0xFF followed by a single 0x00)
+  while (*bits < count) {
+    if (!*size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    *dataword = (*dataword << 8) | **data;
+    *bits += 8;
+    while (**data == 0xff) {
+      ++ *data;
+      -- *size;
+      if (!*size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    }
+    ++ *data;
+    -- *size;
+  }
+  *bits -= count;
+  uint32_t result = *dataword >> *bits;
+  *dataword &= ((uint32_t) 1 << *bits) - 1;
+  return result;
+}
+
+static inline uint64_t color_from_floats (double red, double green, double blue, double alpha) {
+  uint64_t outred = (red >= 0) ? red + 0.5 : 0;
+  if (outred >= 0x10000u) outred = 0xffffu;
+  uint64_t outgreen = (green >= 0) ? green + 0.5 : 0;
+  if (outgreen >= 0x10000u) outgreen = 0xffffu;
+  uint64_t outblue = (blue >= 0) ? blue + 0.5 : 0;
+  if (outblue >= 0x10000u) outblue = 0xffffu;
+  uint64_t outalpha = (alpha >= 0) ? alpha + 0.5 : 0;
+  if (outalpha >= 0x10000u) outalpha = 0xffffu;
+  return (outalpha << 48) | (outblue << 32) | (outgreen << 16) | outred;
+}
+
+static inline int16_t make_signed_16 (uint16_t value) {
+  // this is a no-op (since int16_t must use two's complement), but it's necessary to avoid undefined behavior
+  return (value >= 0x8000u) ? -(int16_t) (~value) - 1 : value;
+}

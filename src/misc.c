@@ -57,11 +57,13 @@ const char * plum_get_error_text (unsigned error) {
 
 const char * plum_get_file_format_name (unsigned format) {
   static const char * const formats[] = {
-    [PLUM_IMAGE_NONE] = NULL, // default for invalid formats
-    [PLUM_IMAGE_BMP]  = "BMP",
-    [PLUM_IMAGE_GIF]  = "GIF",
-    [PLUM_IMAGE_PNG]  = "PNG",
-    [PLUM_IMAGE_APNG] = "APNG"
+    [PLUM_IMAGE_NONE]          = NULL, // default for invalid formats
+    [PLUM_IMAGE_BMP]           = "BMP",
+    [PLUM_IMAGE_GIF]           = "GIF",
+    [PLUM_IMAGE_PNG]           = "PNG",
+    [PLUM_IMAGE_APNG]          = "APNG",
+    [PLUM_IMAGE_JPEG]          = "JPEG",
+    [PLUM_IMAGE_JPEG_LOSSLESS] = "JPEG-lossless"
   };
   if (format >= PLUM_NUM_IMAGE_TYPES) format = PLUM_IMAGE_NONE;
   return formats[format];

@@ -3,6 +3,8 @@
 
 #include "../header/libplum.h"
 
+typedef void JPEG_component_transfer_function(uint64_t * restrict, size_t, unsigned, const double **);
+
 union allocator_node {
   max_align_t alignment;
   struct {
@@ -61,4 +63,49 @@ struct compressed_PNG_code {
   unsigned dataextra:  5;
   unsigned distcode:   5;
   unsigned distextra: 13;
+};
+
+struct JPEG_marker_layout {
+  unsigned char * frametype; // 0-15
+  size_t * frames;
+  size_t ** framescans;
+  size_t *** framedata; // for each frame, for each scan, for each restart interval: offset, size
+  unsigned char * markertype; // same as the follow-up byte from the marker itself
+  size_t * markers; // for some markers only (DHT, DAC, DQT, DNL, DRI, EXP)
+  size_t hierarchical; // DHP marker, if present
+  size_t JFIF;
+  size_t Exif;
+  size_t Adobe;
+};
+
+struct JPEG_decoder_tables {
+  short * Huffman[8]; // 4 DC, 4 AC
+  unsigned short * quantization[4];
+  unsigned char arithmetic[8]; // conditioning values: 4 DC, 4 AC
+  uint16_t restart;
+};
+
+struct JPEG_component_info {
+  uint32_t index:   8;
+  uint32_t tableQ:  8;
+  uint32_t tableDC: 4;
+  uint32_t tableAC: 4;
+  uint32_t scaleH:  4;
+  uint32_t scaleV:  4;
+};
+
+struct JPEG_decompressor_state {
+  int16_t (* restrict current[4])[64];
+  size_t last_size;
+  size_t restart_count;
+  uint16_t row_skip_index;
+  uint16_t row_skip_count;
+  uint16_t column_skip_index;
+  uint16_t column_skip_count;
+  uint16_t row_offset[4];
+  uint16_t unit_row_offset[4];
+  uint8_t unit_offset[4];
+  uint16_t restart_size;
+  unsigned char component_count;
+  unsigned char MCU[81];
 };
