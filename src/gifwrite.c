@@ -70,31 +70,30 @@ void generate_GIF_data_with_palette (struct context * context, unsigned char * h
     if (transparent >= 0) {
       size_t index;
       for (index = 0; index < framesize; index ++) if (framebuffer[index] != transparent) break;
-      if (index == framesize) {
+      if (index == framesize)
         width = height = 1;
-        goto checked;
+      else {
+        top = index / width;
+        height -= top;
+        for (index = 0; index < framesize; index ++) if (framebuffer[framesize - 1 - index] != transparent) break;
+        height -= index / width;
+        for (left = 0; left < width; left ++) for (index = top; index < (top + height); index ++)
+          if (framebuffer[index * context -> source -> width + left] != transparent) goto leftdone;
+        leftdone:
+        width -= left;
+        uint_fast16_t col;
+        for (col = 0; col < width; col ++) for (index = top; index < (top + height); index ++)
+          if (framebuffer[(index + 1) * context -> source -> width - 1 - col] != transparent) goto rightdone;
+        rightdone:
+        width -= col;
+        if (left || (width != context -> source -> width)) {
+          unsigned char * target = framebuffer;
+          for (index = 0; index < height; index ++) for (col = 0; col < width; col ++)
+            *(target ++) = framebuffer[(index + top) * context -> source -> width + col + left];
+        } else if (top)
+          memmove(framebuffer, framebuffer + context -> source -> width * top, context -> source -> width * height);
       }
-      top = index / width;
-      height -= top;
-      for (index = 0; index < framesize; index ++) if (framebuffer[framesize - 1 - index] != transparent) break;
-      height -= index / width;
-      for (left = 0; left < width; left ++) for (index = top; index < (top + height); index ++)
-        if (framebuffer[index * context -> source -> width + left] != transparent) goto leftdone;
-      leftdone:
-      width -= left;
-      uint_fast16_t col;
-      for (col = 0; col < width; col ++) for (index = top; index < (top + height); index ++)
-        if (framebuffer[(index + 1) * context -> source -> width - 1 - col] != transparent) goto rightdone;
-      rightdone:
-      width -= col;
-      if (left || (width != context -> source -> width)) {
-        unsigned char * target = framebuffer;
-        for (index = 0; index < height; index ++) for (col = 0; col < width; col ++)
-          *(target ++) = framebuffer[(index + top) * context -> source -> width + col + left];
-      } else if (top)
-        memmove(framebuffer, framebuffer + context -> source -> width * top, context -> source -> width * height);
     }
-    checked:
     write_GIF_frame(context, framebuffer, NULL, colors, transparent, p, left, top, width, height, durations, disposals);
   }
   if (mapping) ctxfree(context, mapping);
@@ -141,31 +140,30 @@ void generate_GIF_frame_data (struct context * context, uint32_t * restrict pixe
   uint_fast16_t left = 0, top = 0, width = context -> source -> width, height = context -> source -> height;
   if (transparent) {
     for (index = 0; index < framesize; index ++) if (pixels[index] != transparent) break;
-    if (index == framesize) {
+    if (index == framesize)
       width = height = 1;
-      goto checked;
+    else {
+      top = index / width;
+      height -= top;
+      for (index = 0; index < framesize; index ++) if (pixels[framesize - 1 - index] != transparent) break;
+      height -= index / width;
+      for (left = 0; left < width; left ++) for (index = top; index < (top + height); index ++)
+        if (pixels[index * context -> source -> width + left] != transparent) goto leftdone;
+      leftdone:
+      width -= left;
+      uint_fast16_t col;
+      for (col = 0; col < width; col ++) for (index = top; index < (top + height); index ++)
+        if (pixels[(index + 1) * context -> source -> width - 1 - col] != transparent) goto rightdone;
+      rightdone:
+      width -= col;
+      if (left || (width != context -> source -> width)) {
+        uint32_t * target = pixels;
+        for (index = 0; index < height; index ++) for (col = 0; col < width; col ++)
+          *(target ++) = pixels[(index + top) * context -> source -> width + col + left];
+      } else if (top)
+        memmove(pixels, pixels + context -> source -> width * top, sizeof *pixels * context -> source -> width * height);
     }
-    top = index / width;
-    height -= top;
-    for (index = 0; index < framesize; index ++) if (pixels[framesize - 1 - index] != transparent) break;
-    height -= index / width;
-    for (left = 0; left < width; left ++) for (index = top; index < (top + height); index ++)
-      if (pixels[index * context -> source -> width + left] != transparent) goto leftdone;
-    leftdone:
-    width -= left;
-    uint_fast16_t col;
-    for (col = 0; col < width; col ++) for (index = top; index < (top + height); index ++)
-      if (pixels[(index + 1) * context -> source -> width - 1 - col] != transparent) goto rightdone;
-    rightdone:
-    width -= col;
-    if (left || (width != context -> source -> width)) {
-      uint32_t * target = pixels;
-      for (index = 0; index < height; index ++) for (col = 0; col < width; col ++)
-        *(target ++) = pixels[(index + top) * context -> source -> width + col + left];
-    } else if (top)
-      memmove(pixels, pixels + context -> source -> width * top, sizeof *pixels * context -> source -> width * height);
   }
-  checked: /* empty statement because a declaration follows */;
   uint32_t * palette = ctxcalloc(context, 256 * sizeof *palette);
   int colorcount = plum_convert_colors_to_indexes(framebuffer, pixels, palette, (size_t) width * height, PLUM_COLOR_32);
   if (colorcount < 0) throw(context, -colorcount);
@@ -243,7 +241,7 @@ void write_GIF_frame (struct context * context, const unsigned char * restrict d
 void write_GIF_data_blocks (struct context * context, const unsigned char * restrict data, size_t size) {
   uint8_t remainder = size % 0xff;
   size /= 0xff;
-  char * output = append_output_node(context, size * 0x100 + remainder + !!remainder + 1);
+  unsigned char * output = append_output_node(context, size * 0x100 + remainder + !!remainder + 1);
   while (size --) {
     *(output ++) = 0xff;
     memcpy(output, data, 0xff);

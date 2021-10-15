@@ -5,9 +5,9 @@ struct plum_image * plum_load_image (const void * restrict buffer, size_t size, 
   if (error) *error = 0;
   if (!buffer) {
     context.status = PLUM_ERR_INVALID_ARGUMENTS;
-    goto errexit;
+    goto done;
   }
-  if (setjmp(context.target)) goto errexit;
+  if (setjmp(context.target)) goto done;
   if (!(context.image = plum_new_image())) throw(&context, PLUM_ERR_OUT_OF_MEMORY);
   switch (size) {
     case PLUM_FILENAME:
@@ -38,13 +38,14 @@ struct plum_image * plum_load_image (const void * restrict buffer, size_t size, 
     }
   else if (context.image -> palette && !(flags & PLUM_PALETTE_MASK))
     remove_palette(&context);
-  destroy_allocator_list(context.allocator);
-  return context.image;
-  errexit:
-  plum_destroy_image(context.image);
+  done:
+  if (context.status) {
+    plum_destroy_image(context.image);
+    context.image = NULL;
+  }
   destroy_allocator_list(context.allocator);
   if (error) *error = context.status;
-  return NULL;
+  return context.image;
 }
 
 void load_image_buffer_data (struct context * context, unsigned flags) {
