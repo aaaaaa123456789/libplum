@@ -57,9 +57,8 @@ struct PNG_chunk_locations {
 };
 
 struct compressed_PNG_code {
-  // members declared as uint32_t to hint at compilers to use 32-bit integers
-  uint32_t datacode:   9;
-  uint32_t dataextra:  5;
-  uint32_t distcode:   5;
-  uint32_t distextra: 13;
+  unsigned datacode:   9;
+  unsigned dataextra:  5;
+  unsigned distcode:   5;
+  unsigned distextra: 13;
 };
