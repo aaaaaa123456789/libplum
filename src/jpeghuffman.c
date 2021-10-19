@@ -1,9 +1,5 @@
 #include "proto.h"
 
-#define MCU_ZERO_COORD 0xfd
-#define MCU_NEXT_ROW   0xfe
-#define MCU_END_LIST   0xff
-
 void decompress_JPEG_Huffman_scan (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_decoder_tables * tables,
                                    size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned shift, unsigned char first,
                                    unsigned char last) {
@@ -165,68 +161,3 @@ unsigned char next_JPEG_Huffman_value (struct context * context, const unsigned 
     index = -table[index];
   }
 }
-
-void decompress_JPEG_arithmetic_scan (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_decoder_tables * tables,
-                                      size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned shift, unsigned char first,
-                                      unsigned char last) {
-  // ...
-}
-
-void decompress_JPEG_arithmetic_bit_scan (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_decoder_tables * tables,
-                                          size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned shift,
-                                          unsigned char first, unsigned char last) {
-  if (last && !first) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  // ...
-}
-
-void initialize_JPEG_decompressor_state (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_component_info * components,
-                                         const unsigned char * componentIDs, size_t * restrict unitsH, size_t unitsV, size_t width, size_t height,
-                                         unsigned char maxH, unsigned char maxV, const struct JPEG_decoder_tables * tables, const size_t * offsets,
-                                         int16_t (* restrict * output)[64]) {
-  size_t p;
-  for (p = 0; p < 4; p ++) state -> current[p] = NULL;
-  if (componentIDs[1] != 0xff) {
-    uint_fast8_t row, col;
-    unsigned char * entry = state -> MCU;
-    for (p = 0; (p < 4) && (componentIDs[p] != 0xff); p ++) {
-      state -> unit_offset[componentIDs[p]] = components[componentIDs[p]].scaleH;
-      state -> row_offset[componentIDs[p]] = *unitsH * state -> unit_offset[componentIDs[p]];
-      state -> unit_row_offset[componentIDs[p]] = (components[componentIDs[p]].scaleV - 1) * state -> row_offset[componentIDs[p]];
-      state -> row_offset[componentIDs[p]] -= state -> unit_offset[componentIDs[p]];
-      for (row = 0; row < components[componentIDs[p]].scaleV; row ++) {
-        *(entry ++) = row ? MCU_NEXT_ROW : MCU_ZERO_COORD;
-        for (col = 0; col < components[componentIDs[p]].scaleH; col ++) *(entry ++) = componentIDs[p];
-      }
-      state -> current[componentIDs[p]] = output[componentIDs[p]];
-    }
-    *entry = MCU_END_LIST;
-    state -> component_count = p;
-    state -> row_skip_index = state -> row_skip_count = state -> column_skip_index = state -> column_skip_count = 0;
-  } else {
-    // if a scan contains a single component, it's considered a non-interleaved scan and the MCU is a single 8x8 block
-    state -> component_count = 1;
-    state -> unit_offset[*componentIDs] = 1;
-    state -> row_offset[*componentIDs] = state -> unit_row_offset[*componentIDs] = 0;
-    memcpy(state -> MCU, (unsigned char []) {MCU_ZERO_COORD, *componentIDs, MCU_END_LIST}, 3);
-    *unitsH *= components[*componentIDs].scaleH;
-    unitsV *= components[*componentIDs].scaleV;
-    state -> current[*componentIDs] = output[*componentIDs];
-    state -> column_skip_index = 1 + (width * components[*componentIDs].scaleH - 1) / (8 * maxH);
-    state -> column_skip_count = *unitsH - state -> column_skip_index;
-    state -> row_skip_index = 1 + (height * components[*componentIDs].scaleV - 1) / (8 * maxV);
-    state -> row_skip_count = unitsV - state -> row_skip_index;
-  }
-  state -> last_size = *unitsH * unitsV;
-  if (state -> restart_size = tables -> restart) {
-    state -> restart_count = state -> last_size / state -> restart_size;
-    state -> last_size %= state -> restart_size;
-  } else
-    state -> restart_count = 0;
-  for (p = 0; p < state -> restart_count; p ++) if (!offsets[2 * p]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  if (state -> last_size && !offsets[2 * (p ++)]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  if (offsets[2 * p]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-}
-
-#undef MCU_ZERO_COORD
-#undef MCU_NEXT_ROW
-#undef MCU_END_LIST

@@ -109,3 +109,9 @@ struct JPEG_decompressor_state {
   unsigned char component_count;
   unsigned char MCU[81];
 };
+
+enum JPEG_MCU_control_codes {
+  MCU_ZERO_COORD = 0xfd,
+  MCU_NEXT_ROW   = 0xfe,
+  MCU_END_LIST   = 0xff
+};

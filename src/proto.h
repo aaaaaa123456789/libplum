@@ -102,6 +102,12 @@ internal void write_GIF_frame(struct context *, const unsigned char * restrict, 
                               unsigned, const struct plum_metadata *, const struct plum_metadata *);
 internal void write_GIF_data_blocks(struct context *, const unsigned char * restrict, size_t);
 
+// jpegarithmetic.c
+internal void decompress_JPEG_arithmetic_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
+                                              const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char);
+internal void decompress_JPEG_arithmetic_bit_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
+                                                  const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char);
+
 // jpegcomponents.c
 internal uint32_t determine_JPEG_components(struct context *, size_t);
 internal unsigned get_JPEG_component_count(uint32_t);
@@ -124,19 +130,12 @@ internal void JPEG_transfer_CKMY(uint64_t * restrict, size_t, unsigned, const do
 // jpegdct.c
 internal void apply_JPEG_inverse_DCT(double [restrict static 64], int16_t [restrict static 64], uint16_t [restrict static 64]);
 
-// jpegdecompress.c
+// jpeghuffman.c
 internal void decompress_JPEG_Huffman_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
                                            const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char);
 internal void decompress_JPEG_Huffman_bit_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
                                                const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char);
 internal unsigned char next_JPEG_Huffman_value(struct context *, const unsigned char **, size_t * restrict, uint32_t * restrict, uint8_t * restrict, const short *);
-internal void decompress_JPEG_arithmetic_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
-                                              const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char);
-internal void decompress_JPEG_arithmetic_bit_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
-                                                  const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char);
-internal void initialize_JPEG_decompressor_state(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_component_info *,
-                                                 const unsigned char *, size_t * restrict, size_t, size_t, size_t, unsigned char, unsigned char,
-                                                 const struct JPEG_decoder_tables *, const size_t *, int16_t (* restrict *)[64]);
 
 // jpegread.c
 internal void load_JPEG_data(struct context *, unsigned);
@@ -155,6 +154,9 @@ internal unsigned load_JPEG_lossless_frame(struct context *, const struct JPEG_m
                                            double **, unsigned, size_t, size_t);
 internal unsigned get_JPEG_component_info(struct context *, const unsigned char *, struct JPEG_component_info * restrict, uint32_t);
 internal const unsigned char * get_JPEG_scan_components(struct context *, size_t, struct JPEG_component_info * restrict, unsigned, unsigned char * restrict);
+internal void initialize_JPEG_decompressor_state(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_component_info *,
+                                                 const unsigned char *, size_t * restrict, size_t, size_t, size_t, unsigned char, unsigned char,
+                                                 const struct JPEG_decoder_tables *, const size_t *, int16_t (* restrict *)[64]);
 internal void unpack_JPEG_component(double * restrict, double * restrict, size_t, size_t, size_t, size_t, unsigned char, unsigned char, unsigned char,
                                     unsigned char);
 
