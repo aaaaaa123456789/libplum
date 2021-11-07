@@ -121,14 +121,14 @@ void append_PNG_palette_data (struct context * context, int use_alpha) {
 
 void append_PNG_background_chunk (struct context * context, const void * restrict data, unsigned type) {
   if (type >= 4) {
-    unsigned char data[6];
+    unsigned char chunkdata[6];
     uint64_t color;
     plum_convert_colors(&color, data, 1, PLUM_COLOR_64, context -> source -> color_format);
     if (type < 6) color = (color >> 8) & 0xff00ff00ffu;
-    write_be16_unaligned(data, color);
-    write_be16_unaligned(data + 2, color >> 16);
-    write_be16_unaligned(data + 4, color >> 32);
-    output_PNG_chunk(context, 0x624b4744u, sizeof data, data); // bKGD
+    write_be16_unaligned(chunkdata, color);
+    write_be16_unaligned(chunkdata + 2, color >> 16);
+    write_be16_unaligned(chunkdata + 4, color >> 32);
+    output_PNG_chunk(context, 0x624b4744u, sizeof chunkdata, chunkdata); // bKGD
   } else {
     unsigned pos, size = plum_color_buffer_size(1, context -> source -> color_format);
     const unsigned char * current = context -> source -> palette;
