@@ -115,3 +115,10 @@ enum JPEG_MCU_control_codes {
   MCU_NEXT_ROW   = 0xfe,
   MCU_END_LIST   = 0xff
 };
+
+struct JPEG_arithmetic_decoder_state {
+  unsigned probability: 15;
+  unsigned switch_MPS:   1;
+  unsigned next_MPS:     8;
+  unsigned next_LPS:     8;
+};

@@ -12,7 +12,7 @@ void decompress_JPEG_Huffman_scan (struct context * context, struct JPEG_decompr
     const unsigned char * data = context -> data + *(offsets ++);
     int16_t (* outputunit)[64];
     size_t count = *(offsets ++);
-    uint16_t prevDC[4] = {0, 0, 0, 0};
+    uint16_t prevDC[4] = {0};
     int16_t nextvalue = 0;
     uint32_t dataword = 0;
     uint8_t bits = 0;

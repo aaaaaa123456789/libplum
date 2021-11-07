@@ -107,6 +107,12 @@ internal void decompress_JPEG_arithmetic_scan(struct context *, struct JPEG_deco
                                               const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char);
 internal void decompress_JPEG_arithmetic_bit_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
                                                   const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char);
+internal void initialize_JPEG_arithmetic_counters(struct context *, size_t * restrict, size_t * restrict, uint32_t * restrict);
+internal int16_t next_JPEG_arithmetic_value(struct context *, size_t * restrict, size_t * restrict, uint32_t * restrict, uint16_t * restrict,
+                                            unsigned char * restrict, signed char * restrict, int, unsigned, unsigned char);
+internal unsigned char classify_JPEG_arithmetic_value(uint16_t, unsigned char);
+internal unsigned next_JPEG_arithmetic_bit(struct context *, size_t * restrict, size_t * restrict, signed char * restrict, uint32_t * restrict, uint16_t * restrict,
+                                           unsigned char * restrict);
 
 // jpegcomponents.c
 internal uint32_t determine_JPEG_components(struct context *, size_t);
