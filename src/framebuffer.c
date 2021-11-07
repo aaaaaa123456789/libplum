@@ -12,12 +12,26 @@ int plum_check_valid_image_size (uint32_t width, uint32_t height, uint32_t frame
 }
 
 size_t plum_color_buffer_size (size_t count, unsigned flags) {
+  if (count > (SIZE_MAX / sizeof(uint64_t))) return 0;
   if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_64)
     return count * sizeof(uint64_t);
   else if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_16)
     return count * sizeof(uint16_t);
   else
     return count * sizeof(uint32_t);
+}
+
+size_t plum_pixel_buffer_size (const struct plum_image * image) {
+  if (!image) return 0;
+  if (!plum_check_valid_image_size(image -> width, image -> height, image -> frames)) return 0;
+  size_t count = (size_t) image -> width * image -> height * image -> frames;
+  if (!image -> palette) count = plum_color_buffer_size(count, image -> color_format);
+  return count;
+}
+
+size_t plum_palette_buffer_size (const struct plum_image * image) {
+  if (!image) return 0;
+  return plum_color_buffer_size(image -> max_palette_index + 1, image -> color_format);
 }
 
 void allocate_framebuffers (struct context * context, unsigned flags, int palette) {

@@ -8,6 +8,8 @@ const char * plum_get_error_text(unsigned error);
 const char * plum_get_file_format_name(unsigned format);
 int plum_check_valid_image_size(uint32_t width, uint32_t height, uint32_t frames);
 size_t plum_color_buffer_size(size_t size, unsigned flags);
+size_t plum_pixel_buffer_size(const struct plum_image * image);
+size_t plum_palette_buffer_size(const struct plum_image * image);
 unsigned plum_rotate_image(struct plum_image * image, unsigned count, int flip);
 void plum_convert_colors(void * restrict destination, const void * restrict source, size_t count, unsigned to, unsigned from);
 uint64_t plum_convert_color(uint64_t color, unsigned from, unsigned to);

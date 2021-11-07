@@ -34,13 +34,14 @@ struct plum_image * plum_copy_image (const struct plum_image * image) {
       last = allocated;
     }
   }
-  size_t size = plum_color_buffer_size((size_t) image -> width * image -> height * image -> frames, image -> color_format);
+  size_t size = plum_pixel_buffer_size(image);
+  if (!size) goto error;
   void * buffer = plum_malloc(copy, size);
   if (!buffer) goto error;
   memcpy(buffer, image -> data, size);
   copy -> data = buffer;
   if (image -> palette) {
-    size = plum_color_buffer_size(image -> max_palette_index + 1, image -> color_format);
+    size = plum_palette_buffer_size(image);
     buffer = plum_malloc(copy, size);
     if (!buffer) goto error;
     memcpy(buffer, image -> palette, size);
