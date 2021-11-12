@@ -96,6 +96,9 @@ JPEG_component_transfer_function * get_JPEG_component_transfer_function (struct 
     throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   }
   // below this line it's pure guesswork: there are no application headers hinting at components, so just guess from popular ID values
+  if (((*layout -> frametype & 3) == 3) && (components >= 0x10000u) && (components < 0x1000000u) && !((components + 0x102) % 0x10101u))
+    // lossless encoding, three sequential component IDs
+    return &JPEG_transfer_RGB;
   switch (components) {
     case 0x5941u: // 'Y', 'A'
       return &JPEG_transfer_alpha_grayscale;
@@ -122,14 +125,6 @@ JPEG_component_transfer_function * get_JPEG_component_transfer_function (struct 
     default:
       throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   }
-}
-
-int is_JPEG_transfer_lossless (JPEG_component_transfer_function * transfer) {
-  return (transfer == &JPEG_transfer_RGB) ||
-         (transfer == &JPEG_transfer_BGR) ||
-         (transfer == &JPEG_transfer_ABGR) ||
-         (transfer == &JPEG_transfer_grayscale) ||
-         (transfer == &JPEG_transfer_alpha_grayscale);
 }
 
 void append_JPEG_color_depth_metadata (struct context * context, JPEG_component_transfer_function * transfer, unsigned bitdepth) {

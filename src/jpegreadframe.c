@@ -23,7 +23,7 @@ void load_JPEG_DCT_frame (struct context * context, const struct JPEG_marker_lay
     const unsigned char * progdata = get_JPEG_scan_components(context, *scans, component_info, count, scancomponents);
     if ((*progdata > progdata[1]) || (progdata[1] > 63)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     uint_fast8_t bitstart = progdata[2] >> 4, bitend = progdata[2] & 15;
-    if ((bitstart && ((bitstart - 1) != bitend)) || (bitend > 13)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    if ((bitstart && ((bitstart - 1) != bitend)) || (bitend > 13) || (bitend >= precision)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     if (!bitstart) bitstart = 0xff;
     for (p = 0; (p < 4) && (scancomponents[p] != 0xff); p ++) {
       if (!tables -> quantization[component_info[scancomponents[p]].tableQ]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
@@ -67,9 +67,57 @@ void load_JPEG_DCT_frame (struct context * context, const struct JPEG_marker_lay
   }
 }
 
-unsigned load_JPEG_lossless_frame (struct context * context, const struct JPEG_marker_layout * layout, uint32_t components, size_t frameindex, 
-                                   struct JPEG_decoder_tables * tables, size_t * metadata_index, double ** output, unsigned precision, size_t width, size_t height) {
-  // ...
+void load_JPEG_lossless_frame (struct context * context, const struct JPEG_marker_layout * layout, uint32_t components, size_t frameindex,
+                               struct JPEG_decoder_tables * tables, size_t * metadata_index, double ** output, unsigned precision, size_t width, size_t height) {
+  const size_t * scans = layout -> framescans[frameindex];
+  const size_t ** offsets = (const size_t **) layout -> framedata[frameindex];
+  uint_fast8_t p, count, maxH = 1, maxV = 1;
+  struct JPEG_component_info component_info[4];
+  count = get_JPEG_component_info(context, context -> data + layout -> frames[frameindex], component_info, components);
+  for (p = 0; p < count; p ++) {
+    if (component_info[p].scaleV > maxV) maxV = component_info[p].scaleV;
+    if (component_info[p].scaleH > maxH) maxH = component_info[p].scaleH;
+  }
+  size_t unitrow = (width - 1) / maxH + 1, unitcol = (height - 1) / maxV + 1, units = unitrow * unitcol;
+  uint16_t * restrict component_data[4] = {0};
+  for (p = 0; p < count; p ++) component_data[p] = ctxmalloc(context, sizeof **component_data * units * component_info[p].scaleH * component_info[p].scaleV);
+  double initial_value[4];
+  int component_shift[4] = {-1, -1, -1, -1};
+  struct JPEG_decompressor_state state;
+  for (; *scans; scans ++, offsets ++) {
+    process_JPEG_metadata_until_offset(context, layout, tables, metadata_index, **offsets);
+    unsigned char scancomponents[4];
+    const unsigned char * progdata = get_JPEG_scan_components(context, *scans, component_info, count, scancomponents);
+    uint_fast8_t predictor = *progdata, shift = progdata[2] & 15;
+    if ((predictor > 7) || (shift >= precision)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    for (p = 0; (p < 4) && (scancomponents[p] != 0xff); p ++) {
+      if (component_shift[scancomponents[p]] >= 0) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+      component_shift[scancomponents[p]] = shift;
+      if (layout -> hierarchical)
+        initial_value[scancomponents[p]] = 0;
+      else
+        initial_value[scancomponents[p]] = shift ? 1u << (shift - 1) : 0;
+      if (!((layout -> frametype[frameindex] & 8) || tables -> Huffman[component_info[scancomponents[p]].tableDC])) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    }
+    size_t scanunitrow = unitrow;
+    initialize_JPEG_decompressor_state_lossless(context, &state, component_info, scancomponents, &scanunitrow, unitcol, width, height, maxH, maxV, tables,
+                                                *offsets, component_data);
+    // call the decompression function, but here it's a choice between two instead of four
+    ((layout -> frametype[frameindex] & 8) ? decompress_JPEG_arithmetic_lossless_scan : decompress_JPEG_Huffman_lossless_scan)
+      (context, &state, tables, scanunitrow, component_info, *offsets, shift, predictor, precision - shift);
+  }
+  for (p = 0; p < count; p ++) if (component_shift[p] < 0) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  // same as in the previous function: loop backwards
+  while (count --) {
+    size_t x, y, compwidth = unitrow * component_info[count].scaleH + 2, compheight = unitcol * component_info[count].scaleV + 2;
+    double * converted = ctxmalloc(context, sizeof *converted * compwidth * compheight);
+    for (y = 0; y < (unitcol * component_info[count].scaleV); y ++) for (x = 0; x < (unitrow * component_info[count].scaleH); x ++)
+      converted[(y + 1) * compwidth + x + 1] = component_data[count][y * unitrow * component_info[count].scaleH + x] << component_shift[count];
+    if (!(layout -> frametype[frameindex] & 4)) for (x = 0; x < (width * height); x ++) output[count][x] = initial_value[count];
+    unpack_JPEG_component(output[count], converted, width, height, compwidth, compheight, component_info[count].scaleH, component_info[count].scaleV, maxH, maxV);
+    ctxfree(context, converted);
+    ctxfree(context, component_data[count]);
+  }
 }
 
 unsigned get_JPEG_component_info (struct context * context, const unsigned char * frameheader, struct JPEG_component_info * restrict output, uint32_t components) {
@@ -106,54 +154,6 @@ const unsigned char * get_JPEG_scan_components (struct context * context, size_t
     if ((compinfo[index].tableDC > 3) || (compinfo[index].tableAC > 3)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   }
   return context -> data + offset + 3 + 2 * count;
-}
-
-void initialize_JPEG_decompressor_state (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_component_info * components,
-                                         const unsigned char * componentIDs, size_t * restrict unitsH, size_t unitsV, size_t width, size_t height,
-                                         unsigned char maxH, unsigned char maxV, const struct JPEG_decoder_tables * tables, const size_t * offsets,
-                                         int16_t (* restrict * output)[64]) {
-  size_t p;
-  for (p = 0; p < 4; p ++) state -> current[p] = NULL;
-  if (componentIDs[1] != 0xff) {
-    uint_fast8_t row, col;
-    unsigned char * entry = state -> MCU;
-    for (p = 0; (p < 4) && (componentIDs[p] != 0xff); p ++) {
-      state -> unit_offset[componentIDs[p]] = components[componentIDs[p]].scaleH;
-      state -> row_offset[componentIDs[p]] = *unitsH * state -> unit_offset[componentIDs[p]];
-      state -> unit_row_offset[componentIDs[p]] = (components[componentIDs[p]].scaleV - 1) * state -> row_offset[componentIDs[p]];
-      state -> row_offset[componentIDs[p]] -= state -> unit_offset[componentIDs[p]];
-      for (row = 0; row < components[componentIDs[p]].scaleV; row ++) {
-        *(entry ++) = row ? MCU_NEXT_ROW : MCU_ZERO_COORD;
-        for (col = 0; col < components[componentIDs[p]].scaleH; col ++) *(entry ++) = componentIDs[p];
-      }
-      state -> current[componentIDs[p]] = output[componentIDs[p]];
-    }
-    *entry = MCU_END_LIST;
-    state -> component_count = p;
-    state -> row_skip_index = state -> row_skip_count = state -> column_skip_index = state -> column_skip_count = 0;
-  } else {
-    // if a scan contains a single component, it's considered a non-interleaved scan and the MCU is a single 8x8 block
-    state -> component_count = 1;
-    state -> unit_offset[*componentIDs] = 1;
-    state -> row_offset[*componentIDs] = state -> unit_row_offset[*componentIDs] = 0;
-    memcpy(state -> MCU, (unsigned char []) {MCU_ZERO_COORD, *componentIDs, MCU_END_LIST}, 3);
-    *unitsH *= components[*componentIDs].scaleH;
-    unitsV *= components[*componentIDs].scaleV;
-    state -> current[*componentIDs] = output[*componentIDs];
-    state -> column_skip_index = 1 + (width * components[*componentIDs].scaleH - 1) / (8 * maxH);
-    state -> column_skip_count = *unitsH - state -> column_skip_index;
-    state -> row_skip_index = 1 + (height * components[*componentIDs].scaleV - 1) / (8 * maxV);
-    state -> row_skip_count = unitsV - state -> row_skip_index;
-  }
-  state -> last_size = *unitsH * unitsV;
-  if (state -> restart_size = tables -> restart) {
-    state -> restart_count = state -> last_size / state -> restart_size;
-    state -> last_size %= state -> restart_size;
-  } else
-    state -> restart_count = 0;
-  for (p = 0; p < state -> restart_count; p ++) if (!offsets[2 * p]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  if (state -> last_size && !offsets[2 * (p ++)]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  if (offsets[2 * p]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
 }
 
 void unpack_JPEG_component (double * restrict result, double * restrict source, size_t width, size_t height, size_t scaled_width, size_t scaled_height,

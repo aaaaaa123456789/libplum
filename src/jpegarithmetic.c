@@ -24,7 +24,7 @@ void decompress_JPEG_arithmetic_scan (struct context * context, struct JPEG_deco
     while (units --) {
       for (decodepos = state -> MCU; *decodepos != MCU_END_LIST; decodepos ++) switch (*decodepos) {
         case MCU_ZERO_COORD:
-          outputunit = state -> current[decodepos[1]];
+          outputunit = state -> current_block[decodepos[1]];
           break;
         case MCU_NEXT_ROW:
           outputunit += state -> row_offset[decodepos[1]];
@@ -69,9 +69,9 @@ void decompress_JPEG_arithmetic_scan (struct context * context, struct JPEG_deco
         if (rowcount == state -> row_skip_index) skipunits += (rowunits - state -> column_skip_count) * state -> row_skip_count;
       }
       if (colcount == state -> column_skip_index) skipunits += state -> column_skip_count;
-      for (p = 0; p < 4; p ++) if (state -> current[p]) {
-        state -> current[p] += state -> unit_offset[p];
-        if (!colcount) state -> current[p] += state -> unit_row_offset[p];
+      for (p = 0; p < 4; p ++) if (state -> current_block[p]) {
+        state -> current_block[p] += state -> unit_offset[p];
+        if (!colcount) state -> current_block[p] += state -> unit_row_offset[p];
       }
     }
     if (remaining || skipunits) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
@@ -100,7 +100,7 @@ void decompress_JPEG_arithmetic_bit_scan (struct context * context, struct JPEG_
     while (units --) {
       for (decodepos = state -> MCU; *decodepos != MCU_END_LIST; decodepos ++) switch (*decodepos) {
         case MCU_ZERO_COORD:
-          outputunit = state -> current[decodepos[1]];
+          outputunit = state -> current_block[decodepos[1]];
           break;
         case MCU_NEXT_ROW:
           outputunit += state -> row_offset[decodepos[1]];
@@ -139,13 +139,19 @@ void decompress_JPEG_arithmetic_bit_scan (struct context * context, struct JPEG_
         if (rowcount == state -> row_skip_index) skipunits += (rowunits - state -> column_skip_count) * state -> row_skip_count;
       }
       if (colcount == state -> column_skip_index) skipunits += state -> column_skip_count;
-      for (p = 0; p < 4; p ++) if (state -> current[p]) {
-        state -> current[p] += state -> unit_offset[p];
-        if (!colcount) state -> current[p] += state -> unit_row_offset[p];
+      for (p = 0; p < 4; p ++) if (state -> current_block[p]) {
+        state -> current_block[p] += state -> unit_offset[p];
+        if (!colcount) state -> current_block[p] += state -> unit_row_offset[p];
       }
     }
     if (remaining || skipunits) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   }
+}
+
+void decompress_JPEG_arithmetic_lossless_scan (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_decoder_tables * tables,
+                                               size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned shift,
+                                               unsigned char predictor, unsigned precision) {
+  // ...
 }
 
 void initialize_JPEG_arithmetic_counters (struct context * context, size_t * restrict offset, size_t * restrict remaining, uint32_t * restrict current) {

@@ -27,10 +27,7 @@ enum plum_image_types {
   PLUM_IMAGE_PNG,
   PLUM_IMAGE_APNG,
   PLUM_IMAGE_JPEG,
-  PLUM_IMAGE_JPEG_LOSSLESS,
   PLUM_NUM_IMAGE_TYPES,
-  /* alias */
-  PLUM_IMAGE_JPEG_LOSSY = PLUM_IMAGE_JPEG
 };
 
 enum plum_metadata_types {

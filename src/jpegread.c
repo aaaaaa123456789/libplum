@@ -37,7 +37,7 @@ void load_JPEG_data (struct context * context, unsigned flags) {
   if (layout -> hierarchical)
     bitdepth = load_hierarchical_JPEG(context, layout, components, component_data);
   else
-    bitdepth = load_single_frame_JPEG(context, layout, components, component_data, is_JPEG_transfer_lossless(transfer));
+    bitdepth = load_single_frame_JPEG(context, layout, components, component_data);
   append_JPEG_color_depth_metadata(context, transfer, bitdepth);
   allocate_framebuffers(context, flags, 0);
   if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_64) {
@@ -189,21 +189,18 @@ unsigned get_JPEG_rotation (struct context * context, size_t offset) {
   return 0; // dummy
 }
 
-unsigned load_single_frame_JPEG (struct context * context, const struct JPEG_marker_layout * layout, uint32_t components, double ** output, int lossless) {
+unsigned load_single_frame_JPEG (struct context * context, const struct JPEG_marker_layout * layout, uint32_t components, double ** output) {
   if (*layout -> frametype & 4) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   struct JPEG_decoder_tables tables;
   initialize_JPEG_decoder_tables(&tables);
   unsigned precision = context -> data[*layout -> frames + 2];
   if ((precision < 2) || (precision > 16)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   size_t metadata_index = 0;
-  if ((*layout -> frametype == 3) || (*layout -> frametype == 11)) {
-    if (lossless) context -> image -> type = PLUM_IMAGE_JPEG_LOSSLESS;
-    return load_JPEG_lossless_frame(context, layout, components, 0, &tables, &metadata_index, output, precision, context -> image -> width,
-                                    context -> image -> height);
-  } else {
+  if ((*layout -> frametype == 3) || (*layout -> frametype == 11))
+    load_JPEG_lossless_frame(context, layout, components, 0, &tables, &metadata_index, output, precision, context -> image -> width, context -> image -> height);
+  else
     load_JPEG_DCT_frame(context, layout, components, 0, &tables, &metadata_index, output, precision, context -> image -> width, context -> image -> height);
-    return precision;
-  }
+  return precision;
 }
 
 unsigned load_hierarchical_JPEG (struct context * context, const struct JPEG_marker_layout * layout, uint32_t components, double ** output) {

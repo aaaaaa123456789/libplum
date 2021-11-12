@@ -19,7 +19,7 @@ void decompress_JPEG_Huffman_scan (struct context * context, struct JPEG_decompr
     while (units --) {
       for (decodepos = state -> MCU; *decodepos != MCU_END_LIST; decodepos ++) switch (*decodepos) {
         case MCU_ZERO_COORD:
-          outputunit = state -> current[decodepos[1]];
+          outputunit = state -> current_block[decodepos[1]];
           break;
         case MCU_NEXT_ROW:
           outputunit += state -> row_offset[decodepos[1]];
@@ -65,9 +65,9 @@ void decompress_JPEG_Huffman_scan (struct context * context, struct JPEG_decompr
         if (rowcount == state -> row_skip_index) skipunits += (rowunits - state -> column_skip_count) * state -> row_skip_count;
       }
       if (colcount == state -> column_skip_index) skipunits += state -> column_skip_count;
-      for (p = 0; p < 4; p ++) if (state -> current[p]) {
-        state -> current[p] += state -> unit_offset[p];
-        if (!colcount) state -> current[p] += state -> unit_row_offset[p];
+      for (p = 0; p < 4; p ++) if (state -> current_block[p]) {
+        state -> current_block[p] += state -> unit_offset[p];
+        if (!colcount) state -> current_block[p] += state -> unit_row_offset[p];
       }
     }
     if (count || skipcount || skipunits || nextvalue) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
@@ -94,7 +94,7 @@ void decompress_JPEG_Huffman_bit_scan (struct context * context, struct JPEG_dec
     while (units --) {
       for (decodepos = state -> MCU; *decodepos != MCU_END_LIST; decodepos ++) switch (*decodepos) {
         case MCU_ZERO_COORD:
-          outputunit = state -> current[decodepos[1]];
+          outputunit = state -> current_block[decodepos[1]];
           break;
         case MCU_NEXT_ROW:
           outputunit += state -> row_offset[decodepos[1]];
@@ -142,12 +142,71 @@ void decompress_JPEG_Huffman_bit_scan (struct context * context, struct JPEG_dec
         if (rowcount == state -> row_skip_index) skipunits += (rowunits - state -> column_skip_count) * state -> row_skip_count;
       }
       if (colcount == state -> column_skip_index) skipunits += state -> column_skip_count;
-      for (p = 0; p < 4; p ++) if (state -> current[p]) {
-        state -> current[p] += state -> unit_offset[p];
-        if (!colcount) state -> current[p] += state -> unit_row_offset[p];
+      for (p = 0; p < 4; p ++) if (state -> current_block[p]) {
+        state -> current_block[p] += state -> unit_offset[p];
+        if (!colcount) state -> current_block[p] += state -> unit_row_offset[p];
       }
     }
     if (count || skipcount || skipunits || nextvalue) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  }
+}
+
+void decompress_JPEG_Huffman_lossless_scan (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_decoder_tables * tables,
+                                            size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned shift,
+                                            unsigned char predictor, unsigned precision) {
+  size_t restart_interval;
+  for (restart_interval = 0; restart_interval <= state -> restart_count; restart_interval ++) {
+    size_t units = (restart_interval == state -> restart_count) ? state -> last_size : state -> restart_size;
+    if (!units) break;
+    const unsigned char * data = context -> data + *(offsets ++);
+    size_t count = *(offsets ++);
+    uint16_t * outputpos;
+    const unsigned char * decodepos;
+    size_t p, colcount = 0, rowcount = 0, skipunits = 0;
+    uint32_t dataword = 0;
+    uint8_t bits = 0;
+    while (units --) {
+      for (decodepos = state -> MCU; *decodepos != MCU_END_LIST; decodepos ++) switch (*decodepos) {
+        case MCU_ZERO_COORD:
+          outputpos = state -> current_value[decodepos[1]];
+          break;
+        case MCU_NEXT_ROW:
+          outputpos += state -> row_offset[decodepos[1]];
+          break;
+        default:
+          if (skipunits) {
+            *(outputpos ++) = 0;
+            skipunits --;
+          } else {
+            uint16_t difference, predicted = predict_JPEG_lossless_sample(outputpos, rowunits, rowcount, colcount, predictor, precision);
+            unsigned char diffsize = next_JPEG_Huffman_value(context, &data, &count, &dataword, &bits, tables -> Huffman[components[*decodepos].tableDC]);
+            if (diffsize > 16) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+            switch (diffsize) {
+              case 0:
+                difference = 0;
+                break;
+              case 16:
+                difference = 0x8000u;
+                break;
+              default:
+                difference = shift_in_right_JPEG(context, diffsize, &dataword, &bits, &data, &count);
+                if (!(difference >> (diffsize - 1))) difference -= (1u << diffsize) - 1;
+            }
+            *(outputpos ++) = predicted + difference;
+          }
+      }
+      if ((++ colcount) == rowunits) {
+        colcount = 0;
+        rowcount ++;
+        if (rowcount == state -> row_skip_index) skipunits += (rowunits - state -> column_skip_count) * state -> row_skip_count;
+      }
+      if (colcount == state -> column_skip_index) skipunits += state -> column_skip_count;
+      for (p = 0; p < 4; p ++) if (state -> current_value[p]) {
+        state -> current_value[p] += state -> unit_offset[p];
+        if (!colcount) state -> current_value[p] += state -> unit_row_offset[p];
+      }
+    }
+    if (count || skipunits) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   }
 }
 

@@ -95,7 +95,10 @@ struct JPEG_component_info {
 };
 
 struct JPEG_decompressor_state {
-  int16_t (* restrict current[4])[64];
+  union {
+    int16_t (* restrict current_block[4])[64];
+    uint16_t * restrict current_value[4];
+  };
   size_t last_size;
   size_t restart_count;
   uint16_t row_skip_index;
