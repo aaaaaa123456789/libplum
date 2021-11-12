@@ -28,11 +28,7 @@ void load_JPEG_data (struct context * context, unsigned flags) {
   if (!plum_check_valid_image_size(context -> image -> width, context -> image -> height, 1)) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
   size_t count = (size_t) context -> image -> width * context -> image -> height;
   double * component_data[4] = {0};
-  for (p = 0; p < 4; p ++)
-    if (components >> (p * 8))
-      component_data[p] = ctxmalloc(context, sizeof **component_data * count);
-    else
-      break;
+  for (p = 0; p < get_JPEG_component_count(components); p ++) component_data[p] = ctxmalloc(context, sizeof **component_data * count);
   unsigned bitdepth;
   if (layout -> hierarchical)
     bitdepth = load_hierarchical_JPEG(context, layout, components, component_data);
