@@ -187,7 +187,7 @@ void decompress_JPEG_arithmetic_lossless_scan (struct context * context, struct 
             skipunits --;
           } else {
             conditioning = tables -> arithmetic[components[*decodepos].tableDC];
-            predicted = predict_JPEG_lossless_sample(outputpos, rowunits, rowcount, colcount, predictor, precision);
+            predicted = predict_JPEG_lossless_sample(outputpos, rowunits, !x, !(y || rowcount), predictor, precision);
             // the JPEG standard calculates this the other way around, but it makes no difference and doing it in this order enables an optimization
             unsigned char reference = 5 * classify_JPEG_arithmetic_value(rowdifferences[*decodepos][x], conditioning) +
                                       classify_JPEG_arithmetic_value(coldifferences[*decodepos][y], conditioning);

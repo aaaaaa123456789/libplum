@@ -147,7 +147,7 @@ internal void initialize_JPEG_decompressor_state_lossless(struct context *, stru
 internal void initialize_JPEG_decompressor_state_common(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_component_info *,
                                                         const unsigned char *, size_t * restrict, size_t, size_t, size_t, unsigned char, unsigned char,
                                                         const struct JPEG_decoder_tables *, const size_t *, unsigned char);
-internal uint16_t predict_JPEG_lossless_sample(const uint16_t *, ptrdiff_t, size_t, size_t, unsigned, unsigned);
+internal uint16_t predict_JPEG_lossless_sample(const uint16_t *, ptrdiff_t, int, int, unsigned, unsigned);
 
 // jpeghuffman.c
 internal void decompress_JPEG_Huffman_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
