@@ -93,7 +93,7 @@ JPEG_component_transfer_function * get_JPEG_component_transfer_function (struct 
   if (layout -> JFIF) {
     // JFIF mandates one of two possibilities: grayscale (handled already) or YCbCr with IDs of 1, 2, 3
     if (components == 0x30201u) return &JPEG_transfer_YCbCr;
-    // ...but a number of encoders use 0, 1, 2 for some reason
+    // but a number of encoders use 0, 1, 2 for some reason
     if (components == 0x20100u) return &JPEG_transfer_YCbCr;
     throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   }

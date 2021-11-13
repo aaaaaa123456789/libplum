@@ -151,7 +151,71 @@ void decompress_JPEG_arithmetic_bit_scan (struct context * context, struct JPEG_
 void decompress_JPEG_arithmetic_lossless_scan (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_decoder_tables * tables,
                                                size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned shift,
                                                unsigned char predictor, unsigned precision) {
-  // ...
+  size_t p, restart_interval;
+  uint16_t * rowdifferences[4] = {0};
+  for (p = 0; p < state -> component_count; p ++) rowdifferences[p] = ctxmalloc(context, sizeof **rowdifferences * rowunits * components[p].scaleH);
+  for (restart_interval = 0; restart_interval <= state -> restart_count; restart_interval ++) {
+    size_t units = (restart_interval == state -> restart_count) ? state -> last_size : state -> restart_size;
+    if (!units) break;
+    size_t offset = *(offsets ++);
+    size_t remaining = *(offsets ++);
+    uint16_t * outputpos;
+    const unsigned char * decodepos;
+    size_t x, y, colcount = 0, rowcount = 0, skipunits = 0;
+    uint16_t predicted, difference, accumulator = 0;
+    uint32_t current = 0;
+    unsigned char conditioning, bits = 0;
+    initialize_JPEG_arithmetic_counters(context, &offset, &remaining, &current);
+    signed char indexes[4][158] = {0};
+    for (p = 0; p < state -> component_count; p ++) for (x = 0; x < (rowunits * components[p].scaleH); x ++) rowdifferences[p][x] = 0;
+    uint16_t coldifferences[4][4] = {0};
+    while (units --) {
+      for (decodepos = state -> MCU; *decodepos != MCU_END_LIST; decodepos ++) switch (*decodepos) {
+        case MCU_ZERO_COORD:
+          outputpos = state -> current_value[decodepos[1]];
+          x = colcount * components[decodepos[1]].scaleH;
+          y = 0;
+          break;
+        case MCU_NEXT_ROW:
+          outputpos += state -> row_offset[decodepos[1]];
+          x = colcount * components[decodepos[1]].scaleH;
+          y ++;
+          break;
+        default:
+          if (skipunits) {
+            *(outputpos ++) = 0;
+            skipunits --;
+          } else {
+            conditioning = tables -> arithmetic[components[*decodepos].tableDC];
+            predicted = predict_JPEG_lossless_sample(outputpos, rowunits, rowcount, colcount, predictor, precision);
+            // the JPEG standard calculates this the other way around, but it makes no difference and doing it in this order enables an optimization
+            unsigned char reference = 5 * classify_JPEG_arithmetic_value(rowdifferences[*decodepos][x], conditioning) +
+                                      classify_JPEG_arithmetic_value(coldifferences[*decodepos][y], conditioning);
+            if (next_JPEG_arithmetic_bit(context, &offset, &remaining, indexes[components[*decodepos].tableDC] + 4 * reference, &current, &accumulator, &bits))
+              difference = next_JPEG_arithmetic_value(context, &offset, &remaining, &current, &accumulator, &bits, indexes[components[*decodepos].tableDC],
+                                                      2, reference, conditioning);
+            else
+              difference = 0;
+            rowdifferences[*decodepos][x] = coldifferences[*decodepos][y] = difference;
+            *(outputpos ++) = predicted + difference;
+          }
+          x ++;
+      }
+      if ((++ colcount) == rowunits) {
+        colcount = 0;
+        rowcount ++;
+        if (rowcount == state -> row_skip_index) skipunits += (rowunits - state -> column_skip_count) * state -> row_skip_count;
+        memset(coldifferences, 0, sizeof coldifferences);
+      }
+      if (colcount == state -> column_skip_index) skipunits += state -> column_skip_count;
+      for (p = 0; p < 4; p ++) if (state -> current_value[p]) {
+        state -> current_value[p] += state -> unit_offset[p];
+        if (!colcount) state -> current_value[p] += state -> unit_row_offset[p];
+      }
+    }
+    if (remaining || skipunits) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  }
+  for (p = 0; p < state -> component_count; p ++) ctxfree(context, rowdifferences[p]);
 }
 
 void initialize_JPEG_arithmetic_counters (struct context * context, size_t * restrict offset, size_t * restrict remaining, uint32_t * restrict current) {
@@ -173,15 +237,18 @@ void initialize_JPEG_arithmetic_counters (struct context * context, size_t * res
 int16_t next_JPEG_arithmetic_value (struct context * context, size_t * restrict offset, size_t * restrict remaining, uint32_t * restrict current,
                                     uint16_t * restrict accumulator, unsigned char * restrict bits, signed char * restrict indexes, int mode, unsigned reference,
                                     unsigned char conditioning) {
-  // mode = 0 for DC (reference = DC category), 1 for AC (reference = coefficient index)
-  signed char * index = mode ? NULL : (indexes + 4 * reference + 1);
+  // mode = 0 for DC (reference = DC category), 1 for AC (reference = coefficient index), 2 for lossless (reference = 5 * top category + left category)
+  signed char * index = (mode == 1) ? NULL : (indexes + 4 * reference + 1);
   unsigned size, negative = next_JPEG_arithmetic_bit(context, offset, remaining, index, current, accumulator, bits);
-  index = mode ? indexes + 3 * reference - 1 : (index + 1 + negative);
+  index = (mode == 1) ? indexes + 3 * reference - 1 : (index + 1 + negative);
   size = next_JPEG_arithmetic_bit(context, offset, remaining, index, current, accumulator, bits);
   uint16_t result = 0;
   if (size) {
-    if (!mode) index = indexes + 20;
-    signed char * next_index = mode ? indexes + 189 + 28 * (reference > conditioning) : (index + 1);
+    if (!mode)
+      index = indexes + 20;
+    else if (mode == 2)
+      index = indexes + 100 + 29 * (reference >= 15);
+    signed char * next_index = (mode == 1) ? indexes + 189 + 28 * (reference > conditioning) : (index + 1);
     while (next_JPEG_arithmetic_bit(context, offset, remaining, index, current, accumulator, bits)) {
       size ++;
       if (size > 15) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
