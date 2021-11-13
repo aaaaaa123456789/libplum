@@ -104,6 +104,7 @@ JPEG_component_transfer_function * get_JPEG_component_transfer_function (struct 
   switch (components) {
     case 0x5941u: // 'Y', 'A'
       return &JPEG_transfer_alpha_grayscale;
+    case 0x20100u: // 0, 1, 2: used by libjpeg sometimes
     case 0x30201u: // 1, 2, 3: JFIF's standard IDs
     case 0x232201u: // 1, 0x22, 0x23: used by some library for 'big gamut' colors
       return &JPEG_transfer_YCbCr;

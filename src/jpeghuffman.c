@@ -165,6 +165,7 @@ void decompress_JPEG_Huffman_lossless_scan (struct context * context, struct JPE
     size_t p, colcount = 0, rowcount = 0, skipunits = 0;
     uint32_t dataword = 0;
     uint8_t bits = 0;
+    uint16_t difference, predicted;
     int leftmost, topmost;
     while (units --) {
       for (decodepos = state -> MCU; *decodepos != MCU_END_LIST; decodepos ++) switch (*decodepos) {
@@ -182,7 +183,8 @@ void decompress_JPEG_Huffman_lossless_scan (struct context * context, struct JPE
             *(outputpos ++) = 0;
             skipunits --;
           } else {
-            uint16_t difference, predicted = predict_JPEG_lossless_sample(outputpos, rowunits, leftmost && !colcount, topmost && !rowcount, predictor, precision);
+            predicted = predict_JPEG_lossless_sample(outputpos, rowunits * ((state -> component_count > 1) ? components[*decodepos].scaleH : 1),
+                                                     leftmost && !colcount, topmost && !rowcount, predictor, precision);
             unsigned char diffsize = next_JPEG_Huffman_value(context, &data, &count, &dataword, &bits, tables -> Huffman[components[*decodepos].tableDC]);
             if (diffsize > 16) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
             switch (diffsize) {

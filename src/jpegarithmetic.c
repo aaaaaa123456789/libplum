@@ -153,7 +153,8 @@ void decompress_JPEG_arithmetic_lossless_scan (struct context * context, struct 
                                                unsigned char predictor, unsigned precision) {
   size_t p, restart_interval;
   uint16_t * rowdifferences[4] = {0};
-  for (p = 0; p < state -> component_count; p ++) rowdifferences[p] = ctxmalloc(context, sizeof **rowdifferences * rowunits * components[p].scaleH);
+  for (p = 0; p < state -> component_count; p ++)
+    rowdifferences[p] = ctxmalloc(context, sizeof **rowdifferences * rowunits * ((state -> component_count > 1) ? components[p].scaleH : 1));
   for (restart_interval = 0; restart_interval <= state -> restart_count; restart_interval ++) {
     size_t units = (restart_interval == state -> restart_count) ? state -> last_size : state -> restart_size;
     if (!units) break;
@@ -167,18 +168,19 @@ void decompress_JPEG_arithmetic_lossless_scan (struct context * context, struct 
     unsigned char conditioning, bits = 0;
     initialize_JPEG_arithmetic_counters(context, &offset, &remaining, &current);
     signed char indexes[4][158] = {0};
-    for (p = 0; p < state -> component_count; p ++) for (x = 0; x < (rowunits * components[p].scaleH); x ++) rowdifferences[p][x] = 0;
+    for (p = 0; p < state -> component_count; p ++) for (x = 0; x < (rowunits * ((state -> component_count > 1) ? components[p].scaleH : 1)); x ++)
+      rowdifferences[p][x] = 0;
     uint16_t coldifferences[4][4] = {0};
     while (units --) {
       for (decodepos = state -> MCU; *decodepos != MCU_END_LIST; decodepos ++) switch (*decodepos) {
         case MCU_ZERO_COORD:
           outputpos = state -> current_value[decodepos[1]];
-          x = colcount * components[decodepos[1]].scaleH;
+          x = colcount * ((state -> component_count > 1) ? components[decodepos[1]].scaleH : 1);
           y = 0;
           break;
         case MCU_NEXT_ROW:
           outputpos += state -> row_offset[decodepos[1]];
-          x = colcount * components[decodepos[1]].scaleH;
+          x = colcount * ((state -> component_count > 1) ? components[decodepos[1]].scaleH : 1);
           y ++;
           break;
         default:
@@ -187,7 +189,8 @@ void decompress_JPEG_arithmetic_lossless_scan (struct context * context, struct 
             skipunits --;
           } else {
             conditioning = tables -> arithmetic[components[*decodepos].tableDC];
-            predicted = predict_JPEG_lossless_sample(outputpos, rowunits, !x, !(y || rowcount), predictor, precision);
+            predicted = predict_JPEG_lossless_sample(outputpos, rowunits * ((state -> component_count > 1) ? components[*decodepos].scaleH : 1),
+                                                     !x, !(y || rowcount), predictor, precision);
             // the JPEG standard calculates this the other way around, but it makes no difference and doing it in this order enables an optimization
             unsigned char reference = 5 * classify_JPEG_arithmetic_value(rowdifferences[*decodepos][x], conditioning) +
                                       classify_JPEG_arithmetic_value(coldifferences[*decodepos][y], conditioning);

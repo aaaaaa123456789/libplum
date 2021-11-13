@@ -6,8 +6,8 @@ void initialize_JPEG_decompressor_state (struct context * context, struct JPEG_d
                                          int16_t (* restrict * output)[64]) {
   initialize_JPEG_decompressor_state_common(context, state, components, componentIDs, unitsH, unitsV, width, height, maxH, maxV, tables, offsets, 8);
   unsigned char p;
+  for (p = 0; p < 4; p ++) state -> current_block[p] = NULL;
   for (p = 0; p < state -> component_count; p ++) state -> current_block[componentIDs[p]] = output[componentIDs[p]];
-  for (; p < 4; p ++) state -> current_block[p] = NULL;
 }
 
 void initialize_JPEG_decompressor_state_lossless (struct context * context, struct JPEG_decompressor_state * restrict state,
@@ -16,8 +16,8 @@ void initialize_JPEG_decompressor_state_lossless (struct context * context, stru
                                                   const struct JPEG_decoder_tables * tables, const size_t * offsets, uint16_t * restrict * output) {
   initialize_JPEG_decompressor_state_common(context, state, components, componentIDs, unitsH, unitsV, width, height, maxH, maxV, tables, offsets, 1);
   unsigned char p;
+  for (p = 0; p < 4; p ++) state -> current_value[p] = NULL;
   for (p = 0; p < state -> component_count; p ++) state -> current_value[componentIDs[p]] = output[componentIDs[p]];
-  for (; p < 4; p ++) state -> current_value[p] = NULL;
 }
 
 void initialize_JPEG_decompressor_state_common (struct context * context, struct JPEG_decompressor_state * restrict state,
