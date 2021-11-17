@@ -2,7 +2,7 @@
 
 void decompress_JPEG_arithmetic_scan (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_decoder_tables * tables,
                                       size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned shift, unsigned char first,
-                                      unsigned char last) {
+                                      unsigned char last, int differential) {
   size_t restart_interval;
   for (restart_interval = 0; restart_interval <= state -> restart_count; restart_interval ++) {
     size_t units = (restart_interval == state -> restart_count) ? state -> last_size : state -> restart_size;
@@ -53,10 +53,13 @@ void decompress_JPEG_arithmetic_scan (struct context * context, struct JPEG_deco
               unsigned char category = classify_JPEG_arithmetic_value(prevdiff[*decodepos], conditioning);
               if (next_JPEG_arithmetic_bit(context, &offset, &remaining, indexesDC[components[*decodepos].tableDC] + 4 * category, &current, &accumulator, &bits))
                 prevdiff[*decodepos] = next_JPEG_arithmetic_value(context, &offset, &remaining, &current, &accumulator, &bits,
-                                                          indexesDC[components[*decodepos].tableDC], 0, category, conditioning);
+                                                                  indexesDC[components[*decodepos].tableDC], 0, category, conditioning);
               else
                 prevdiff[*decodepos] = 0;
-              prevDC[*decodepos] = **outputunit = make_signed_16(prevDC[*decodepos] + prevdiff[*decodepos]);
+              if (differential)
+                **outputunit = make_signed_16(prevdiff[*decodepos]);
+              else
+                prevDC[*decodepos] = **outputunit = make_signed_16(prevDC[*decodepos] + prevdiff[*decodepos]);
             }
             p[*outputunit] = make_signed_16((uint16_t) p[*outputunit] << shift);
           }

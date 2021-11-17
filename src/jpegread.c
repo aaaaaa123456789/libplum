@@ -109,7 +109,7 @@ struct JPEG_marker_layout * load_JPEG_marker_layout (struct context * context) {
       case 0xc7: case 0xc9: case 0xca: case 0xcb: case 0xcd: case 0xce: case 0xcf:
         // start a new frame
         if (frame != SIZE_MAX) {
-          layout -> framescans[frame] = ctxrealloc(context, layout -> framedata[frame], sizeof **layout -> framescans * ((++ scan) + 1));
+          layout -> framescans[frame] = ctxrealloc(context, layout -> framescans[frame], sizeof **layout -> framescans * ((++ scan) + 1));
           layout -> framescans[frame][scan] = 0;
           if (!scan) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         }
@@ -139,7 +139,7 @@ struct JPEG_marker_layout * load_JPEG_marker_layout (struct context * context) {
         layout -> hierarchical = offset;
         break;
       case 0xdf:
-        if (!layout -> hierarchical || (scan != SIZE_MAX)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+        if (!layout -> hierarchical) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
       case 0xc4: case 0xcc: case 0xdb: case 0xdc: case 0xdd:
         layout -> markers = ctxrealloc(context, layout -> markers, sizeof *layout -> markers * (markers + 1));
         layout -> markers[markers] = offset;
@@ -199,10 +199,6 @@ unsigned load_single_frame_JPEG (struct context * context, const struct JPEG_mar
   return precision;
 }
 
-unsigned load_hierarchical_JPEG (struct context * context, const struct JPEG_marker_layout * layout, uint32_t components, double ** output) {
-  // ...
-}
-
 void initialize_JPEG_decoder_tables (struct JPEG_decoder_tables * tables) {
   *tables = (struct JPEG_decoder_tables) {
     .Huffman = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
@@ -212,8 +208,9 @@ void initialize_JPEG_decoder_tables (struct JPEG_decoder_tables * tables) {
   };
 }
 
-void process_JPEG_metadata_until_offset (struct context * context, const struct JPEG_marker_layout * layout, struct JPEG_decoder_tables * tables,
-                                         size_t * index, size_t limit) {
+unsigned char process_JPEG_metadata_until_offset (struct context * context, const struct JPEG_marker_layout * layout, struct JPEG_decoder_tables * tables,
+                                                  size_t * index, size_t limit) {
+  unsigned char expansion = 0;
   for (; layout -> markers[*index] && (layout -> markers[*index] < limit); ++ *index) {
     const unsigned char * markerdata = context -> data + layout -> markers[*index];
     uint16_t markersize = read_be16_unaligned(markerdata) - 2;
@@ -261,8 +258,13 @@ void process_JPEG_metadata_until_offset (struct context * context, const struct 
       case 0xdd: // DRI
         if (markersize != 2) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         tables -> restart = read_be16_unaligned(markerdata);
+        break;
+      case 0xdf: // EXP
+        if (markersize != 1) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+        expansion = *markerdata;
     }
   }
+  return expansion;
 }
 
 short * process_JPEG_Huffman_table (struct context * context, const unsigned char ** restrict markerdata, uint16_t * restrict markersize) {

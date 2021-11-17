@@ -104,7 +104,7 @@ internal void write_GIF_data_blocks(struct context *, const unsigned char * rest
 
 // jpegarithmetic.c
 internal void decompress_JPEG_arithmetic_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
-                                              const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char);
+                                              const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char, int);
 internal void decompress_JPEG_arithmetic_bit_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
                                                   const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char);
 internal void decompress_JPEG_arithmetic_lossless_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
@@ -149,9 +149,15 @@ internal void initialize_JPEG_decompressor_state_common(struct context *, struct
                                                         const struct JPEG_decoder_tables *, const size_t *, unsigned char);
 internal uint16_t predict_JPEG_lossless_sample(const uint16_t *, ptrdiff_t, int, int, unsigned, unsigned);
 
+// jpeghierarchical.c
+internal unsigned load_hierarchical_JPEG(struct context *, const struct JPEG_marker_layout *, uint32_t, double **);
+internal void expand_JPEG_component_horizontally(struct context *, double * restrict, size_t, size_t, size_t, double * restrict);
+internal void expand_JPEG_component_vertically(struct context *, double * restrict, size_t, size_t, size_t, double * restrict);
+internal void normalize_JPEG_component(double * restrict, size_t, double);
+
 // jpeghuffman.c
 internal void decompress_JPEG_Huffman_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
-                                           const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char);
+                                           const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char, int);
 internal void decompress_JPEG_Huffman_bit_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
                                                const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char);
 internal void decompress_JPEG_Huffman_lossless_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
@@ -163,9 +169,8 @@ internal void load_JPEG_data(struct context *, unsigned);
 internal struct JPEG_marker_layout * load_JPEG_marker_layout(struct context *);
 internal unsigned get_JPEG_rotation(struct context *, size_t);
 internal unsigned load_single_frame_JPEG(struct context *, const struct JPEG_marker_layout *, uint32_t, double **);
-internal unsigned load_hierarchical_JPEG(struct context *, const struct JPEG_marker_layout *, uint32_t, double **);
 internal void initialize_JPEG_decoder_tables(struct JPEG_decoder_tables *);
-internal void process_JPEG_metadata_until_offset(struct context *, const struct JPEG_marker_layout *, struct JPEG_decoder_tables *, size_t *, size_t);
+internal unsigned char process_JPEG_metadata_until_offset(struct context *, const struct JPEG_marker_layout *, struct JPEG_decoder_tables *, size_t *, size_t);
 internal short * process_JPEG_Huffman_table(struct context *, const unsigned char ** restrict, uint16_t * restrict);
 
 // jpegreadframe.c

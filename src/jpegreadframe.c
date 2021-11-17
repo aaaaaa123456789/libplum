@@ -18,7 +18,7 @@ void load_JPEG_DCT_frame (struct context * context, const struct JPEG_marker_lay
   memset(currentbits, 0xff, sizeof currentbits);
   struct JPEG_decompressor_state state;
   for (; *scans; scans ++, offsets ++) {
-    process_JPEG_metadata_until_offset(context, layout, tables, metadata_index, **offsets);
+    if (process_JPEG_metadata_until_offset(context, layout, tables, metadata_index, **offsets)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     unsigned char scancomponents[4];
     const unsigned char * progdata = get_JPEG_scan_components(context, *scans, component_info, count, scancomponents);
     if ((*progdata > progdata[1]) || (progdata[1] > 63)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
@@ -39,10 +39,13 @@ void load_JPEG_DCT_frame (struct context * context, const struct JPEG_marker_lay
     size_t scanunitrow = unitrow;
     initialize_JPEG_decompressor_state(context, &state, component_info, scancomponents, &scanunitrow, unitcol, width, height, maxH, maxV, tables, *offsets,
                                        component_data);
-    // call the decompression function -- they all have the same type, so select the function inline and write the argument list only once
-    ((layout -> frametype[frameindex] & 8) ? ((bitstart == 0xff) ? decompress_JPEG_arithmetic_scan : decompress_JPEG_arithmetic_bit_scan) :
-                                             ((bitstart == 0xff) ? decompress_JPEG_Huffman_scan : decompress_JPEG_Huffman_bit_scan))
-      (context, &state, tables, scanunitrow, component_info, *offsets, bitend, *progdata, progdata[1]);
+    // call the decompression function -- each pair of functions shares the argument list, so select the function inline and write each argument list only once
+    if (bitstart == 0xff)
+      ((layout -> frametype[frameindex] & 8) ? decompress_JPEG_arithmetic_scan : decompress_JPEG_Huffman_scan)
+        (context, &state, tables, scanunitrow, component_info, *offsets, bitend, *progdata, progdata[1], layout -> frametype[frameindex] & 4);
+    else
+      ((layout -> frametype[frameindex] & 8) ? decompress_JPEG_arithmetic_bit_scan : decompress_JPEG_Huffman_bit_scan)
+        (context, &state, tables, scanunitrow, component_info, *offsets, bitend, *progdata, progdata[1]);
   }
   for (p = 0; p < count; p ++) for (coefficient = 0; coefficient < 64; coefficient ++)
     if (currentbits[p][coefficient]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
@@ -85,7 +88,7 @@ void load_JPEG_lossless_frame (struct context * context, const struct JPEG_marke
   int component_shift[4] = {-1, -1, -1, -1};
   struct JPEG_decompressor_state state;
   for (; *scans; scans ++, offsets ++) {
-    process_JPEG_metadata_until_offset(context, layout, tables, metadata_index, **offsets);
+    if (process_JPEG_metadata_until_offset(context, layout, tables, metadata_index, **offsets)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     unsigned char scancomponents[4];
     const unsigned char * progdata = get_JPEG_scan_components(context, *scans, component_info, count, scancomponents);
     uint_fast8_t predictor = *progdata, shift = progdata[2] & 15;
@@ -102,7 +105,7 @@ void load_JPEG_lossless_frame (struct context * context, const struct JPEG_marke
     size_t scanunitrow = unitrow;
     initialize_JPEG_decompressor_state_lossless(context, &state, component_info, scancomponents, &scanunitrow, unitcol, width, height, maxH, maxV, tables,
                                                 *offsets, component_data);
-    // call the decompression function, but here it's a choice between two instead of four
+    // call the decompression function: same as above, but without needing to account for progressive scans
     ((layout -> frametype[frameindex] & 8) ? decompress_JPEG_arithmetic_lossless_scan : decompress_JPEG_Huffman_lossless_scan)
       (context, &state, tables, scanunitrow, component_info, *offsets, shift, predictor, precision - shift);
   }
