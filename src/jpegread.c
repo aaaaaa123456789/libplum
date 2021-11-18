@@ -182,8 +182,36 @@ struct JPEG_marker_layout * load_JPEG_marker_layout (struct context * context) {
 
 unsigned get_JPEG_rotation (struct context * context, size_t offset) {
   // returns rotation count in bits 0-1 and vertical inversion in bit 2
-  // ...
-  return 0; // dummy
+  uint_fast16_t size = read_be16_unaligned(context -> data + offset);
+  if ((size < 16) || !bytematch(context -> data + offset + 2, 0x45, 0x78, 0x69, 0x66, 0x00, 0x00)) return 0;
+  const unsigned char * data = context -> data + offset + 8;
+  size -= 8;
+  uint_fast16_t tag = read_le16_unaligned(data);
+  unsigned endianness;
+  if (tag == 0x4949)
+    endianness = 0; // little endian
+  else if (tag == 0x4d4d)
+    endianness = 1; // big endian
+  else
+    return 0;
+  tag = endianness ? read_be16_unaligned(data + 2) : read_le16_unaligned(data + 2);
+  if (tag != 42) return 0;
+  uint_fast32_t pos = endianness ? read_be32_unaligned(data + 4) : read_le32_unaligned(data + 4);
+  if (pos > (size - 2)) return 0;
+  uint_fast16_t count = endianness ? read_be16_unaligned(data + pos) : read_le16_unaligned(data + pos);
+  pos += 2;
+  if ((size - pos) < ((uint32_t) count * 12)) return 0;
+  for (; count; pos += 12, count --) {
+    tag = endianness ? read_be16_unaligned(data + pos) : read_le16_unaligned(data + pos);
+    if (tag == 0x112) break; // 0x112 = orientation data
+  }
+  if (!count) return 0;
+  tag = endianness ? read_be16_unaligned(data + pos + 2) : read_le16_unaligned(data + pos + 2);
+  uint_fast32_t datasize = endianness ? read_be32_unaligned(data + pos + 4) : read_le32_unaligned(data + pos + 4);
+  if ((tag != 3) || (datasize != 1)) return 0;
+  tag = endianness ? read_be16_unaligned(data + pos + 8) : read_le16_unaligned(data + pos + 8);
+  if ((-- tag) >= 8) return 0;
+  return tag[(const unsigned []) {0, 6, 2, 4, 7, 1, 5, 3}];
 }
 
 unsigned load_single_frame_JPEG (struct context * context, const struct JPEG_marker_layout * layout, uint32_t components, double ** output) {
