@@ -49,7 +49,7 @@ JPEG_component_transfer_function * get_JPEG_component_transfer_function (struct 
     // if there's only one component, assume the image is just grayscale
     return &JPEG_transfer_grayscale;
   if (layout -> Adobe) {
-    if (read_be16_unaligned(context -> data + layout -> Adobe) != 14) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    if (read_be16_unaligned(context -> data + layout -> Adobe) < 14) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     // Adobe stores a color format ID and specifies four possibilities based on it
     switch (context -> data[layout -> Adobe + 13]) {
       case 0:
