@@ -198,6 +198,9 @@ internal void add_animation_metadata(struct context *, uint64_t **, uint8_t **);
 internal int compare64(const void *, const void *);
 internal int compare_index_value_pairs(const void *, const void *);
 
+// newstruct.c
+internal struct context * create_context(void);
+
 // palette.c
 internal void generate_palette(struct context *);
 internal void remove_palette(struct context *);

@@ -1,51 +1,56 @@
 #include "proto.h"
 
 struct plum_image * plum_load_image (const void * restrict buffer, size_t size, unsigned flags, unsigned * restrict error) {
-  struct context context = {0};
+  struct context * context = create_context();
+  if (!context) {
+    if (error) *error = PLUM_ERR_OUT_OF_MEMORY;
+    return NULL;
+  }
   if (error) *error = 0;
   if (!buffer) {
-    context.status = PLUM_ERR_INVALID_ARGUMENTS;
+    context -> status = PLUM_ERR_INVALID_ARGUMENTS;
     goto done;
   }
-  if (setjmp(context.target)) goto done;
-  if (!(context.image = plum_new_image())) throw(&context, PLUM_ERR_OUT_OF_MEMORY);
+  if (setjmp(context -> target)) goto done;
+  if (!(context -> image = plum_new_image())) throw(context, PLUM_ERR_OUT_OF_MEMORY);
   switch (size) {
     case PLUM_FILENAME:
-      load_file(&context, buffer);
+      load_file(context, buffer);
       break;
     case PLUM_BUFFER:
-      context.data = ((struct plum_buffer *) buffer) -> data;
-      context.size = ((struct plum_buffer *) buffer) -> size;
+      context -> data = ((struct plum_buffer *) buffer) -> data;
+      context -> size = ((struct plum_buffer *) buffer) -> size;
       break;
     case PLUM_CALLBACK:
-      load_from_callback(&context, buffer);
+      load_from_callback(context, buffer);
       break;
     default:
-      context.data = buffer;
-      context.size = size;
+      context -> data = buffer;
+      context -> size = size;
   }
-  load_image_buffer_data(&context, flags);
-  if (flags & PLUM_ALPHA_REMOVE) plum_remove_alpha(context.image);
+  load_image_buffer_data(context, flags);
+  if (flags & PLUM_ALPHA_REMOVE) plum_remove_alpha(context -> image);
   if (flags & PLUM_PALETTE_GENERATE)
-    if (context.image -> palette) {
-      int colors = plum_get_highest_palette_index(context.image);
-      if (colors < 0) throw(&context, -colors);
-      context.image -> max_palette_index = colors;
+    if (context -> image -> palette) {
+      int colors = plum_get_highest_palette_index(context -> image);
+      if (colors < 0) throw(context, -colors);
+      context -> image -> max_palette_index = colors;
     } else {
-      generate_palette(&context);
+      generate_palette(context);
       // PLUM_PALETTE_FORCE == PLUM_PALETTE_LOAD | PLUM_PALETTE_GENERATE
-      if (!(context.image -> palette) && (flags & PLUM_PALETTE_LOAD)) throw(&context, PLUM_ERR_TOO_MANY_COLORS);
+      if (!(context -> image -> palette) && (flags & PLUM_PALETTE_LOAD)) throw(context, PLUM_ERR_TOO_MANY_COLORS);
     }
-  else if (context.image -> palette && !(flags & PLUM_PALETTE_MASK))
-    remove_palette(&context);
+  else if (context -> image -> palette && !(flags & PLUM_PALETTE_MASK))
+    remove_palette(context);
   done:
-  if (context.status) {
-    plum_destroy_image(context.image);
-    context.image = NULL;
+  if (error) *error = context -> status;
+  struct plum_image * image = context -> image;
+  if (context -> status) {
+    plum_destroy_image(image);
+    image = NULL;
   }
-  destroy_allocator_list(context.allocator);
-  if (error) *error = context.status;
-  return context.image;
+  destroy_allocator_list(context -> allocator);
+  return image;
 }
 
 void load_image_buffer_data (struct context * context, unsigned flags) {
