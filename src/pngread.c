@@ -359,7 +359,7 @@ uint64_t add_PNG_background_metadata (struct context * context, const struct PNG
       break;
     case 3:
       if (read_be32_unaligned(data - 8) != 1) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-      if (*data > max_palette_index) throw(context, PLUM_ERR_INVALID_COLOR_INDEX);
+      if (*data > max_palette_index) return 0; // allow (and ignore) invalid background colors
       color = palette[*data];
       break;
     default:
