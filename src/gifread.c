@@ -3,8 +3,8 @@
 void load_GIF_data (struct context * context, unsigned flags) {
   if (context -> size < 14) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   context -> image -> type = PLUM_IMAGE_GIF;
-  context -> image -> width = read_le16((uint16_t *) (context -> data + 6));
-  context -> image -> height = read_le16((uint16_t *) (context -> data + 8));
+  context -> image -> width = read_le16_unaligned(context -> data + 6);
+  context -> image -> height = read_le16_unaligned(context -> data + 8);
   if (!(context -> image -> width && context -> image -> height)) throw(context, PLUM_ERR_NO_DATA);
   size_t offset = 13;
   uint64_t transparent = 0xffff000000000000u;

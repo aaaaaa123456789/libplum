@@ -10,8 +10,8 @@ void load_PNG_data (struct context * context, unsigned flags) {
     context -> image -> type = PLUM_IMAGE_PNG;
     context -> image -> frames = 1;
   }
-  context -> image -> width = read_be32((const uint32_t *) (context -> data + 16));
-  context -> image -> height = read_be32((const uint32_t *) (context -> data + 20));
+  context -> image -> width = read_be32_unaligned(context -> data + 16);
+  context -> image -> height = read_be32_unaligned(context -> data + 20);
   if (!(context -> image -> width && context -> image -> height)) throw(context, PLUM_ERR_NO_DATA);
   if ((context -> image -> width > 0x7fffffffu) || (context -> image -> height > 0x7fffffffu)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   int interlaced = context -> data[28];
