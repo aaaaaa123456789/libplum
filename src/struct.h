@@ -125,3 +125,10 @@ struct JPEG_arithmetic_decoder_state {
   unsigned next_MPS:     8;
   unsigned next_LPS:     8;
 };
+
+struct JPEG_encoded_value {
+  unsigned code:   8;
+  unsigned type:   1; // 0 for DC codes, 1 for AC codes
+  unsigned bits:   7;
+  unsigned value: 16;
+};

@@ -102,6 +102,10 @@ internal void write_GIF_frame(struct context *, const unsigned char * restrict, 
                               unsigned, const struct plum_metadata *, const struct plum_metadata *);
 internal void write_GIF_data_blocks(struct context *, const unsigned char * restrict, size_t);
 
+// huffman.c
+internal void generate_Huffman_tree(struct context *, const size_t * restrict, unsigned char * restrict, size_t, unsigned char);
+internal void generate_Huffman_codes(unsigned short * restrict, unsigned, const unsigned char * restrict, int);
+
 // jpegarithmetic.c
 internal void decompress_JPEG_arithmetic_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
                                               const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char, int);
@@ -134,8 +138,21 @@ internal void JPEG_transfer_ACbYCr(uint64_t * restrict, size_t, unsigned, const 
 internal void JPEG_transfer_CMYK(uint64_t * restrict, size_t, unsigned, const double **);
 internal void JPEG_transfer_CKMY(uint64_t * restrict, size_t, unsigned, const double **);
 
+// jpegcompress.c
+internal struct JPEG_encoded_value * generate_JPEG_luminance_data_stream(struct context *, const double (*)[64], size_t, const uint8_t [restrict static 64],
+                                                                         size_t * restrict);
+internal struct JPEG_encoded_value * generate_JPEG_chrominance_data_stream(struct context *, const double (*)[64], const double (*)[64], size_t,
+                                                                           const uint8_t [restrict static 64], size_t * restrict);
+internal double generate_JPEG_data_unit(struct context *, struct JPEG_encoded_value **, size_t * restrict, const double [restrict static 64],
+                                        const uint8_t [restrict static 64], double);
+internal void encode_JPEG_value(struct JPEG_encoded_value *, int16_t, unsigned, unsigned char);
+internal size_t generate_JPEG_Huffman_table(struct context *, const struct JPEG_encoded_value *, size_t, unsigned char * restrict,
+                                            unsigned char [restrict static 0x100], unsigned char);
+internal void encode_JPEG_scan(struct context *, const struct JPEG_encoded_value *, size_t, const unsigned char [restrict static 0x200]);
+
 // jpegdct.c
-internal void apply_JPEG_inverse_DCT(double [restrict static 64], int16_t [restrict static 64], uint16_t [restrict static 64]);
+internal double apply_JPEG_DCT(int16_t [restrict static 64], const double [restrict static 64], const uint8_t [restrict static 64], double);
+internal void apply_JPEG_inverse_DCT(double [restrict static 64], const int16_t [restrict static 64], const uint16_t [restrict static 64]);
 
 // jpegdecompress.c
 internal void initialize_JPEG_decompressor_state(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_component_info *,
@@ -183,6 +200,13 @@ internal const unsigned char * get_JPEG_scan_components(struct context *, size_t
 internal void unpack_JPEG_component(double * restrict, double * restrict, size_t, size_t, size_t, size_t, unsigned char, unsigned char, unsigned char,
                                     unsigned char);
 
+// jpegwrite.c
+internal void generate_JPEG_data(struct context *);
+internal void calculate_JPEG_quantization_tables(struct context *, uint8_t [restrict static 64], uint8_t [restrict static 64]);
+internal void convert_JPEG_components_to_YCbCr(struct context *, double (* restrict)[64], double (* restrict)[64], double (* restrict)[64]);
+internal void convert_JPEG_colors_to_YCbCr(struct context *, const void *, size_t, unsigned char, double * restrict, double * restrict, double * restrict);
+internal void subsample_JPEG_component(const double (* restrict)[64], double (* restrict)[64], size_t, size_t);
+
 // load.c
 internal void load_image_buffer_data(struct context *, unsigned);
 internal void load_file(struct context *, const char *);
@@ -220,8 +244,6 @@ internal unsigned char * emit_PNG_compressed_block(struct context *, const struc
 internal unsigned char * generate_PNG_Huffman_trees(struct context *, uint32_t * restrict, uint8_t * restrict, size_t * restrict,
                                                     const size_t [restrict static 0x120], const size_t [restrict static 0x20],
                                                     unsigned char [restrict static 0x120], unsigned char [restrict static 0x20]);
-internal void generate_PNG_Huffman_tree(struct context *, const size_t * restrict, unsigned char * restrict, size_t, unsigned char);
-internal void generate_PNG_Huffman_codes(unsigned short * restrict, unsigned, const unsigned char * restrict);
 
 // pngdecompress.c
 internal void * decompress_PNG_data(struct context *, const unsigned char *, size_t, size_t);
