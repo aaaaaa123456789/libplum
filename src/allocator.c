@@ -73,8 +73,10 @@ void * plum_realloc (struct plum_image * image, void * buffer, size_t size) {
 }
 
 void plum_free (struct plum_image * image, void * buffer) {
-  if (!image) free(buffer); // special compatibility mode for bad runtimes without access to C libraries
-  union allocator_node * list = image -> allocator;
-  deallocate(&list, buffer);
-  image -> allocator = list;
+  if (image) {
+    union allocator_node * list = image -> allocator;
+    deallocate(&list, buffer);
+    image -> allocator = list;
+  } else
+    free(buffer); // special compatibility mode for bad runtimes without access to C libraries
 }
