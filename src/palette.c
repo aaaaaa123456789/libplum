@@ -1,11 +1,11 @@
 #include "proto.h"
 
-void generate_palette (struct context * context) {
+void generate_palette (struct context * context, unsigned flags) {
   size_t count = (size_t) context -> image -> width * context -> image -> height * context -> image -> frames;
-  void * palette = plum_malloc(context -> image, plum_color_buffer_size(256, context -> image -> color_format));
+  void * palette = plum_malloc(context -> image, plum_color_buffer_size(0x100, context -> image -> color_format));
   uint8_t * indexes = plum_malloc(context -> image, count);
   if (!(palette || indexes)) throw(context, PLUM_ERR_OUT_OF_MEMORY);
-  int result = plum_convert_colors_to_indexes(indexes, context -> image -> data, palette, count, context -> image -> color_format);
+  int result = plum_convert_colors_to_indexes(indexes, context -> image -> data, palette, count, flags);
   if (result >= 0) {
     plum_free(context -> image, context -> image -> data);
     context -> image -> data = indexes;
@@ -30,6 +30,35 @@ void remove_palette (struct context * context) {
   context -> image -> data = buffer;
   context -> image -> palette = NULL;
   context -> image -> max_palette_index = 0;
+}
+
+unsigned plum_sort_palette (struct plum_image * image, unsigned flags) {
+  unsigned result = plum_validate_image(image);
+  if (result) return result;
+  if (!image -> palette) return PLUM_ERR_UNDEFINED_PALETTE;
+  if (plum_validate_palette_indexes(image)) return PLUM_ERR_INVALID_COLOR_INDEX;
+  sort_palette(image, image -> color_format | (flags & PLUM_SORT_DARK_FIRST));
+  return 0;
+}
+
+void sort_palette (struct plum_image * image, unsigned flags) {
+  uint8_t sorted[0x100];
+  plum_sort_colors(image -> palette, image -> max_palette_index, flags, sorted);
+  size_t p, limit = (size_t) image -> width * image -> height * image -> frames;
+  for (p = 0; p < limit; p ++) image -> data8[p] = sorted[image -> data8[p]];
+  if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_64) {
+    uint64_t colors[0x100];
+    for (p = 0; p <= image -> max_palette_index; p ++) colors[p] = image -> palette64[sorted[p]];
+    memcpy(image -> palette64, colors, p * sizeof *colors);
+  } else if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_16) {
+    uint16_t colors[0x100];
+    for (p = 0; p <= image -> max_palette_index; p ++) colors[p] = image -> palette16[sorted[p]];
+    memcpy(image -> palette16, colors, p * sizeof *colors);
+  } else {
+    uint32_t colors[0x100];
+    for (p = 0; p <= image -> max_palette_index; p ++) colors[p] = image -> palette32[sorted[p]];
+    memcpy(image -> palette32, colors, p * sizeof *colors);
+  }
 }
 
 const uint8_t * plum_validate_palette_indexes (const struct plum_image * image) {
@@ -153,6 +182,7 @@ uint64_t get_color_sorting_score (uint64_t color, unsigned flags) {
   color = plum_convert_color(color, flags, PLUM_COLOR_64 | PLUM_ALPHA_INVERT);
   uint64_t red = color & 0xffffu, green = (color >> 16) & 0xffffu, blue = (color >> 32) & 0xffffu, alpha = color >> 48;
   uint64_t luminance = red * 299 + green * 587 + blue * 114; // 26 bits
+  if (flags & PLUM_SORT_DARK_FIRST) luminance ^= 0x3ffffffu;
   uint64_t sum = red + green + blue; // 18 bits
   return ~((luminance << 27) | (sum << 9) | (alpha >> 7)); // total: 53 bits
 }
@@ -175,8 +205,9 @@ void plum_convert_indexes_to_colors (void * restrict destination, const uint8_t 
 }
 
 void plum_sort_colors (const void * restrict colors, uint8_t max_index, unsigned flags, uint8_t * restrict result) {
+  // returns the ordered color indexes
   if (!(colors && result)) return;
-  uint64_t keys[256]; // allocate on stack to avoid dealing with malloc() failure
+  uint64_t keys[0x100]; // allocate on stack to avoid dealing with malloc() failure
   unsigned p;
   if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_64)
     for (p = 0; p <= max_index; p ++) keys[p] = p | (get_color_sorting_score(p[(const uint64_t *) colors], flags) << 8);

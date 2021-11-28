@@ -14,6 +14,7 @@ unsigned plum_rotate_image(struct plum_image * image, unsigned count, int flip);
 void plum_convert_colors(void * restrict destination, const void * restrict source, size_t count, unsigned to, unsigned from);
 uint64_t plum_convert_color(uint64_t color, unsigned from, unsigned to);
 void plum_remove_alpha(struct plum_image * image);
+unsigned plum_sort_palette(struct plum_image * image, unsigned flags);
 const uint8_t * plum_validate_palette_indexes(const struct plum_image * image);
 int plum_get_highest_palette_index(const struct plum_image * image);
 int plum_convert_colors_to_indexes(uint8_t * restrict destination, const void * restrict source, void * restrict palette, size_t count, unsigned flags);

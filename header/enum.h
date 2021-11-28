@@ -17,7 +17,11 @@ enum plum_flags {
   PLUM_PALETTE_LOAD     = 0x200,
   PLUM_PALETTE_GENERATE = 0x400,
   PLUM_PALETTE_FORCE    = 0x600,
-  PLUM_PALETTE_MASK     = 0x600
+  PLUM_PALETTE_MASK     = 0x600,
+  /* palette sorting */
+  PLUM_SORT_LIGHT_FIRST =      0,
+  PLUM_SORT_DARK_FIRST  =  0x800,
+  PLUM_SORT_EXISTING    = 0x1000
 };
 
 enum plum_image_types {
