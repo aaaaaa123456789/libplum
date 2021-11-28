@@ -7,7 +7,7 @@ CFLAGS = -Ofast -fomit-frame-pointer -fno-asynchronous-unwind-tables -fno-except
          -Wl,--no-eh-frame-hdr $(OPTFLAGS)
 
 all: basefiles
-	$(CC) -shared $(CFLAGS) build/libplum.c -o build/$(OUTPUT)
+	$(CC) -shared -fPIC $(CFLAGS) build/libplum.c -o build/$(OUTPUT)
 
 clean:
 	rm -rf build
