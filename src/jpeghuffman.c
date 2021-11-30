@@ -43,7 +43,7 @@ void decompress_JPEG_Huffman_scan (struct context * context, struct JPEG_decompr
               }
               if (decompressed) {
                 uint_fast16_t extrabits = shift_in_right_JPEG(context, decompressed, &dataword, &bits, &data, &count);
-                if (!(extrabits >> (decompressed - 1))) nextvalue = ((int16_t) -1 << decompressed) + 1;
+                if (!(extrabits >> (decompressed - 1))) nextvalue = make_signed_16(1u - (1u << decompressed));
                 nextvalue = make_signed_16(nextvalue + extrabits);
               }
             }
@@ -114,7 +114,7 @@ void decompress_JPEG_Huffman_bit_scan (struct context * context, struct JPEG_dec
                 decompressed &= 15;
                 if (decompressed) {
                   uint_fast16_t extrabits = shift_in_right_JPEG(context, decompressed, &dataword, &bits, &data, &count);
-                  if (!(extrabits >> (decompressed - 1))) nextvalue = ((int16_t) -1 << decompressed) + 1;
+                  if (!(extrabits >> (decompressed - 1))) nextvalue = make_signed_16(1u - (1u << decompressed));
                   nextvalue = make_signed_16(nextvalue + extrabits);
                 }
               }
@@ -152,8 +152,8 @@ void decompress_JPEG_Huffman_bit_scan (struct context * context, struct JPEG_dec
 }
 
 void decompress_JPEG_Huffman_lossless_scan (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_decoder_tables * tables,
-                                            size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned shift,
-                                            unsigned char predictor, unsigned precision) {
+                                            size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned char predictor,
+                                            unsigned precision) {
   size_t restart_interval;
   for (restart_interval = 0; restart_interval <= state -> restart_count; restart_interval ++) {
     size_t units = (restart_interval == state -> restart_count) ? state -> last_size : state -> restart_size;

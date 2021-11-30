@@ -107,7 +107,7 @@ void load_JPEG_lossless_frame (struct context * context, const struct JPEG_marke
                                                 *offsets, component_data);
     // call the decompression function: same as above, but without needing to account for progressive scans
     ((layout -> frametype[frameindex] & 8) ? decompress_JPEG_arithmetic_lossless_scan : decompress_JPEG_Huffman_lossless_scan)
-      (context, &state, tables, scanunitrow, component_info, *offsets, shift, predictor, precision - shift);
+      (context, &state, tables, scanunitrow, component_info, *offsets, predictor, precision - shift);
   }
   for (p = 0; p < count; p ++) if (component_shift[p] < 0) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   // same as in the previous function: loop backwards

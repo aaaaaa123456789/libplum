@@ -112,7 +112,7 @@ internal void decompress_JPEG_arithmetic_scan(struct context *, struct JPEG_deco
 internal void decompress_JPEG_arithmetic_bit_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
                                                   const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char);
 internal void decompress_JPEG_arithmetic_lossless_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
-                                                       const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned);
+                                                       const struct JPEG_component_info *, const size_t *, unsigned char, unsigned);
 internal void initialize_JPEG_arithmetic_counters(struct context *, size_t * restrict, size_t * restrict, uint32_t * restrict);
 internal int16_t next_JPEG_arithmetic_value(struct context *, size_t * restrict, size_t * restrict, uint32_t * restrict, uint16_t * restrict,
                                             unsigned char * restrict, signed char * restrict, int, unsigned, unsigned char);
@@ -139,9 +139,9 @@ internal void JPEG_transfer_CMYK(uint64_t * restrict, size_t, unsigned, const do
 internal void JPEG_transfer_CKMY(uint64_t * restrict, size_t, unsigned, const double **);
 
 // jpegcompress.c
-internal struct JPEG_encoded_value * generate_JPEG_luminance_data_stream(struct context *, const double (*)[64], size_t, const uint8_t [restrict static 64],
+internal struct JPEG_encoded_value * generate_JPEG_luminance_data_stream(struct context *, double (* restrict)[64], size_t, const uint8_t [restrict static 64],
                                                                          size_t * restrict);
-internal struct JPEG_encoded_value * generate_JPEG_chrominance_data_stream(struct context *, const double (*)[64], const double (*)[64], size_t,
+internal struct JPEG_encoded_value * generate_JPEG_chrominance_data_stream(struct context *, double (* restrict)[64], double (* restrict)[64], size_t,
                                                                            const uint8_t [restrict static 64], size_t * restrict);
 internal double generate_JPEG_data_unit(struct context *, struct JPEG_encoded_value **, size_t * restrict, const double [restrict static 64],
                                         const uint8_t [restrict static 64], double);
@@ -178,7 +178,7 @@ internal void decompress_JPEG_Huffman_scan(struct context *, struct JPEG_decompr
 internal void decompress_JPEG_Huffman_bit_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
                                                const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char);
 internal void decompress_JPEG_Huffman_lossless_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
-                                                    const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned);
+                                                    const struct JPEG_component_info *, const size_t *, unsigned char, unsigned);
 internal unsigned char next_JPEG_Huffman_value(struct context *, const unsigned char **, size_t * restrict, uint32_t * restrict, uint8_t * restrict, const short *);
 
 // jpegread.c
@@ -205,7 +205,7 @@ internal void generate_JPEG_data(struct context *);
 internal void calculate_JPEG_quantization_tables(struct context *, uint8_t [restrict static 64], uint8_t [restrict static 64]);
 internal void convert_JPEG_components_to_YCbCr(struct context *, double (* restrict)[64], double (* restrict)[64], double (* restrict)[64]);
 internal void convert_JPEG_colors_to_YCbCr(struct context *, const void *, size_t, unsigned char, double * restrict, double * restrict, double * restrict);
-internal void subsample_JPEG_component(const double (* restrict)[64], double (* restrict)[64], size_t, size_t);
+internal void subsample_JPEG_component(double (* restrict)[64], double (* restrict)[64], size_t, size_t);
 
 // load.c
 internal void load_image_buffer_data(struct context *, unsigned);
@@ -301,7 +301,7 @@ internal void skip_PNM_line(struct context *, size_t * restrict);
 internal unsigned next_PNM_token_length(struct context *, size_t);
 internal void read_PNM_numbers(struct context *, size_t * restrict, uint32_t * restrict, size_t);
 internal void add_PNM_bit_depth_metadata(struct context *, const struct PNM_image_header *);
-internal void load_PNM_frame(struct context *, const struct PNM_image_header *, uint32_t, uint64_t * restrict);
+internal void load_PNM_frame(struct context *, const struct PNM_image_header *, uint64_t * restrict);
 internal void load_PNM_bit_frame(struct context *, size_t, size_t, size_t, uint64_t * restrict);
 
 // store.c

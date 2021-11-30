@@ -97,7 +97,7 @@ void decompress_JPEG_arithmetic_bit_scan (struct context * context, struct JPEG_
     size_t colcount = 0, rowcount = 0, skipunits = 0;
     uint16_t accumulator = 0;
     uint32_t current = 0;
-    unsigned char p, conditioning, bits = 0;
+    unsigned char p, bits = 0;
     initialize_JPEG_arithmetic_counters(context, &offset, &remaining, &current);
     signed char indexes[4][189] = {0}; // most likely very few will be actually used, but allocate for the worst case
     while (units --) {
@@ -115,7 +115,6 @@ void decompress_JPEG_arithmetic_bit_scan (struct context * context, struct JPEG_
             unsigned char lastnonzero;
             for (lastnonzero = 63; lastnonzero; lastnonzero --) if (lastnonzero[*outputunit]) break;
             int prevzero = 0;
-            conditioning = tables -> arithmetic[components[*decodepos].tableAC + 4];
             for (p = first; p <= last; p ++) {
               signed char * index = indexes[components[*decodepos].tableAC] + 3 * (p - 1);
               if (!prevzero && (p > lastnonzero) && next_JPEG_arithmetic_bit(context, &offset, &remaining, index, &current, &accumulator, &bits)) break;
@@ -128,7 +127,8 @@ void decompress_JPEG_arithmetic_bit_scan (struct context * context, struct JPEG_
                     p[*outputunit] += 1 << shift;
               } else if (next_JPEG_arithmetic_bit(context, &offset, &remaining, index + 1, &current, &accumulator, &bits)) {
                 prevzero = 0;
-                p[*outputunit] = next_JPEG_arithmetic_bit(context, &offset, &remaining, NULL, &current, &accumulator, &bits) ? -1 << shift : (1 << shift);
+                p[*outputunit] = next_JPEG_arithmetic_bit(context, &offset, &remaining, NULL, &current, &accumulator, &bits) ?
+                                 make_signed_16(0xffffu << shift) : (1 << shift);
               } else
                 prevzero = 1;
             }
@@ -152,8 +152,8 @@ void decompress_JPEG_arithmetic_bit_scan (struct context * context, struct JPEG_
 }
 
 void decompress_JPEG_arithmetic_lossless_scan (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_decoder_tables * tables,
-                                               size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned shift,
-                                               unsigned char predictor, unsigned precision) {
+                                               size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned char predictor,
+                                               unsigned precision) {
   size_t p, restart_interval;
   uint16_t * rowdifferences[4] = {0};
   for (p = 0; p < state -> component_count; p ++)

@@ -1,6 +1,6 @@
 #include "proto.h"
 
-struct JPEG_encoded_value * generate_JPEG_luminance_data_stream (struct context * context, const double (* data)[64], size_t units,
+struct JPEG_encoded_value * generate_JPEG_luminance_data_stream (struct context * context, double (* restrict data)[64], size_t units,
                                                                  const uint8_t quantization[restrict static 64], size_t * restrict count) {
   struct JPEG_encoded_value * result = NULL;
   *count = 0;
@@ -10,8 +10,8 @@ struct JPEG_encoded_value * generate_JPEG_luminance_data_stream (struct context 
   return result;
 }
 
-struct JPEG_encoded_value * generate_JPEG_chrominance_data_stream (struct context * context, const double (* blue)[64], const double (* red)[64], size_t units,
-                                                                   const uint8_t quantization[restrict static 64], size_t * restrict count) {
+struct JPEG_encoded_value * generate_JPEG_chrominance_data_stream (struct context * context, double (* restrict blue)[64], double (* restrict red)[64],
+                                                                   size_t units, const uint8_t quantization[restrict static 64], size_t * restrict count) {
   struct JPEG_encoded_value * result = NULL;
   *count = 0;
   size_t unit;

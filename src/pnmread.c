@@ -22,7 +22,7 @@ void load_PNM_data (struct context * context, unsigned flags) {
   uint_fast32_t frame;
   offset = plum_color_buffer_size((size_t) context -> image -> width * context -> image -> height, flags);
   for (frame = 0; frame < context -> image -> frames; frame ++) {
-    load_PNM_frame(context, headers + frame, frame, buffer);
+    load_PNM_frame(context, headers + frame, buffer);
     plum_convert_colors(context -> image -> data8 + offset * frame, buffer, (size_t) context -> image -> width * context -> image -> height, flags,
                         PLUM_COLOR_64 | PLUM_ALPHA_INVERT);
   }
@@ -191,7 +191,7 @@ void add_PNM_bit_depth_metadata (struct context * context, const struct PNM_imag
     add_color_depth_metadata(context, 0, 0, 0, alphadepth, colordepth);
 }
 
-void load_PNM_frame (struct context * context, const struct PNM_image_header * header, uint32_t frame, uint64_t * restrict buffer) {
+void load_PNM_frame (struct context * context, const struct PNM_image_header * header, uint64_t * restrict buffer) {
   size_t p, offset = header -> datastart;
   uint_fast32_t row, col;
   if (header -> width < context -> image -> width)

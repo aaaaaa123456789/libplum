@@ -166,7 +166,7 @@ void convert_JPEG_colors_to_YCbCr (struct context * context, const void * colors
   ctxfree(context, buffer);
 }
 
-void subsample_JPEG_component (const double (* restrict component)[64], double (* restrict output)[64], size_t unitsH, size_t unitsV) {
+void subsample_JPEG_component (double (* restrict component)[64], double (* restrict output)[64], size_t unitsH, size_t unitsV) {
   size_t unitrow, unitcol, row, col, p;
   #define reduce(offset, shift) do {                                                           \
     const double * ref = component[(offset) * unitsH] + row * 16 + col * 2 - 64 * (offset);    \
