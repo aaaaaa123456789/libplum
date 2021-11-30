@@ -69,6 +69,11 @@ void load_image_buffer_data (struct context * context, unsigned flags) {
   else if (bytematch(context -> data, 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a))
     // APNG files disguise as PNG files, so handle them all as PNG and split them later
     load_PNG_data(context, flags);
+  else if ((*context -> data == 0x50) && (context -> data[1] >= 0x31) && (context -> data[1] <= 0x37))
+    load_PNM_data(context, flags);
+  else if (bytematch(context -> data, 0xef, 0xbb, 0xbf, 0x50) && (context -> data[4] >= 0x31) && (context -> data[4] <= 0x37))
+    // text-based PNM data destroyed by a UTF-8 BOM: load it anyway, just in case a broken text editor does this
+    load_PNM_data(context, flags);
   else {
     // JPEG detection: one or more 0xff bytes followed by 0xd8
     size_t position;

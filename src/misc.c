@@ -35,7 +35,7 @@ unsigned plum_validate_image (const struct plum_image * image) {
 }
 
 const char * plum_get_error_text (unsigned error) {
-  static const char * const messages[] = {
+  static const char * const messages[PLUM_NUM_ERRORS] = {
     [PLUM_OK]                      = "success",
     [PLUM_ERR_INVALID_ARGUMENTS]   = "invalid argument for function",
     [PLUM_ERR_INVALID_FILE_FORMAT] = "invalid image data or unknown format",
@@ -56,13 +56,14 @@ const char * plum_get_error_text (unsigned error) {
 }
 
 const char * plum_get_file_format_name (unsigned format) {
-  static const char * const formats[] = {
+  static const char * const formats[PLUM_NUM_IMAGE_TYPES] = {
     [PLUM_IMAGE_NONE] = NULL, // default for invalid formats
     [PLUM_IMAGE_BMP]  = "BMP",
     [PLUM_IMAGE_GIF]  = "GIF",
     [PLUM_IMAGE_PNG]  = "PNG",
     [PLUM_IMAGE_APNG] = "APNG",
     [PLUM_IMAGE_JPEG] = "JPEG",
+    [PLUM_IMAGE_PNM]  = "PNM"
   };
   if (format >= PLUM_NUM_IMAGE_TYPES) format = PLUM_IMAGE_NONE;
   return formats[format];

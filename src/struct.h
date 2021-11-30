@@ -132,3 +132,12 @@ struct JPEG_encoded_value {
   unsigned bits:   7;
   unsigned value: 16;
 };
+
+struct PNM_image_header {
+  uint8_t type; // 1-6: PNM header types, 7: unknown PAM, 11-13: PAM without alpha (B/W, grayscale, RGB), 14-16: PAM with alpha
+  uint16_t maxvalue;
+  uint32_t width;
+  uint32_t height;
+  size_t datastart;
+  size_t datalength;
+};

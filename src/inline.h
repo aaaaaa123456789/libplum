@@ -120,3 +120,8 @@ static inline unsigned bit_width (unsigned value) {
   for (result = 0; value; result ++) value >>= 1;
   return result;
 }
+
+static inline int is_whitespace (unsigned char value) {
+  // checks if value is 0 or isspace(value), but independent of current locale and system encoding
+  return !value || ((value >= 9) && (value <= 13)) || (value == 32);
+}

@@ -292,6 +292,18 @@ internal void generate_PNG_row_data(struct context *, const void * restrict, uns
 internal void filter_PNG_rows(unsigned char * restrict, const unsigned char * restrict, size_t, unsigned);
 internal unsigned char select_PNG_filtered_row(const unsigned char *, size_t);
 
+// pnmread.c
+internal void load_PNM_data(struct context *, unsigned);
+internal void load_PNM_header(struct context *, size_t, struct PNM_image_header * restrict);
+internal void load_PAM_header(struct context *, size_t, struct PNM_image_header * restrict);
+internal void skip_PNM_whitespace(struct context *, size_t * restrict);
+internal void skip_PNM_line(struct context *, size_t * restrict);
+internal unsigned next_PNM_token_length(struct context *, size_t);
+internal void read_PNM_numbers(struct context *, size_t * restrict, uint32_t * restrict, size_t);
+internal void add_PNM_bit_depth_metadata(struct context *, const struct PNM_image_header *);
+internal void load_PNM_frame(struct context *, const struct PNM_image_header *, uint32_t, uint64_t * restrict);
+internal void load_PNM_bit_frame(struct context *, size_t, size_t, size_t, uint64_t * restrict);
+
 // store.c
 internal void write_generated_image_data_to_file(struct context *, const char *);
 internal void write_generated_image_data_to_callback(struct context *, const struct plum_callback *);

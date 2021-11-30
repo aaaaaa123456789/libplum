@@ -31,7 +31,8 @@ enum plum_image_types {
   PLUM_IMAGE_PNG,
   PLUM_IMAGE_APNG,
   PLUM_IMAGE_JPEG,
-  PLUM_NUM_IMAGE_TYPES,
+  PLUM_IMAGE_PNM,
+  PLUM_NUM_IMAGE_TYPES
 };
 
 enum plum_metadata_types {
