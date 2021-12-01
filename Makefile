@@ -18,7 +18,7 @@ debug: build/libplum-debug.so build/libplum.h
 
 build/libplum.c: $(wildcard src/*.c) $(wildcard src/*.h) $(wildcard header/*.h) merge.sh
 	mkdir -p build
-	./merge.sh $(wildcard src/*.c) > $@
+	./merge.sh $(sort $(wildcard src/*.c)) > $@
 
 build/libplum-debug.so: $(wildcard src/*.c) $(wildcard src/*.h) $(wildcard header/*.h)
 	mkdir -p build
