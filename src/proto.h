@@ -304,6 +304,17 @@ internal void add_PNM_bit_depth_metadata(struct context *, const struct PNM_imag
 internal void load_PNM_frame(struct context *, const struct PNM_image_header *, uint64_t * restrict);
 internal void load_PNM_bit_frame(struct context *, size_t, size_t, size_t, uint64_t * restrict);
 
+// pnmwrite.c
+internal void generate_PNM_data(struct context *);
+internal uint32_t * get_true_PNM_frame_sizes(struct context *);
+internal void generate_PPM_data(struct context *, const uint32_t *, unsigned, uint64_t * restrict);
+internal void generate_PPM_header(struct context *, uint32_t, uint32_t, unsigned);
+internal void generate_PAM_data(struct context *, unsigned, uint64_t * restrict);
+internal void generate_PAM_header(struct context *, unsigned);
+internal size_t write_PNM_number(unsigned char *, uint32_t);
+internal void generate_PNM_frame_data(struct context *, const uint64_t *, uint32_t, uint32_t, unsigned, int);
+internal void generate_PNM_frame_data_from_palette(struct context *, const uint8_t *, const uint64_t *, uint32_t, uint32_t, unsigned, int);
+
 // store.c
 internal void write_generated_image_data_to_file(struct context *, const char *);
 internal void write_generated_image_data_to_callback(struct context *, const struct plum_callback *);
