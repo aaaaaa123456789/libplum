@@ -15,7 +15,7 @@ void generate_JPEG_data (struct context * context) {
   uint8_t chrominance_table[64];
   calculate_JPEG_quantization_tables(context, luminance_table, chrominance_table);
   unsigned char * node = append_output_node(context, 134);
-  memcpy(node, (unsigned char []) {0xff, 0xdb, 0x00, 0x84, 0x00}, 5); // DQT, 132 bytes long, table 0 first
+  bytewrite(node, 0xff, 0xdb, 0x00, 0x84, 0x00); // DQT, 132 bytes long, table 0 first
   memcpy(node + 5, luminance_table, sizeof luminance_table);
   node[69] = 1; // table 1 afterwards
   memcpy(node + 70, chrominance_table, sizeof chrominance_table);

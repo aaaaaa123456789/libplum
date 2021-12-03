@@ -204,7 +204,7 @@ unsigned char * emit_PNG_compressed_block (struct context * context, const struc
   if (custom_tree)
     output = generate_PNG_Huffman_trees(context, dataword, bits, blocksize, codecounts, distcounts, codelengths, distlengths);
   else {
-    memcpy(codelengths, (const unsigned char []) {
+    bytewrite(codelengths,
              //         00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f
              /* 0x000 */ 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
              /* 0x020 */ 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
@@ -215,7 +215,7 @@ unsigned char * emit_PNG_compressed_block (struct context * context, const struc
              /* 0x0c0 */ 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
              /* 0x0e0 */ 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
              /* 0x100 */ 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8
-           }, sizeof codelengths);
+    );
     memset(distlengths, 5, sizeof distlengths);
   }
   // precalculate the output size and allocate enough space for the output (and a little extra); this must account for parameter size too

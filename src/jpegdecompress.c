@@ -46,7 +46,7 @@ void initialize_JPEG_decompressor_state_common (struct context * context, struct
     state -> component_count = 1;
     state -> unit_offset[*componentIDs] = 1;
     state -> row_offset[*componentIDs] = state -> unit_row_offset[*componentIDs] = 0;
-    memcpy(state -> MCU, (unsigned char []) {MCU_ZERO_COORD, *componentIDs, MCU_END_LIST}, 3);
+    bytewrite(state -> MCU, MCU_ZERO_COORD, *componentIDs, MCU_END_LIST);
     *unitsH *= components[*componentIDs].scaleH;
     unitsV *= components[*componentIDs].scaleV;
     state -> column_skip_index = 1 + (width * components[*componentIDs].scaleH - 1) / (unit_dimensions * maxH);
