@@ -13,8 +13,8 @@ these `_t` suffixed aliases will never be defined by the library and are availab
 
 - [`plum_image`](#plum_image)
 - [`plum_metadata`](#plum_metadata)
-- [`plum_buffer`](#plum-buffer)
-- [`plum_callback`](#plum-callback)
+- [`plum_buffer`](#plum_buffer)
+- [`plum_callback`](#plum_callback)
 
 ## `plum_image`
 
@@ -171,7 +171,11 @@ For more information, see the [Data callbacks][callbacks] page.
 
 * * *
 
-Back to [README](README.md).
+Prev: [Color formats](colors.md)
+
+Next: [Memory management](memory.md)
+
+Up: [README](README.md)
 
 [accessing]: colors.md#accessing-pixel-and-color-data
 [callbacks]: #
@@ -182,7 +186,7 @@ Back to [README](README.md).
 [indexed]: colors.md#indexed-color-mode
 [load]: #
 [memory]: memory.md
-[metadata]: #
+[metadata]: metadata.md
 [metadata-constants]: #
 [new]: #
 [size-constants]: #

@@ -57,7 +57,9 @@ long as they aren't performing mutable operations on the same image.
 
 * * *
 
-Back to [README](README.md).
+Next: [Building and including the library](building.md)
+
+Up: [README](README.md)
 
 [formats]: colors.md
 [indexed]: colors.md#indexed-color-mode

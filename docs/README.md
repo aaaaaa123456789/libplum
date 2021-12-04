@@ -8,7 +8,7 @@ All documentation for the current version of the library can be found here.
 - [Color formats](colors.md)
 - [Data structures](structs.md)
 - [Memory management](memory.md)
-- Metadata
+- [Metadata](metadata.md)
 - Function reference
 - Constants and enumerations
 - Macros

@@ -60,7 +60,11 @@ character encoding.
 
 * * *
 
-Back to [README](README.md).
+Prev: [Building and including the library](building.md)
+
+Next: [Color formats](colors.md)
+
+Up: [README](README.md)
 
 [colors]: colors.md
 [image]: structs.md#plum_image

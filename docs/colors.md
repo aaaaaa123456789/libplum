@@ -133,7 +133,11 @@ reference to the corresponding pixel data.)
 
 * * *
 
-Back to [README](README.md).
+Prev: [Conventions and limitations](conventions.md)
+
+Next: [Data structures](structs.md)
+
+Up: [README](README.md)
 
 [copy]: #
 [image]: structs.md#plum_image

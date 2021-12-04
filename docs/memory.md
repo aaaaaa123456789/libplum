@@ -46,7 +46,11 @@ These buffers are the `data` member, the `palette` member (when not `NULL`), and
 
 * * *
 
-Back to [README](README.md).
+Prev: [Data structures](structs.md)
+
+Next: [Metadata](metadata.md)
+
+Up: [README](README.md)
 
 [allocate-metadata]: #
 [calloc]: #
