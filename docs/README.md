@@ -6,7 +6,7 @@ All documentation for the current version of the library can be found here.
 - [Building and including the library](building.md)
 - [Conventions and limitations](conventions.md)
 - [Color formats](colors.md)
-- Data structures
+- [Data structures](structs.md)
 - Memory management
 - Metadata
 - Function reference

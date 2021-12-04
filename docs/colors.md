@@ -136,7 +136,7 @@ reference to the corresponding pixel data.)
 Back to [README](README.md).
 
 [copy]: #
-[image]: #
+[image]: structs.md#plum_image
 [load]: #
 [macros]: #
 [methods]: #

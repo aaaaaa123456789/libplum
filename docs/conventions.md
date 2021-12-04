@@ -45,6 +45,8 @@ here for completeness.
   can copy one pointer into another and access it that way (assuming the pointer is properly aligned).
   This in turn implies that, if a union contains pointers as members, a value assigned to one of those members can be
   read back through any other member.
+- Integer data types aren't aligned more strictly than their width; in other words, `alignof(T) <= sizeof(T)` for all
+  integer types `T`. This is only required for exact-width integer types.
 - Memory allocation is available.
   If `malloc` always returns a null pointer, many functions will fail with an error.
 - The stack is large enough to hold the library's temporary arrays.
@@ -53,14 +55,14 @@ here for completeness.
   While it isn't particularly large for a common desktop machine, systems with very small stacks (like 32 KB) might
   run into stack overflows.
 
-In particular, the library doesn't make any assumptions about endianness, floating point format, system locale,
-character encoding or alignment requirements.
+In particular, the library doesn't make any assumptions about endianness, floating point format, system locale or
+character encoding.
 
 * * *
 
 Back to [README](README.md).
 
 [colors]: colors.md
-[image]: #
+[image]: structs.md#plum_image
 [store]: #
 [unprefixed]: #
