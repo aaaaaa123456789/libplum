@@ -6,8 +6,8 @@ The main goal is to provide a simple interface through which the most common ope
 It does **not** attempt to generate or give fine control over every possible feature of every file format it supports;
 in most cases, while it will read files using all sorts of optional features, it will discard most non-image data and
 it will automatically choose the best possible configuration when generating an image file.
-However, indexed-color images (i.e., images using a color palette) are fully supported and considered a first-class
-use case for the library.
+However, [indexed-color images][indexed] (i.e., images using a color palette) are fully supported and considered a
+first-class use case for the library.
 
 The API is designed to provide the minimal functionality needed to read, write and generate image data.
 Some functions are provided because they match functionality that was needed internally (for instance, rotating images
@@ -59,5 +59,6 @@ long as they aren't performing mutable operations on the same image.
 
 Back to [README](README.md).
 
-[formats]: #
+[formats]: colors.md
+[indexed]: colors.md#indexed-color-mode
 [rotate]: #

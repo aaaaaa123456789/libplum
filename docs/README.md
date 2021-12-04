@@ -5,7 +5,7 @@ All documentation for the current version of the library can be found here.
 - [Overview](overview.md)
 - [Building and including the library](building.md)
 - [Conventions and limitations](conventions.md)
-- Color formats
+- [Color formats](colors.md)
 - Data structures
 - Memory management
 - Metadata

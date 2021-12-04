@@ -4,6 +4,9 @@ The library has been designed to be easy to include in any C project (and C++ by
 also available).
 It has no dependencies besides what the C standard requires; the source of the library targets ISO C17.
 
+- [Building the library](#building-the-library)
+- [Using and including the library](#using-and-including-the-library)
+
 ## Building the library
 
 The build process will generate three files in the `build` directory (creating it if needed): `libplum.c`, `libplum.h`

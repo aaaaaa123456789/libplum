@@ -1,5 +1,10 @@
 # Conventions and limitations
 
+- [Conventions](#conventions)
+- [Limitations](#limitations)
+
+## Conventions
+
 The library follows a number of conventions to make it easier to use.
 
 All public identifiers (functions, macros, etc.) begin with `plum_` or `PLUM_`.
@@ -55,7 +60,7 @@ character encoding or alignment requirements.
 
 Back to [README](README.md).
 
-[colors]: #
+[colors]: colors.md
 [image]: #
 [store]: #
 [unprefixed]: #
