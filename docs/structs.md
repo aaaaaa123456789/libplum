@@ -181,7 +181,7 @@ Back to [README](README.md).
 [helpers]: #
 [indexed]: colors.md#indexed-color-mode
 [load]: #
-[memory]: #
+[memory]: memory.md
 [metadata]: #
 [metadata-constants]: #
 [new]: #

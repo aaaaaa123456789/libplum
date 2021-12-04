@@ -7,9 +7,11 @@ All documentation for the current version of the library can be found here.
 - [Conventions and limitations](conventions.md)
 - [Color formats](colors.md)
 - [Data structures](structs.md)
-- Memory management
+- [Memory management](memory.md)
 - Metadata
 - Function reference
 - Constants and enumerations
 - Macros
+- Data callbacks
+- C++ helper methods
 - Supported file formats
