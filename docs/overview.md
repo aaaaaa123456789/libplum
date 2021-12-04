@@ -51,6 +51,10 @@ the compression level automatically. This library is not intended for dedicated 
 control over all of those features; rather, it is intended for applications that need to process images to serve some
 other purpose, and that would therefore prefer a simple and unified interface to handle their image data.
 
+The library contains no multithreading support; code always runs in the same thread that invoked it.
+However, since it also contains no global mutable state, it can be used safely by multiple threads simultaneously, as
+long as they aren't performing mutable operations on the same image.
+
 * * *
 
 Back to [README](README.md).
