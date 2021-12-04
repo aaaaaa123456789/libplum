@@ -42,6 +42,8 @@ that programs using the library use a release build, even if those programs them
 The `debug` target will generate a `libplum-debug.so` file, and it uses the `DEBUGFLAGS` variable to pass extra flags
 to the compiler; it will ignore all other variables other than `CC`.
 
+As it is conventional, `make clean` will delete the `build` directory and all files within it.
+
 The library is intentionally compiled using GCC's default warning flags.
 At the time of writing, using GCC 11, that produces no warnings.
 Other compilers might have different default warning settings and produce a number of warnings when building the

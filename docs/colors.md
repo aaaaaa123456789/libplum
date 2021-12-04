@@ -77,8 +77,8 @@ The library fully supports indexed-color mode, i.e., images where colors are def
 indexes into that palette.
 
 In this case, image data is stored as `uint8_t` values; those values are indexes into the palette.
-The palette itself stores colors in whichever color format is set for the image (as determined by its `color_format`)
-member.
+The palette itself stores colors in whichever color format is set for the image (as determined by its `color_format`
+member).
 
 An image uses indexed-color mode if its `palette` member (and therefore, the corresponding `palette16`, `palette32`
 and `palette64` members, which alias `palette`) is not null.
@@ -119,7 +119,7 @@ has `palette16`, `palette32` and `palette64` aliases to access it without a cast
 The palette uses the color format defined for the image and is subject to the same constraints as the image data in
 direct-color mode.
 For images created through [`plum_load_image`][load] or [`plum_copy_image`][copy], the palette is only guaranteed to
-contain `max_palette_index + 1` members; it is **not** required to contain 256 elements unless `max_palette_index` is
+contain `max_palette_index + 1` elements; it is **not** required to contain 256 elements unless `max_palette_index` is
 255.
 
 In all cases, the image data is conceptually a three-dimensional array of values of the corresponding integer type:
