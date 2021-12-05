@@ -139,10 +139,10 @@ Next: [Data structures](structs.md)
 
 Up: [README](README.md)
 
-[copy]: #
+[copy]: functions.md#plum_copy_image
 [image]: structs.md#plum_image
 [load]: #
 [macros]: #
 [methods]: #
-[new]: #
+[new]: functions#plum_new_image
 [vla]: #

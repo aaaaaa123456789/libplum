@@ -141,12 +141,12 @@ as equal to `PLUM_DISPOSAL_NONE`.
 
 Prev: [Memory management](memory.md)
 
-Next: Function reference
+Next: [Function reference](functions.md)
 
 Up: [README](README.md)
 
 [constants]: #
-[copy]: #
+[copy]: functions.md#plum_copy_image
 [disposal-constants]: #
 [formats]: colors.md
 [indexed]: colors.md#indexed-color-mode

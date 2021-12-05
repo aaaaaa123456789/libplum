@@ -9,7 +9,7 @@ All documentation for the current version of the library can be found here.
 - [Data structures](structs.md)
 - [Memory management](memory.md)
 - [Metadata](metadata.md)
-- Function reference
+- [Function reference](functions.md)
 - Constants and enumerations
 - Macros
 - Data callbacks
