@@ -8,6 +8,7 @@ struct plum_image * plum_new_image (void) {
 }
 
 struct plum_image * plum_copy_image (const struct plum_image * image) {
+  if (!(image && image -> data)) return NULL;
   struct plum_image * copy = plum_new_image();
   if (!copy) return NULL;
   copy -> type = image -> type;
