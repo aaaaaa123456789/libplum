@@ -12,6 +12,6 @@ All documentation for the current version of the library can be found here.
 - [Function reference](functions.md)
 - Constants and enumerations
 - Macros
-- Data callbacks
+- Loading and storing modes
 - C++ helper methods
 - Supported file formats

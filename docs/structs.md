@@ -156,7 +156,7 @@ from or written to a user-defined callback function.
 This allows implementing data readers and writers for any user-defined resource without having to add special code for
 that resource type in the library, thus enabling those functions to interact with image data from anywhere.
 
-For more information, see the [Data callbacks][callbacks] page.
+For more information, see the [Data callbacks][callbacks] section.
 
 - `callback`: the function that will be called for each data read/write.
   The `userdata` argument will be the value from the `plum_callback` struct, the `buffer` argument will be memory
@@ -184,7 +184,7 @@ Up: [README](README.md)
 [copy]: functions.md#plum_copy_image
 [helpers]: #
 [indexed]: colors.md#indexed-color-mode
-[load]: #
+[load]: functions.md#plum_load_image
 [memory]: memory.md
 [metadata]: metadata.md
 [metadata-constants]: #

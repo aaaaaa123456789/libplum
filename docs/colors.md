@@ -141,7 +141,7 @@ Up: [README](README.md)
 
 [copy]: functions.md#plum_copy_image
 [image]: structs.md#plum_image
-[load]: #
+[load]: functions.md#plum_load_image
 [macros]: #
 [methods]: #
 [new]: functions#plum_new_image

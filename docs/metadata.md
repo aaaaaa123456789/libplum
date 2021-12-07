@@ -150,6 +150,6 @@ Up: [README](README.md)
 [disposal-constants]: #
 [formats]: colors.md
 [indexed]: colors.md#indexed-color-mode
-[load]: #
+[load]: functions.md#plum_load_image
 [store]: #
 [struct]: structs.md#plum_metadata
