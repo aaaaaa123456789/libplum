@@ -109,8 +109,8 @@ see the [Memory management][memory] page for more details.
 ### `plum_load_image`
 
 ``` c
-struct plum_image * plum_load_image(const void * restrict buffer, size_t size, unsigned flags,
-                                    unsigned * restrict error);
+struct plum_image * plum_load_image(const void * restrict buffer, size_t size,
+                                    unsigned flags, unsigned * restrict error);
 ```
 
 **Arguments:**
@@ -178,6 +178,9 @@ If the function fails and `error` is not `NULL`, `*error` will indicate the reas
 This function, together with [`plum_store_image`](#plum_store_image), implements most of the library's functionality.
 This function will load an image, automatically detecting the file format in use, and, if loading is successful,
 return a [`plum_image`][image] struct for the application to use.
+
+The image can be loaded from a memory buffer, from a file, from a [`plum_buffer`][buffer] struct, or through a
+user-defined callback; see the [Loading and storing modes][loading-modes] for more information.
 
 The loaded image data will contain all of the image's frames, as well as all relevant nodes of [metadata][metadata].
 Depending on the value of the `flags` argument, the image may use [indexed-color mode][indexed] or not; the `palette`
