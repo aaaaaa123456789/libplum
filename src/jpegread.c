@@ -11,7 +11,7 @@ void load_JPEG_data (struct context * context, unsigned flags) {
     context -> image -> width = read_be16_unaligned(context -> data + layout -> hierarchical + 5);
     context -> image -> height = read_be16_unaligned(context -> data + layout -> hierarchical + 3);
   } else {
-    if (layout -> frames[1]) throw(context, PLUM_ERR_NO_MULTI_FRAME);
+    if (layout -> frames[1]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     context -> image -> width = read_be16_unaligned(context -> data + *layout -> frames + 5);
     context -> image -> height = read_be16_unaligned(context -> data + *layout -> frames + 3);
     for (p = 0; layout -> markers[p]; p ++) if (layout -> markertype[p] == 0xdc) { // DNL marker
