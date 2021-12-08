@@ -65,12 +65,6 @@ image file from image data.
 struct plum_image * plum_new_image(void);
 ```
 
-**Arguments:** none.
-
-**Return value:**
-
-Pointer to the new image, or `NULL` on failure due to memory exhaustion.
-
 **Description:**
 
 This function allocates a new image (i.e., a new [`struct plum_image`][image]), returning a pointer to it.
@@ -78,19 +72,17 @@ The image is zero-initialized, except for the `allocator` member, which is initi
 This image struct is allocated as if by [`plum_malloc`](#plum_malloc), and will be deallocated by
 [`plum_destroy_image`](#plum_destroy_image); see the [Memory management][memory] page for more details.
 
+**Arguments:** none.
+
+**Return value:**
+
+Pointer to the new image, or `NULL` on failure due to memory exhaustion.
+
 ### `plum_copy_image`
 
 ``` c
 struct plum_image * plum_copy_image(const struct plum_image * image);
 ```
-
-**Arguments:**
-
-- `image`: image to be copied.
-
-**Return value:**
-
-Pointer to the copied image, or `NULL` on failure.
 
 **Description:**
 
@@ -106,12 +98,39 @@ the necessary buffers.
 The image created by this function must be deallocated with the [`plum_destroy_image`](#plum_destroy_image) function;
 see the [Memory management][memory] page for more details.
 
+**Arguments:**
+
+- `image`: image to be copied.
+
+**Return value:**
+
+Pointer to the copied image, or `NULL` on failure.
+
 ### `plum_load_image`
 
 ``` c
 struct plum_image * plum_load_image(const void * restrict buffer, size_t size,
                                     unsigned flags, unsigned * restrict error);
 ```
+
+**Description:**
+
+This function, together with [`plum_store_image`](#plum_store_image), implements most of the library's functionality.
+This function will load an image, automatically detecting the file format in use, and, if loading is successful,
+return a [`plum_image`][image] struct for the application to use.
+
+The image can be loaded from a memory buffer, from a file, from a [`plum_buffer`][buffer] struct, or through a
+user-defined callback; see the [Loading and storing modes][loading-modes] page for more information.
+
+The loaded image data will contain all of the image's frames, as well as all relevant nodes of [metadata][metadata].
+Depending on the value of the `flags` argument, the image may use [indexed-color mode][indexed] or not; the `palette`
+member can be used to determine which mode it uses.
+(The `palette` member will be `NULL` if the image doesn't use a palette.)
+The image's [color format][colors] (and its `color_format` member) will also be determined by the `flags` argument.
+
+The image struct and the data buffers it will contain will be allocated as if by [`plum_malloc`](#plum_malloc), and
+therefore must be released through the [`plum_destroy_image`](#plum_destroy_image) function.
+See the [Memory management][memory] page for more details.
 
 **Arguments:**
 
@@ -173,25 +192,6 @@ struct plum_image * plum_load_image(const void * restrict buffer, size_t size,
 Pointer to the (newly-created) loaded image, or `NULL` on failure.
 If the function fails and `error` is not `NULL`, `*error` will indicate the reason.
 
-**Description:**
-
-This function, together with [`plum_store_image`](#plum_store_image), implements most of the library's functionality.
-This function will load an image, automatically detecting the file format in use, and, if loading is successful,
-return a [`plum_image`][image] struct for the application to use.
-
-The image can be loaded from a memory buffer, from a file, from a [`plum_buffer`][buffer] struct, or through a
-user-defined callback; see the [Loading and storing modes][loading-modes] page for more information.
-
-The loaded image data will contain all of the image's frames, as well as all relevant nodes of [metadata][metadata].
-Depending on the value of the `flags` argument, the image may use [indexed-color mode][indexed] or not; the `palette`
-member can be used to determine which mode it uses.
-(The `palette` member will be `NULL` if the image doesn't use a palette.)
-The image's [color format][colors] (and its `color_format` member) will also be determined by the `flags` argument.
-
-The image struct and the data buffers it will contain will be allocated as if by [`plum_malloc`](#plum_malloc), and
-therefore must be released through the [`plum_destroy_image`](#plum_destroy_image) function.
-See the [Memory management][memory] page for more details.
-
 **Error values:**
 
 If the `error` argument isn't `NULL`, the value it points to will be set to [an error constant][errors].
@@ -230,29 +230,6 @@ size_t plum_store_image(const struct plum_image * image, void * restrict buffer,
                         size_t size, unsigned * restrict error);
 ```
 
-**Arguments:**
-
-- `image`: image that will be written out.
-- `buffer`: pointer to the memory region where the image data will be written.
-  If `size` is one of the constants indicating a [special storing mode][loading-modes], then this argument is the
-  corresponding special value.
-- `size`: size of the memory buffer pointed to by `buffer`.
-  This argument can also be one of the [special storing mode constants][mode-constants] indicating that the image will
-  instead be written out to a file, an automatically-allocated [`plum_buffer`][buffer] struct, or through callbacks.
-  (Note: these special constants take up the highest possible `size_t` values, and therefore the risk of colliding
-  with true buffer sizes is minimal.)
-- `error`: pointer to an `unsigned` value that will be set to [an error constant][errors] if the function fails.
-  If the function succeeds, that value will be set to zero.
-  This argument can be `NULL` if the caller isn't interested in the reason why writing out the image failed, as the
-  failure itself can be detected through the return value.
-
-**Return value:**
-
-If the function succeeds, it will return the number of bytes written.
-(If `size` equals [`PLUM_BUFFER`][mode-constants], then the return value will equal the size of the allocated buffer.)
-If the function fails, it will return zero (which is never a valid return value on success).
-In this case, if `error` is not `NULL`, `*error` will indicate the reason.
-
 **Description:**
 
 This function, together with [`plum_load_image`](#plum_load_image), implements most of the library's functionality.
@@ -281,6 +258,29 @@ In some cases, the chosen format won't be able to represent the image at all.
 (For example, the image may have more than one frame, and the chosen format only supports single-frame images.)
 In that case, this function will fail; the error code returned through the `error` parameter will explain the reason
 for that failure.
+
+**Arguments:**
+
+- `image`: image that will be written out.
+- `buffer`: pointer to the memory region where the image data will be written.
+  If `size` is one of the constants indicating a [special storing mode][loading-modes], then this argument is the
+  corresponding special value.
+- `size`: size of the memory buffer pointed to by `buffer`.
+  This argument can also be one of the [special storing mode constants][mode-constants] indicating that the image will
+  instead be written out to a file, an automatically-allocated [`plum_buffer`][buffer] struct, or through callbacks.
+  (Note: these special constants take up the highest possible `size_t` values, and therefore the risk of colliding
+  with true buffer sizes is minimal.)
+- `error`: pointer to an `unsigned` value that will be set to [an error constant][errors] if the function fails.
+  If the function succeeds, that value will be set to zero.
+  This argument can be `NULL` if the caller isn't interested in the reason why writing out the image failed, as the
+  failure itself can be detected through the return value.
+
+**Return value:**
+
+If the function succeeds, it will return the number of bytes written.
+(If `size` equals [`PLUM_BUFFER`][mode-constants], then the return value will equal the size of the allocated buffer.)
+If the function fails, it will return zero (which is never a valid return value on success).
+In this case, if `error` is not `NULL`, `*error` will indicate the reason.
 
 **Error values:**
 
