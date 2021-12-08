@@ -55,7 +55,10 @@ struct plum_image * plum_copy_image (const struct plum_image * image) {
 }
 
 void plum_destroy_image (struct plum_image * image) {
-  if (image) destroy_allocator_list(image -> allocator);
+  if (!image) return;
+  union allocator_node * allocator = image -> allocator;
+  image -> allocator = NULL;
+  destroy_allocator_list(allocator);
 }
 
 struct context * create_context (void) {
