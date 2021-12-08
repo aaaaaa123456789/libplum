@@ -190,5 +190,5 @@ Up: [README](README.md)
 [metadata-constants]: #
 [new]: functions.md#plum_new_image
 [size-constants]: #
-[store]: #
+[store]: functions.md#plum_store_image
 [types]: #

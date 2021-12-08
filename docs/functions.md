@@ -11,7 +11,7 @@ In other words, the function won't modify any of the data accessible through tha
     - [`plum_new_image`](#plum_new_image)
     - [`plum_copy_image`](#plum_copy_image)
     - [`plum_load_image`](#plum_load_image)
-    - `plum_store_image`
+    - [`plum_store_image`](#plum_store_image)
     - `plum_destroy_image`
 - Validation
     - `plum_validate_image`
@@ -180,7 +180,7 @@ This function will load an image, automatically detecting the file format in use
 return a [`plum_image`][image] struct for the application to use.
 
 The image can be loaded from a memory buffer, from a file, from a [`plum_buffer`][buffer] struct, or through a
-user-defined callback; see the [Loading and storing modes][loading-modes] for more information.
+user-defined callback; see the [Loading and storing modes][loading-modes] page for more information.
 
 The loaded image data will contain all of the image's frames, as well as all relevant nodes of [metadata][metadata].
 Depending on the value of the `flags` argument, the image may use [indexed-color mode][indexed] or not; the `palette`
@@ -223,6 +223,94 @@ The error constants signal the following reasons for failure:
   [`PLUM_CALLBACK`][mode-constants].
 - `PLUM_ERR_OUT_OF_MEMORY`: there is not enough memory available to load the image.
 
+### `plum_store_image`
+
+``` c
+size_t plum_store_image(const struct plum_image * image, void * restrict buffer,
+                        size_t size, unsigned * restrict error);
+```
+
+**Arguments:**
+
+- `image`: image that will be written out.
+- `buffer`: pointer to the memory region where the image data will be written.
+  If `size` is one of the constants indicating a [special storing mode][loading-modes], then this argument is the
+  corresponding special value.
+- `size`: size of the memory buffer pointed to by `buffer`.
+  This argument can also be one of the [special storing mode constants][mode-constants] indicating that the image will
+  instead be written out to a file, an automatically-allocated [`plum_buffer`][buffer] struct, or through callbacks.
+  (Note: these special constants take up the highest possible `size_t` values, and therefore the risk of colliding
+  with true buffer sizes is minimal.)
+- `error`: pointer to an `unsigned` value that will be set to [an error constant][errors] if the function fails.
+  If the function succeeds, that value will be set to zero.
+  This argument can be `NULL` if the caller isn't interested in the reason why writing out the image failed, as the
+  failure itself can be detected through the return value.
+
+**Return value:**
+
+If the function succeeds, it will return the number of bytes written.
+(If `size` equals [`PLUM_BUFFER`][mode-constants], then the return value will equal the size of the allocated buffer.)
+If the function fails, it will return zero (which is never a valid return value on success).
+In this case, if `error` is not `NULL`, `*error` will indicate the reason.
+
+**Description:**
+
+This function, together with [`plum_load_image`](#plum_load_image), implements most of the library's functionality.
+This function will write out an image's data, in the format indicated by its `type` member; this is the only use of
+that member, and therefore, the way the user can choose the format in which image data is generated.
+
+The image data can be written out to a memory buffer, a file, an automatically-allocated buffer in a
+[`plum_buffer`][buffer] struct, or through a user-defined callback; see the [Loading and storing modes][loading-modes]
+page for more information.
+
+If the `size` argument is set to [`PLUM_BUFFER`][mode-constants], the `buffer` argument will point to a
+[`plum_buffer`][buffer] struct whose `data` member will be automatically allocated by the function if it succeeds,
+using the `malloc` standard function.
+In this case, the user is responsible for calling `free` on it after using it; this memory is **not** managed by the
+library.
+(If the `free` function isn't available, a special mode of [`plum_free`](#plum_free) may be used; see that function's
+description for more information.)
+
+The image written out will attempt to mirror the image data to the best of the format's abilities.
+For example, if the chosen format supports [indexed-color mode][indexed], and the image uses it, the generated image
+data will use that mode as well.
+However, not all formats support all of the library's features.
+For more information on which formats support which features, see the [Supported file formats][formats] page.
+
+In some cases, the chosen format won't be able to represent the image at all.
+(For example, the image may have more than one frame, and the chosen format only supports single-frame images.)
+In that case, this function will fail; the error code returned through the `error` parameter will explain the reason
+for that failure.
+
+**Error values:**
+
+If the `error` argument isn't `NULL`, the value it points to will be set to [an error constant][errors].
+
+This function can fail for any of the reasons specified in the [`plum_validate_image`](#plum_validate_image) function,
+setting the error code to that function's return value.
+In addition to those results, the following error codes may be set:
+
+- `PLUM_OK` (zero): success.
+  This value will be used only if the function succeeds, i.e., it returns a non-`NULL` value.
+- `PLUM_ERR_INVALID_ARGUMENTS`: `image` or `buffer` are `NULL`, or `size` is zero.
+- `PLUM_ERR_INVALID_FILE_FORMAT`: the image's `type` member is [`PLUM_IMAGE_NONE`][types].
+- `PLUM_ERR_INVALID_COLOR_INDEX`: the image uses [indexed-color mode][indexed], but some of the pixels in the image
+  have an invalid color index (i.e., a value greater than the image's `max_palette_index`).
+- `PLUM_ERR_TOO_MANY_COLORS`: the chosen image format (given by the image's `type` member) only supports images with
+  a certain number of colors, and the image uses more than that.
+- `PLUM_ERR_IMAGE_TOO_LARGE`: the image's dimensions are larger than what the chosen image format (given by the
+  image's `type` member) supports.
+  (Note: this does **not** apply when the chosen format only supports single-frame images and the image's `frames`
+  member is larger than one; the `PLUM_ERR_NO_MULTI_FRAME` error code is used instead in that case.)
+- `PLUM_ERR_NO_MULTI_FRAME`: the chosen image format (given by the image's `type` member) only supports single-frame
+  images, but the image has more than one frame (i.e., the image's `frames` member is greater than 1).
+- `PLUM_ERR_FILE_INACCESSIBLE`: the specified file could not be opened for writing.
+  This error can only occur when `size` is set to [`PLUM_FILENAME`][mode-constants].
+- `PLUM_ERR_FILE_ERROR`: an error occurred while writing out the image data.
+  This error can only occur when `size` is set to [`PLUM_FILENAME`][mode-constants] or
+  [`PLUM_CALLBACK`][mode-constants].
+- `PLUM_ERR_OUT_OF_MEMORY`: there is not enough memory available to complete the operation.
+
 * * *
 
 Prev: [Metadata](metadata.md)
@@ -235,6 +323,7 @@ Up: [README](README.md)
 [colors]: colors.md
 [conventions]: conventions.md#Conventions
 [errors]: #
+[formats]: #
 [image]: structs.md#plum_image
 [indexed]: colors.md#indexed-color-mode
 [loading-flags]: #
@@ -242,3 +331,4 @@ Up: [README](README.md)
 [memory]: memory.md
 [metadata]: metadata.md
 [mode-constants]: #
+[types]: #

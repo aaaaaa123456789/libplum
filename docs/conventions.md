@@ -68,5 +68,5 @@ Up: [README](README.md)
 
 [colors]: colors.md
 [image]: structs.md#plum_image
-[store]: #
+[store]: functions.md#plum_store_image
 [unprefixed]: #

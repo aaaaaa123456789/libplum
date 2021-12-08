@@ -151,5 +151,5 @@ Up: [README](README.md)
 [formats]: colors.md
 [indexed]: colors.md#indexed-color-mode
 [load]: functions.md#plum_load_image
-[store]: #
+[store]: functions.md#plum_store_image
 [struct]: structs.md#plum_metadata
