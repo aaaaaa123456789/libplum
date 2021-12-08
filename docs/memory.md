@@ -55,7 +55,7 @@ Up: [README](README.md)
 [allocate-metadata]: #
 [calloc]: #
 [constructors]: functions.md#basic-functionality
-[destroy]: #
+[destroy]: functions.md#plum_destroy_image
 [free]: #
 [image]: structs.md#plum_image
 [malloc]: #

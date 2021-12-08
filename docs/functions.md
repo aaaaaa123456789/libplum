@@ -12,11 +12,11 @@ In other words, the function won't modify any of the data accessible through tha
     - [`plum_copy_image`](#plum_copy_image)
     - [`plum_load_image`](#plum_load_image)
     - [`plum_store_image`](#plum_store_image)
-    - `plum_destroy_image`
-- Validation
-    - `plum_validate_image`
-    - `plum_check_valid_image_size`
-    - `plum_validate_palette_indexes`
+    - [`plum_destroy_image`](#plum_destroy_image)
+- [Validation](#validation)
+    - [`plum_validate_image`](#plum_validate_image)
+    - [`plum_check_valid_image_size`](#plum_check_valid_image_size)
+    - [`plum_validate_palette_indexes`](#plum_validate_palette_indexes)
 - Color operations
     - `plum_convert_color`
     - `plum_convert_colors`
@@ -189,7 +189,7 @@ See the [Memory management][memory] page for more details.
 
 **Return value:**
 
-Pointer to the (newly-created) loaded image, or `NULL` on failure.
+Pointer to the (newly-created) loaded [`struct plum_image`][image], or `NULL` on failure.
 If the function fails and `error` is not `NULL`, `*error` will indicate the reason.
 
 **Error values:**
@@ -311,6 +311,150 @@ In addition to those results, the following error codes may be set:
   This error can only occur when `size` is set to [`PLUM_FILENAME`][mode-constants] or
   [`PLUM_CALLBACK`][mode-constants].
 - `PLUM_ERR_OUT_OF_MEMORY`: there is not enough memory available to complete the operation.
+
+### `plum_destroy_image`
+
+``` c
+void plum_destroy_image(struct plum_image * image);
+```
+
+**Description:**
+
+This function deallocates all memory resources associated to an image.
+
+If the image has been created with one of the [constructor functions](#basic-functionality), then this function will
+destroy the image itself, along with all buffers created by the function that created it.
+Regardless of how the image was created, this function will also deallocate any memory associated to the image that
+has been allocated by [`plum_malloc`](#plum_malloc), [`plum_calloc`](#plum_calloc), [`plum_realloc`](#plum_realloc) or
+[`plum_allocate_metadata`](#plum_allocate_metadata) and hasn't been released yet by [`plum_free`](#plum_free).
+
+If this function is called on an image created with one of the [constructor functions](#basic-functionality), since
+the image itself will be destroyed, that struct cannot be used at all after the call.
+(It must be considered freed.)
+On the other hand, if the image was statically allocated (or allocated by the program without invoking one of the
+library's functions), this function will reset the image's `allocator` member, which will allow reusing it.
+However, in that case, if any of the buffers referenced by the image's members has been allocated by the
+[memory management functions](#memory-management), those buffers will have been freed, so special care must be taken.
+
+If the image was not created by one of the [constructor functions](#basic-functionality) and no memory is associated
+to it, this function will do nothing.
+It will also do nothing if the `image` argument is `NULL`.
+Therefore, it is always safe (and recommended) to call this function when the user will stop using an image.
+
+**Arguments:**
+
+- `image`: pointer to the image that will be destroyed.
+
+**Return value:** none.
+
+## Validation
+
+These functions validate various aspects of an image, allowing the user to detect errors before attempting to write it
+out to a file.
+
+### `plum_validate_image`
+
+``` c
+unsigned plum_validate_image(const struct plum_image * image);
+```
+
+**Description:**
+
+This function will validate the contents of a [`plum_image`][image] struct, ensuring that all of its members are set
+to reasonable values.
+It will also validate the contents of known [metadata nodes][metadata], checking that their data sizes match what is
+expected and that their contents are valid.
+(Metadata nodes with negative types won't be checked, since their structure is defined by the user, not the library.)
+
+Note: this function will _not_ check pixel values for validity, since that check alone would be significantly slower
+than all other checks combined.
+Use the [`plum_validate_palette_indexes`](#plum_validate_palette_indexes) function for that purpose.
+(That function can also quickly handle images that don't need any validation, such as images that don't use
+[indexed-color mode][indexed] in the first place.)
+
+**Arguments:**
+
+- `image`: pointer to the image that will be validated.
+
+**Return value:**
+
+If validation is successful, the function returns zero ([`PLUM_OK`][errors]).
+If validation fails, the function will return a non-zero [error constant][errors] indicating the check that failed.
+
+**Error values:**
+
+These are the possible error values that the function can return:
+
+- `PLUM_OK` (zero): success.
+  This value will be returned only if all checks pass, i.e., if the image is valid.
+- `PLUM_ERR_INVALID_ARGUMENTS`: `image` is `NULL`.
+- `PLUM_ERR_INVALID_FILE_FORMAT`: the image's `type` member is set to an invalid value.
+  (Note that the [`PLUM_IMAGE_NONE`][types] type will _not_ be considered invalid by this function.
+  However, [`plum_image_store`](#plum_image_store) will still refuse to write out an image with that type.)
+- `PLUM_ERR_INVALID_METADATA`: one of the image's [metadata nodes][metadata] has an unknown type (i.e., a positive
+  type that is not one of the types defined by the library), a non-zero `size` with a null `data` pointer, or a size
+  or contents that don't fulfill the constraints given in the [Metadata][metadata] page.
+- `PLUM_ERR_IMAGE_TOO_LARGE`: the image's dimensions are too large for the pixel buffer size to fit in a `size_t`
+  value.
+  This is checked with the [`plum_check_valid_image_size`](#plum_check_valid_image_size) function.
+- `PLUM_ERR_NO_DATA`: either the image's `data` member (i.e., its pixel data) is a null pointer, or one of the image's
+  dimensions is zero, indicating that the image has no pixels.
+
+### `plum_check_valid_image_size`
+
+``` c
+int plum_check_valid_image_size(uint32_t width, uint32_t height,
+                                uint32_t frames);
+```
+
+**Description:**
+
+This function verifies that the size of an image's pixel buffer can be represented as a `size_t` value, regardless of
+the image's [color format][colors] and whether it uses [indexed-color mode][indexed] or not.
+
+In other words, it checks that `width * height * frames * sizeof(uint64_t)` doesn't overflow a `size_t`.
+
+Note that it does _not_ check whether that size will fit in memory, or if it is at all reasonable.
+This function only checks for overflow; it is intended to prevent security issues that derive from overflowing sizes.
+
+**Arguments:**
+
+- `width`: width of the image.
+- `height`: height of the image.
+- `frames`: number of frames in the image.
+
+(Note that, since the function's purpose is to validate a product, the arguments are actually interchangeable.)
+
+**Return value:**
+
+1 if the size is valid, or 0 if it overflows.
+
+### `plum_validate_palette_indexes`
+
+``` c
+const uint8_t * plum_validate_palette_indexes(const struct plum_image * image);
+```
+
+**Description:**
+
+This function validates the pixel values of an image.
+
+If an image uses [indexed-color mode][indexed], pixel values (i.e., indexes) must be smaller than or equal to the
+image's `max_palette_index` value.
+This function checks those values and finds the first value that is out of range.
+
+Images that use full 256-color palettes, as well as images that don't use [indexed-color mode][indexed] at all, don't
+need any validation, since all pixel values are valid for those images.
+This function handles those images quickly and returns `NULL` for them, ensuring that it can be called for any image.
+
+**Arguments:**
+
+- `image`: image to validate.
+
+**Return value:**
+
+`NULL` if all pixel values are valid (or if `image` itself is `NULL`).
+Pointer to the first invalid pixel (i.e., a pointer within `image -> data8`) otherwise.
 
 * * *
 
