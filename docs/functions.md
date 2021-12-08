@@ -234,7 +234,8 @@ size_t plum_store_image(const struct plum_image * image, void * restrict buffer,
 
 This function, together with [`plum_load_image`](#plum_load_image), implements most of the library's functionality.
 This function will write out an image's data, in the format indicated by its `type` member; this is the only use of
-that member, and therefore, the way the user can choose the format in which image data is generated.
+that member after an image has been loaded, and therefore, the way the user can choose the format in which image data
+is generated.
 
 The image data can be written out to a memory buffer, a file, an automatically-allocated buffer in a
 [`plum_buffer`][buffer] struct, or through a user-defined callback; see the [Loading and storing modes][loading-modes]
