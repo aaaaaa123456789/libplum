@@ -17,15 +17,15 @@ In other words, the function won't modify any of the data accessible through tha
     - [`plum_validate_image`](#plum_validate_image)
     - [`plum_check_valid_image_size`](#plum_check_valid_image_size)
     - [`plum_validate_palette_indexes`](#plum_validate_palette_indexes)
-- Color operations
-    - `plum_convert_color`
-    - `plum_convert_colors`
-    - `plum_remove_alpha`
-    - `plum_sort_colors`
-    - `plum_color_buffer_size`
-- Palette operations
-    - `plum_convert_colors_to_indexes`
-    - `plum_convert_indexes_to_colors`
+- [Color operations](#color-operations)
+    - [`plum_convert_color`](#plum_convert_color)
+    - [`plum_convert_colors`](#plum_convert_colors)
+    - [`plum_remove_alpha`](#plum_remove_alpha)
+    - [`plum_sort_colors`](#plum_sort_colors)
+    - [`plum_color_buffer_size`](#plum_color_buffer_size)
+- [Palette operations](#palette-operations)
+    - [`plum_convert_colors_to_indexes`](#plum_convert_colors_to_indexes)
+    - [`plum_convert_indexes_to_colors`](#plum_convert_indexes_to_colors)
     - `plum_sort_palette`
     - `plum_get_highest_palette_index`
 - Miscellaneous image operations
@@ -455,6 +455,282 @@ This function handles those images quickly and returns `NULL` for them, ensuring
 
 `NULL` if all pixel values are valid (or if `image` itself is `NULL`).
 Pointer to the first invalid pixel (i.e., a pointer within `image -> data8`) otherwise.
+
+## Color operations
+
+These functions perform various operations and transformations on color values directly, such as converting between
+different [color formats][colors].
+
+### `plum_convert_color`
+
+``` c
+uint64_t plum_convert_color(uint64_t color, unsigned from, unsigned to);
+```
+
+**Description:**
+
+This function converts a single color value from any [color format][colors] to any other.
+
+The color formats are specified using the constants described in the [Color formats][colors] page; only the color
+format bits are used by this function (in other words, other flags are ignored).
+
+**Arguments:**
+
+- `color`: color value to convert.
+- `from`: `color`'s current [color format][colors].
+- `to`: [color format][colors] to convert to.
+
+**Return value:**
+
+Converted color value.
+The result is unspecified if `color` is out of range for the format specified by `from`.
+
+### `plum_convert_colors`
+
+``` c
+void plum_convert_colors(void * restrict destination,
+                         const void * restrict source, size_t count,
+                         unsigned to, unsigned from);
+```
+
+**Description:**
+
+This function converts an array of color values from any [color format][colors] to any other.
+It is equivalent to calling [`plum_convert_color`](#plum_convert_color) on each value in the array.
+However, this function will automatically handle converting between [color formats][colors] of different sizes.
+
+The `destination` buffer must be large enough to store `count` colors in the format specified by `to`; this might not
+be the same size as the `source` array if the specified color formats are of different sizes.
+As indicated by the `restrict` keyword, the `source` and `destination` arrays must not overlap.
+
+Note that the `to` and `from` arguments are in reverse order with respect to the
+[`plum_convert_color`](#plum_convert_color) function.
+This was done to match the order of the `destination` and `source` arguments.
+
+The color formats are specified using the constants described in the [Color formats][colors] page; only the color
+format bits are used by this function (in other words, other flags are ignored).
+
+**Arguments:**
+
+- `destination`: buffer where the converted color values will be stored; it must be large enough to store `count`
+  color values in the format specified by `to`.
+  This argument must not be `NULL` unless `count` is zero.
+- `source`: buffer containing the color values to be converted; it must contain `count` color values in the format
+  specified by `from`, and it must not overlap with `destination`.
+  This argument must not be `NULL` unless `count` is zero.
+- `count`: number of color values to convert.
+  If this value is zero, no conversions are performed.
+- `to`: [color format][colors] to convert to.
+- `from`: current [color format][colors] for the values in `source`.
+
+**Return value:** none.
+
+### `plum_remove_alpha`
+
+``` c
+void plum_remove_alpha(struct plum_image * image);
+```
+
+**Description:**
+
+This function removes transparency data from an image, in the same way the [`PLUM_ALPHA_REMOVE`][loading-flags] flag
+does when loading an image with [`plum_load_image`](#plum_load_image).
+
+The function operates in place and modifies the image's color or palette values, making them all opaque.
+(In other words, it sets the alpha channel of all color values to zero, or to its maximal value if the image's
+[color format][colors] includes the [`PLUM_ALPHA_INVERT`][loading-flags] flag.)
+
+**Arguments:**
+
+- `image`: image to transform.
+  If this argument is `NULL`, the function does nothing.
+
+**Return value:** none.
+
+### `plum_sort_colors`
+
+``` c
+void plum_sort_colors(const void * restrict colors, uint8_t max_index,
+                      unsigned flags, uint8_t * restrict result);
+```
+
+**Description:**
+
+This function sorts an array of colors, in the same way [`plum_load_image`](#plum_load_image) does when generating a
+new palette (or sorting an existing one).
+
+The function writes out an array of indexes containing the result of the sort.
+For example, if `result[0]` is 36, that means that index 36 in the original array corresponds to the first color after
+sorting.
+The function **does not** modify the original array.
+This is because the function's primary use is to sort an image's colors, and doing that requires sorting the palette
+and updating the index values for all pixels; a sorted array of indexes allows the user to perform both operations.
+(To do all of this automatically for an image, use the [`plum_sort_palette`](#plum_sort_palette) function instead.)
+
+**Arguments:**
+
+- `colors`: array of colors to sort.
+  Must not be `NULL`.
+- `max_index`: maximum valid index into `colors`, in the same manner the `max_palette_index` member of a
+  [`struct plum_image`][image] is specified.
+  Note that this is _one less_ than the number of colors in the array.
+- `flags`: [color format][colors] and sorting mode used to sort the array.
+  This value is a bitwise OR (`|`) of the following values, taken from the [loading flags constants][loading-flags]
+  (other bits from those flags will be ignored):
+    - [Color format][colors] constants, which determine the color format used for the values in the `colors` array.
+      If this is omitted, the default format (`PLUM_COLOR_32`) will be used; it is _strongly_ recommended to never
+      omit this value.
+    - One of the palette-sorting constants:
+        - `PLUM_SORT_LIGHT_FIRST` (default): specifies that the brighest colors should be sorted first.
+          This constant has a value of zero, so this ordering will be used by default if none if specified.
+        - `PLUM_SORT_DARK_FIRST`: specifies that the darkest colors should be sorted first.
+- `result`: array of `uint8_t` values where the sorted indexes will be stored.
+  Must not overlap with `colors`.
+
+**Return value:** none.
+
+### `plum_color_buffer_size`
+
+``` c
+size_t plum_color_buffer_size(size_t size, unsigned flags);
+```
+
+**Description:**
+
+This function calculates the size that a buffer would have to have to be able to contain a given number of color
+values using a chosen [color format][colors].
+This can be used to calculate allocation sizes, `memcpy` sizes, etc.
+
+**Arguments:**
+
+- `size`: number of colors in the buffer.
+- `flags`: [color format][colors] that the buffer will use.
+  This argument is named `flags` after the argument to [`plum_load_image`](#plum_load_image), but only the color
+  format bits are used; other [loading flags][loading-flags] are ignored.
+
+**Return value:**
+
+If `size` is valid (i.e., `size * sizeof(uint64_t)` doesn't overflow a `size_t`), this function returns the number of
+bytes that many colors would take.
+(In particular, that means that `plum_color_buffer_size(1, format)` can be used to obtain the size of a single color
+value for any given [color format][colors].)
+
+If `size` is not valid (i.e., it would overflow for some color formats), the function returns 0.
+This happens regardless of whether the specific color format indicated by `flags` would cause the calculation to
+overflow.
+
+## Palette operations
+
+These functions operate on palettes, assisting the user in converting images to and from [indexed-color mode][indexed]
+and in manipulating the palettes already there.
+
+### `plum_convert_colors_to_indexes`
+
+``` c
+int plum_convert_colors_to_indexes(uint8_t * restrict destination,
+                                   const void * restrict source,
+                                   void * restrict palette,
+                                   size_t count, unsigned flags);
+```
+
+**Description:**
+
+This function generates a palette out of an array of color values, as well as the corresponding array of indexes.
+
+The library only supports palettes of up to 256 colors; if the array contains more than 256 distinct color values,
+generating the palette will fail.
+
+If generating the palette succeeds, the function will convert the color values in `source` to indexes into the
+palette, which will be stored in `destination`.
+The palette itself will be written to `palette`.
+Therefore, this function can be used to convert an image to [indexed-color mode][indexed], generating both the pixel
+data (for the [`plum_image`][image] struct's `data` member) and its palette (for the image's `palette` member).
+
+As indicated by the `restrict` keyword, the `destination`, `source` and `palette` buffers must not overlap.
+
+**Arguments:**
+
+- `destination`: buffer where the new palette indexes will be written if the function succeeds.
+  Must not be `NULL`.
+- `source`: array of color values, in the [color format][colors] given by the `flags` argument.
+  Must not be `NULL`.
+- `palette`: buffer where the palette colors will be written if the function succeeds; it should have enough space for
+  up to 256 color values (in the [color format][colors] specified by the `flags` argument), since that is the maximum
+  number of colors that a palette can use.
+  Must not be `NULL`.
+- `count`: number of color values in the `source` array (and therefore, number of indexes that will be written to
+  `destination` on success).
+  Must not be zero.
+- `flags`: [color format][colors] and sorting mode used for `source` and `palette`.
+  This value is a bitwise OR (`|`) of the following values, taken from the [loading flags constants][loading-flags]
+  (other bits from those flags will be ignored):
+    - [Color format][colors] constants, which determine the color format used for the values in the `source` array,
+      as well as the color format that `palette` will use.
+      If this is omitted, the default format (`PLUM_COLOR_32`) will be used; it is _strongly_ recommended to never
+      omit this value.
+    - One of the palette-sorting constants, which will be used for the generated palette:
+        - `PLUM_SORT_LIGHT_FIRST` (default): specifies that the brighest colors should be sorted first.
+          This constant has a value of zero, so this ordering will be used by default if none if specified.
+        - `PLUM_SORT_DARK_FIRST`: specifies that the darkest colors should be sorted first.
+
+**Return value:**
+
+If this function succeeds, it returns the maximum index value used by the palette, in the same manner that the
+`max_palette_index` member of a [`struct plum_image`][image] is specified.
+Note that this is _one less_ than the number of colors in the palette; in particular, it may be zero if the palette
+only contains one color.
+(The maximum possible return value is 255, for a 256-color palette.)
+
+If the function fails, it will return a negative [error constant][errors].
+(For example, if a `PLUM_ERR_TOO_MANY_COLORS` error occurs, the function will return `-PLUM_ERR_TOO_MANY_COLORS`.)
+Since all error constants are positive, the function will always return a negative value on error.
+
+**Error values:**
+
+If the return value is negative, it will be the negated value of one of the following [error constants][errors]:
+
+- `PLUM_ERR_INVALID_ARGUMENTS`: one of the pointer arguments is `NULL`, or `size` is zero.
+- `PLUM_ERR_TOO_MANY_COLORS`: the `source` array contains more than 256 distinct color values, and therefore a palette
+  cannot be generated.
+- `PLUM_ERR_OUT_OF_MEMORY`: there isn't enough memory available to complete the operation.
+
+### `plum_convert_indexes_to_colors`
+
+``` c
+void plum_convert_indexes_to_colors(void * restrict destination,
+                                    const uint8_t * restrict source,
+                                    const void * restrict palette,
+                                    size_t count, unsigned flags);
+```
+
+**Description:**
+
+This function converts an array of palette indexes, along with its corresponding palette, into an array of color
+values.
+In other words, it is the inverse of [`plum_convert_colors_to_indexes`](#plum_convert_colors_to_indexes).
+
+Unlike that function, this function's conversion will always succeed, as it is always possible to represent colors as
+an array of color values.
+
+As indicated by the `restrict` keyword, the `destination`, `source` and `palette` buffers must not overlap.
+
+**Arguments:**
+
+- `destination`: buffer where the color values will be written; it must have enough space for `count` values in the
+  [color format][colors] determined by `flags`.
+  Must not be `NULL`.
+- `source`: array of `count` palette indexes that will be converted.
+  Must not be `NULL`.
+- `palette`: color palette used by `source`; it uses the [color format][colors] determined by `flags`, and it must
+  have as many entries as needed for all indexes in `source` to be valid.
+  (For instance, if the indexes in `source` are all between 0 and 4, `palette` must contain at least 5 entries.)
+  Must not be `NULL`.
+- `count`: number of indexes in `source`, and therefore number of color values that will be written to `destination`.
+- `flags`: [color format][colors] that `palette` and `destination` will use.
+  This argument is named `flags` after the argument to [`plum_load_image`](#plum_load_image), but only the color
+  format bits are used; other [loading flags][loading-flags] are ignored.
+
+**Return value:** none.
 
 * * *
 
