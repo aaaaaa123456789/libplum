@@ -472,7 +472,8 @@ uint64_t plum_convert_color(uint64_t color, unsigned from, unsigned to);
 This function converts a single color value from any [color format][colors] to any other.
 
 The color formats are specified using the constants described in the [Color formats][colors] page; only the color
-format bits are used by this function (in other words, other flags are ignored).
+format bits are used by this function (in other words, other bits, such as those coming from
+[loading flags][loading-flags], are ignored).
 
 **Arguments:**
 
@@ -508,7 +509,8 @@ Note that the `to` and `from` arguments are in reverse order with respect to the
 This was done to match the order of the `destination` and `source` arguments.
 
 The color formats are specified using the constants described in the [Color formats][colors] page; only the color
-format bits are used by this function (in other words, other flags are ignored).
+format bits are used by this function (in other words, other bits, such as those coming from
+[loading flags][loading-flags], are ignored).
 
 **Arguments:**
 
@@ -562,8 +564,9 @@ new palette (or sorting an existing one).
 The function writes out an array of indexes containing the result of the sort.
 For example, if `result[0]` is 36, that means that index 36 in the original array corresponds to the first color after
 sorting.
-The function **does not** modify the original array.
-This is because the function's primary use is to sort an image's colors, and doing that requires sorting the palette
+
+This function **does not** modify the original array.
+That is because the function's primary use is to sort an image's colors, and doing that requires sorting the palette
 and updating the index values for all pixels; a sorted array of indexes allows the user to perform both operations.
 (To do all of this automatically for an image, use the [`plum_sort_palette`](#plum_sort_palette) function instead.)
 
