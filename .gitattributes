@@ -5,5 +5,6 @@
 *.hpp text linguist-language=C++
 *.md text
 *.sh text
+*.png binary
 LICENSE text
 Makefile text
