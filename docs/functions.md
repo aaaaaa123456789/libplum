@@ -31,8 +31,8 @@ In other words, the function won't modify any of the data accessible through tha
 - [Miscellaneous image operations](#miscellaneous-image-operations)
     - [`plum_find_metadata`](#plum_find_metadata)
     - [`plum_rotate_image`](#plum_rotate_image)
-    - `plum_pixel_buffer_size`
-    - `plum_palette_buffer_size`
+    - [`plum_pixel_buffer_size`](#plum_pixel_buffer_size)
+    - [`plum_palette_buffer_size`](#plum_palette_buffer_size)
 - Memory management
     - `plum_malloc`
     - `plum_calloc`
@@ -883,6 +883,56 @@ It can also return one of the following [error constants][errors]:
 - `PLUM_OK` (zero): success.
   This value will be used only if the function executes without errors.
 - `PLUM_ERR_OUT_OF_MEMORY`: there is not enough memory to complete the operation.
+
+### `plum_pixel_buffer_size`
+
+``` c
+size_t plum_pixel_buffer_size(const struct plum_image * image);
+```
+
+**Description:**
+
+This function calculates the size of an image's pixel buffer.
+That value can be used, for example, to allocate a new pixel buffer.
+
+For images using [indexed-color mode][indexed], this is simply the product of its dimensions (`width`, `height` and
+`frames`).
+For other images, it is that product times the size of each color value, as it would be calculated by
+[`plum_color_buffer_size`](#plum_color_buffer_size) using the image's [color format][colors].
+An image is considered to use [indexed-color mode][indexed] if its `palette` member is not `NULL`.
+
+**Arguments:**
+
+- `image`: image whose pixel buffer size will be calculated.
+
+**Return value:**
+
+If the image's dimensions are valid (as determined by [`plum_check_valid_image_size`](#plum_check_valid_image_size)),
+this function returns the size of the pixel buffer.
+Otherwise, or if `image` is `NULL`, this function returns 0.
+
+### `plum_palette_buffer_size`
+
+``` c
+size_t plum_palette_buffer_size(const struct plum_image * image);
+```
+
+**Description:**
+
+This function calculates the size of an image's palette data.
+This value can be used, for example, to allocate a new palette.
+
+The function uses the image's [color format][colors] to determine the size of each color value.
+Note that this function is purely a convenience function: it is equivalent to
+`plum_color_buffer_size(image -> max_palette_index + 1, image -> color_format)`.
+
+**Arguments:**
+
+- `image`: image whose palette buffer size will be calculated.
+
+**Return value:**
+
+Size of the image's palette buffer, or 0 if `image` is `NULL`.
 
 * * *
 
