@@ -28,9 +28,9 @@ In other words, the function won't modify any of the data accessible through tha
     - [`plum_convert_indexes_to_colors`](#plum_convert_indexes_to_colors)
     - [`plum_sort_palette`](#plum_sort_palette)
     - [`plum_get_highest_palette_index`](#plum_get_highest_palette_index)
-- Miscellaneous image operations
-    - `plum_find_metadata`
-    - `plum_rotate_image`
+- [Miscellaneous image operations](#miscellaneous-image-operations)
+    - [`plum_find_metadata`](#plum_find_metadata)
+    - [`plum_rotate_image`](#plum_rotate_image)
     - `plum_pixel_buffer_size`
     - `plum_palette_buffer_size`
 - Memory management
@@ -810,6 +810,80 @@ The function may also return the negated value of the following [error constant]
 Note that the function will _not_ fail with a `PLUM_ERR_INVALID_COLOR_INDEX` error if there is an invalid color index,
 since one of this function's purposes is to obtain a new value for the `max_palette_index` member of the image's data.
 
+## Miscellaneous image operations
+
+These functions perform some operations on image data that don't fall into any of the categories above.
+
+### `plum_find_metadata`
+
+``` c
+struct plum_metadata * plum_find_metadata(const struct plum_image * image,
+                                          int type);
+```
+
+**Description:**
+
+This function finds a [metadata node][metadata] in an image, given its type.
+If there are multiple nodes with the same type, the function returns the first one found.
+
+(For positive types, which are types defined by the library, it is not valid for an image to have more than one of
+each, anyway.)
+
+**Arguments:**
+
+- `image`: image to search.
+- `type`: metadata type to search for.
+  For positive, library-defined types, this should be one of the [metadata constants][metadata-constants].
+
+**Return value:**
+
+If a node with the chosen type is found, the function returns a pointer to it.
+Otherwise (or if `image` is `NULL`), it returns `NULL`.
+
+### `plum_rotate_image`
+
+``` c
+unsigned plum_rotate_image(struct plum_image * image, unsigned count, int flip);
+```
+
+**Description:**
+
+This function rotates and/or vertically flips an image.
+If the image has multiple frames, the same transformation is applied on each frame.
+
+The function operates in place, updating the image's pixel data.
+(If `count` is odd, it will also swap its `width` and `height` members, indicating the new dimensions of the image.)
+
+Rotations are always clockwise; however, since only the two least significant bits are used by the function (because
+four rotations cancel out), negative values may be used to rotate counterclockwise.
+If the arguments specify both a rotation and a vertical flip, the rotation is applied first.
+
+Note that every possible rotation and reflection can be obtained as a combination of a clockwise rotation and a
+vertical flip, as shown in the [Rotation sample][rotation] page.
+
+**Arguments:**
+
+- `image`: image to rotate and/or flip.
+- `count`: number of clockwise rotations to perform.
+  Since 4 rotations are equivalent to doing nothing, this value will be reduced modulo 4.
+  (Note that, due to how unsigned values work, a negative rotation count will rotate the image counterclockwise.)
+- `flip`: non-zero if the image must be vertically flipped (after rotating it, if applicable), or zero otherwise.
+
+**Return value:**
+
+Zero ([`PLUM_OK`][errors]) if the function succeeds, or a non-zero [error constant][errors] otherwise.
+
+**Error values:**
+
+The function may fail for any of the reasons specified for [`plum_validate_image`](#plum_validate_image), returning
+one of the error constants listed there.
+
+It can also return one of the following [error constants][errors]:
+
+- `PLUM_OK` (zero): success.
+  This value will be used only if the function executes without errors.
+- `PLUM_ERR_OUT_OF_MEMORY`: there is not enough memory to complete the operation.
+
 * * *
 
 Prev: [Metadata](metadata.md)
@@ -829,5 +903,7 @@ Up: [README](README.md)
 [loading-modes]: #
 [memory]: memory.md
 [metadata]: metadata.md
+[metadata-constants]: #
 [mode-constants]: #
+[rotation]: rotation.md
 [types]: #

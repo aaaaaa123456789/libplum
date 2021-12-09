@@ -63,4 +63,4 @@ Up: [README](README.md)
 
 [formats]: colors.md
 [indexed]: colors.md#indexed-color-mode
-[rotate]: #
+[rotate]: functions.md#plum_rotate_image
