@@ -793,8 +793,8 @@ This function returns the highest palette index in use for an image.
 If the function succeeds, it returns the highest palette index used by any pixel in the image.
 (This will be a value between 0 and 255.)
 
-If the function fails, it returns a negated [error constant][errors] (for example, if a `PLUM_ERR_INVALID_COLOR_INDEX`
-error occurs, the function will return `-PLUM_ERR_INVALID_COLOR_INDEX`).
+If the function fails, it returns a negated [error constant][errors] (for example, if a `PLUM_ERR_NO_DATA` error
+occurs, the function will return `-PLUM_ERR_NO_DATA`).
 Since all error constants are positive, the function will always return a negative value on error.
 
 **Error values:**
@@ -806,6 +806,9 @@ The function may also return the negated value of the following [error constant]
 
 - `PLUM_ERR_UNDEFINED_PALETTE`: the image doesn't use [indexed-color mode][image] at all (i.e., it doesn't have a
   palette to begin with).
+
+Note that the function will _not_ fail with a `PLUM_ERR_INVALID_COLOR_INDEX` error if there is an invalid color index,
+since one of this function's purposes is to obtain a new value for the `max_palette_index` member of the image's data.
 
 * * *
 
