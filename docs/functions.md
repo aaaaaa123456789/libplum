@@ -26,8 +26,8 @@ In other words, the function won't modify any of the data accessible through tha
 - [Palette operations](#palette-operations)
     - [`plum_convert_colors_to_indexes`](#plum_convert_colors_to_indexes)
     - [`plum_convert_indexes_to_colors`](#plum_convert_indexes_to_colors)
-    - `plum_sort_palette`
-    - `plum_get_highest_palette_index`
+    - [`plum_sort_palette`](#plum_sort_palette)
+    - [`plum_get_highest_palette_index`](#plum_get_highest_palette_index)
 - Miscellaneous image operations
     - `plum_find_metadata`
     - `plum_rotate_image`
@@ -734,6 +734,78 @@ As indicated by the `restrict` keyword, the `destination`, `source` and `palette
   format bits are used; other [loading flags][loading-flags] are ignored.
 
 **Return value:** none.
+
+### `plum_sort_palette`
+
+``` c
+unsigned plum_sort_palette(struct plum_image * image, unsigned flags);
+```
+
+**Description:**
+
+This function sorts an image's existing palette, in place.
+It also updates the image's color values (i.e., indexes) to point to the new indexes for the same colors.
+
+**Arguments:**
+
+- `image`: image whose palette will be sorted.
+- `flags`: one of the following values, taken from [loading flags constants][loading-flags] (other bits from the
+  value, including [color format][colors] bits, will be ignored):
+    - `PLUM_SORT_LIGHT_FIRST` (default): specifies that the brighest colors should be sorted first.
+      This constant has a value of zero, so 0 may be used instead of the constant.
+    - `PLUM_SORT_DARK_FIRST`: specifies that the darkest colors should be sorted first.
+
+**Return value:**
+
+Zero ([`PLUM_OK`][errors]) on success, or a non-zero [error constant][errors] on error.
+
+**Error values:**
+
+The function may fail for any of the reasons specified for [`plum_validate_image`](#plum_validate_image), returning
+one of the error constants listed there.
+
+It can also return one of the following [error constants][errors]:
+
+- `PLUM_OK` (zero): success.
+  This value will be used only if the function executes without errors.
+- `PLUM_ERR_INVALID_COLOR_INDEX`: the image contains an invalid color index (i.e.,
+  [`plum_validate_palette_indexes`](#plum_validate_palette_indexes) returns a non-`NULL` value).
+- `PLUM_ERR_UNDEFINED_PALETTE`: the image doesn't use [indexed-color mode][image] at all (i.e., it doesn't have a
+  palette to begin with).
+
+### `plum_get_highest_palette_index`
+
+``` c
+int plum_get_highest_palette_index(const struct plum_image * image);
+```
+
+**Description:**
+
+This function returns the highest palette index in use for an image.
+(This value is simply the highest value in the `image -> data8` array.)
+
+**Arguments:**
+
+- `image`: the image whose highest palette index will be obtained.
+
+**Return value:**
+
+If the function succeeds, it returns the highest palette index used by any pixel in the image.
+(This will be a value between 0 and 255.)
+
+If the function fails, it returns a negated [error constant][errors] (for example, if a `PLUM_ERR_INVALID_COLOR_INDEX`
+error occurs, the function will return `-PLUM_ERR_INVALID_COLOR_INDEX`).
+Since all error constants are positive, the function will always return a negative value on error.
+
+**Error values:**
+
+The function may fail for any of the reasons specified for [`plum_validate_image`](#plum_validate_image), returning
+the negated value of any of the error constants listed there.
+
+The function may also return the negated value of the following [error constant][errors]:
+
+- `PLUM_ERR_UNDEFINED_PALETTE`: the image doesn't use [indexed-color mode][image] at all (i.e., it doesn't have a
+  palette to begin with).
 
 * * *
 
