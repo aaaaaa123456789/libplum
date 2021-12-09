@@ -16,6 +16,7 @@ struct plum_metadata * plum_allocate_metadata (struct plum_image * image, size_t
 
 struct plum_metadata * plum_find_metadata (const struct plum_image * image, int type) {
   struct plum_metadata * metadata;
+  if (!image) return NULL;
   for (metadata = (struct plum_metadata *) image -> metadata; metadata; metadata = metadata -> next) if (metadata -> type == type) return metadata;
   return NULL;
 }
