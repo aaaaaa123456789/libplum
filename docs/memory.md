@@ -52,12 +52,12 @@ Next: [Metadata](metadata.md)
 
 Up: [README](README.md)
 
-[allocate-metadata]: #
-[calloc]: #
+[allocate-metadata]: functions.md#plum_allocate_metadata
+[calloc]: functions.md#plum_calloc
 [constructors]: functions.md#basic-functionality
 [destroy]: functions.md#plum_destroy_image
-[free]: #
+[free]: functions.md#plum_free
 [image]: structs.md#plum_image
-[malloc]: #
+[malloc]: functions.md#plum_malloc
 [new]: functions.md#plum_new_image
-[realloc]: #
+[realloc]: functions.md#plum_realloc

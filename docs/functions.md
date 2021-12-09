@@ -33,12 +33,12 @@ In other words, the function won't modify any of the data accessible through tha
     - [`plum_rotate_image`](#plum_rotate_image)
     - [`plum_pixel_buffer_size`](#plum_pixel_buffer_size)
     - [`plum_palette_buffer_size`](#plum_palette_buffer_size)
-- Memory management
-    - `plum_malloc`
-    - `plum_calloc`
-    - `plum_realloc`
-    - `plum_allocate_metadata`
-    - `plum_free`
+- [Memory management](#memory-management)
+    - [`plum_malloc`](#plum_malloc)
+    - [`plum_calloc`](#plum_calloc)
+    - [`plum_realloc`](#plum_realloc)
+    - [`plum_allocate_metadata`](#plum_allocate_metadata)
+    - [`plum_free`](#plum_free)
 - Library information
     - `plum_get_file_format_name`
     - `plum_get_error_text`
@@ -934,6 +934,171 @@ Note that this function is purely a convenience function: it is equivalent to
 
 Size of the image's palette buffer, or 0 if `image` is `NULL`.
 
+## Memory management
+
+These functions perform various memory management duties, allowing the user to allocate memory associated to an image
+(that will be deallocated alongside the rest of the image's memory by [`plum_destroy_image`](#plum_destroy_image)).
+
+For more information, see the [Memory management][memory] page.
+
+### `plum_malloc`
+
+``` c
+void * plum_malloc(struct plum_image * image, size_t size);
+```
+
+**Description:**
+
+This function allocates memory associated to an image.
+(For more information, see the [Memory management][memory] page.)
+As with the standard library function `malloc`, memory allocated by this function will be suitably aligned for any
+built-in data type.
+
+Memory allocated this way can be redimensioned with [`plum_realloc`](#plum_realloc), freed with
+[`plum_free`](#plum_free), or deallocated automatically by [`plum_destroy_image`](#plum_destroy_image).
+
+**Arguments:**
+
+- `image`: image that the allocated buffer will be linked to.
+  Must not be `NULL`.
+- `size`: size of the allocated buffer.
+
+**Return value:**
+
+Pointer to the allocated buffer, or `NULL` if there isn't enough memory available (or if `image` is `NULL`).
+Note that this function will never return `NULL` on success, even if `size` is zero.
+
+### `plum_calloc`
+
+``` c
+void * plum_calloc(struct plum_image * image, size_t size);
+```
+
+**Description:**
+
+This function is equivalent to [`plum_malloc`](#plum_malloc), but it also zeroes out the allocated buffer, like the
+standard library function `calloc` does.
+
+**Arguments:**
+
+- `image`: image that the allocated buffer will be linked to.
+  Must not be `NULL`.
+- `size`: size of the allocated buffer.
+
+**Return value:**
+
+Pointer to the allocated buffer, or `NULL` if there isn't enough memory available (or if `image` is `NULL`).
+Note that this function will never return `NULL` on success, even if `size` is zero.
+
+### `plum_realloc`
+
+``` c
+void * plum_realloc(struct plum_image * image, void * buffer, size_t size);
+```
+
+**Description:**
+
+This function resizes a buffer previously allocated by [`plum_malloc`](#plum_malloc) or [`plum_calloc`](#plum_calloc)
+(possibly already redimensioned by prior calls to this function).
+
+Similarly to the standard library function `realloc`, if reallocation succeeds, data in the buffer will be moved to
+its new location.
+If the buffer becomes larger, the extra space will be uninitialized; if the buffer becomes smaller, the end of the
+original data will be truncated away.
+
+As with the standard library function `realloc`, buffers reallocated by this function will be suitably aligned for any
+built-in data type.
+
+If `buffer` is `NULL`, this function behaves exactly like `plum_malloc(image, size)`.
+This is consistent with what `malloc` does.
+
+**Arguments:**
+
+- `image`: image that the buffer is associated to; the buffer will continue to be associated to it.
+  Must not be `NULL`.
+- `buffer`: buffer to redimension (and possibly relocate).
+  If this argument is `NULL`, a new buffer will be allocated, as if by [`plum_malloc`](#plum_malloc).
+- `size`: new size for the buffer.
+  Note that the buffer will **not** be freed if this argument is zero.
+
+**Return value:**
+
+Pointer to the redimensioned buffer (which may or may not be equal to its old address), or `NULL` if there isn't
+enough memory available (or if `image` is `NULL`).
+Note that this function will never return `NULL` on success, even if `size` is zero.
+
+### `plum_allocate_metadata`
+
+``` c
+struct plum_metadata * plum_allocate_metadata(struct plum_image * image,
+                                              size_t size);
+```
+
+**Description:**
+
+This function allocates a [`struct plum_metadata`][metadata-struct] and its associated data buffer in a single
+allocation, allowing the user to release them both with a single call to [`plum_free`](#plum_free).
+The returned value will point to the allocated [`struct plum_metadata`][metadata-struct], and the struct's `data`
+member will point to the associated data buffer; the struct's `size` member will also be initialized to the correct
+value.
+(The struct's remaining members will be zero-initialized.)
+
+[Metadata nodes][metadata] allocated this way may be freed with [`plum_free`](#plum_free) or deallocated automatically
+by [`plum_destroy_image`](#plum_destroy_image).
+The node's associated data buffer (i.e., its `data` member) **must not** be freed, since it belongs to the same
+allocation as the node itself, and therefore will be freed when the node is freed.
+
+Since the distance between the node's address and the address of its associated data buffer is intentionally not
+specified, it is not recommended to use [`plum_realloc`](#plum_realloc) to redimension a node allocated this way.
+Nevertheless, the node behaves exactly like any other buffer allocated by [`plum_malloc`](#plum_malloc), and therefore
+_can_ be redimensioned this way if appropriate care is taken.
+
+The node's associated data buffer will be suitably aligned for any built-in data type, as with any other buffer
+allocated by these functions.
+
+**Arguments:**
+
+- `image`: image that the allocated buffer will be linked to.
+  Must not be `NULL`.
+- `size`: size to allocate for the [metadata node][metadata]'s associated data buffer.
+
+**Return value:**
+
+Pointer to the allocated [`struct plum_metadata`][metadata-struct], or `NULL` if there isn't enough memory available
+(or if `image` is `NULL`).
+The allocated struct's `data` and `size` members will be initialized to the associated data buffer and its size.
+
+### `plum_free`
+
+``` c
+void plum_free(struct plum_image * image, void * buffer);
+```
+
+**Description:**
+
+This function frees a buffer previously allocated with any of the other
+[memory management functions](#memory-management).
+This is equivalent to the standard library function `free`: the buffer ceases to exist and its memory is returned to
+the system.
+
+If `buffer` is `NULL`, this function is a harmless no-op, just like `free`.
+
+If `image` is `NULL`, this function is equivalent to `free(buffer)`.
+(In other words, it calls the standard library function `free` directly.)
+This can be used to free the memory allocated with `malloc` when [`plum_store_image`](#plum_store_image) is called
+with a `size` argument of [`PLUM_BUFFER`][mode-constants]; it is only intended for users that may not have access to
+the C standard library, or to the exact allocator used by this library.
+(For example, bindings for other languages may need to use this special mode.)
+
+**Arguments:**
+
+- `image`: image that the buffer is associated to.
+  If this value is `NULL`, it triggers the special mode mentioned in the description.
+- `buffer`: buffer to deallocate.
+  If this value is `NULL`, the function does nothing.
+
+**Return value:** none.
+
 * * *
 
 Prev: [Metadata](metadata.md)
@@ -954,6 +1119,7 @@ Up: [README](README.md)
 [memory]: memory.md
 [metadata]: metadata.md
 [metadata-constants]: #
+[metadata-struct]: structs.md#plum_metadata
 [mode-constants]: #
 [rotation]: rotation.md
 [types]: #
