@@ -39,10 +39,10 @@ In other words, the function won't modify any of the data accessible through tha
     - [`plum_realloc`](#plum_realloc)
     - [`plum_allocate_metadata`](#plum_allocate_metadata)
     - [`plum_free`](#plum_free)
-- Library information
-    - `plum_get_file_format_name`
-    - `plum_get_error_text`
-- Alphabetical function index
+- [Library information](#library-information)
+    - [`plum_get_file_format_name`](#plum_get_file_format_name)
+    - [`plum_get_error_text`](#plum_get_error_text)
+- [Alphabetical function index](#alphabetical-function-index)
 
 ## Basic functionality
 
@@ -1098,6 +1098,85 @@ the C standard library, or to the exact allocator used by this library.
   If this value is `NULL`, the function does nothing.
 
 **Return value:** none.
+
+## Library information
+
+These functions retrieve information from the library itself, not linked to an image.
+
+### `plum_get_file_format_name`
+
+``` c
+const char * plum_get_file_format_name(unsigned format);
+```
+
+**Description:**
+
+This function returns a human-readable string that describes a [file format value][types].
+For example, if `format` is [`PLUM_IMAGE_BMP`][types], this function returns `"BMP"`.
+
+The returned string is a constant and must not be modified.
+
+**Arguments:**
+
+- `format`: format whose name will be retrieved; it will usually be one of the [format constants][types].
+
+**Return value:**
+
+If `format` is a valid [format value][types], the function returns a constant string naming that format.
+If `format` is [`PLUM_IMAGE_NONE`][types] or an out-of-range value, the function returns `NULL`.
+
+### `plum_get_error_text`
+
+``` c
+const char * plum_get_error_text(unsigned error);
+```
+
+**Description:**
+
+This function returns an error message for each [error constant][errors].
+
+The returned string is a constant and must not be modified.
+
+**Arguments:**
+
+- `error`: error value for which an error message will be retrieved; it will usually be an [error constant][errors].
+
+**Return value:**
+
+If `error` is a valid [error constant][errors] (including [`PLUM_OK`][errors]), the function returns an error message
+describing it.
+If `error` is out of range, the function returns `NULL`.
+
+## Alphabetical function index
+
+- [`plum_allocate_metadata`](#plum_allocate_metadata)
+- [`plum_calloc`](#plum_calloc)
+- [`plum_check_valid_image_size`](#plum_check_valid_image_size)
+- [`plum_color_buffer_size`](#plum_color_buffer_size)
+- [`plum_convert_color`](#plum_convert_color)
+- [`plum_convert_colors`](#plum_convert_colors)
+- [`plum_convert_colors_to_indexes`](#plum_convert_colors_to_indexes)
+- [`plum_convert_indexes_to_colors`](#plum_convert_indexes_to_colors)
+- [`plum_copy_image`](#plum_copy_image)
+- [`plum_destroy_image`](#plum_destroy_image)
+- [`plum_find_metadata`](#plum_find_metadata)
+- [`plum_free`](#plum_free)
+- [`plum_get_error_text`](#plum_get_error_text)
+- [`plum_get_file_format_name`](#plum_get_file_format_name)
+- [`plum_get_highest_palette_index`](#plum_get_highest_palette_index)
+- [`plum_load_image`](#plum_load_image)
+- [`plum_malloc`](#plum_malloc)
+- [`plum_new_image`](#plum_new_image)
+- [`plum_palette_buffer_size`](#plum_palette_buffer_size)
+- [`plum_pixel_buffer_size`](#plum_pixel_buffer_size)
+- [`plum_realloc`](#plum_realloc)
+- [`plum_remove_alpha`](#plum_remove_alpha)
+- [`plum_rotate_image`](#plum_rotate_image)
+- [`plum_sort_colors`](#plum_sort_colors)
+- [`plum_sort_palette`](#plum_sort_palette)
+- [`plum_store_image`](#plum_store_image)
+- [`plum_validate_image`](#plum_validate_image)
+- [`plum_validate_palette_indexes`](#plum_validate_palette_indexes)
 
 * * *
 
