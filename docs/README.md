@@ -10,7 +10,7 @@ All documentation for the current version of the library can be found here.
 - [Memory management](memory.md)
 - [Metadata](metadata.md)
 - [Function reference](functions.md)
-- Constants and enumerations
+- [Constants and enumerations](constants.md)
 - Macros
 - Loading and storing modes
 - C++ helper methods

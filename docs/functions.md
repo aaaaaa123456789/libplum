@@ -1182,13 +1182,13 @@ If `error` is out of range, the function returns `NULL`.
 
 Prev: [Metadata](metadata.md)
 
-Next: Constants and enumerations
+Next: [Constants and enumerations](constants.md)
 
 Up: [README](README.md)
 
 [buffer]: structs.md#plum_buffer
 [colors]: colors.md
-[conventions]: conventions.md#Conventions
+[conventions]: conventions.md#conventions
 [errors]: #
 [formats]: #
 [image]: structs.md#plum_image
@@ -1199,6 +1199,6 @@ Up: [README](README.md)
 [metadata]: metadata.md
 [metadata-constants]: #
 [metadata-struct]: structs.md#plum_metadata
-[mode-constants]: #
+[mode-constants]: constants.md#special-loading-and-storing-modes
 [rotation]: rotation.md
 [types]: #
