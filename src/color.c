@@ -6,7 +6,7 @@ void plum_convert_colors (void * restrict destination, const void * restrict sou
     memcpy(destination, source, plum_color_buffer_size(count, to));
     return;
   }
-  #define convert(sp)                                                        \
+  #define convert(sp) do                                                     \
     if ((to & PLUM_COLOR_MASK) == PLUM_COLOR_16) {                           \
       uint16_t * dp = destination;                                           \
       while (count --) *(dp ++) = plum_convert_color(*(sp ++), from, to);    \
@@ -16,7 +16,8 @@ void plum_convert_colors (void * restrict destination, const void * restrict sou
     } else {                                                                 \
       uint32_t * dp = destination;                                           \
       while (count --) *(dp ++) = plum_convert_color(*(sp ++), from, to);    \
-    }
+    }                                                                        \
+  while (0)
   if ((from & PLUM_COLOR_MASK) == PLUM_COLOR_16) {
     const uint16_t * sp = source;
     convert(sp);
