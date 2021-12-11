@@ -4,7 +4,7 @@ OPTFLAGS = -march=native -mtune=native
 DEBUGFLAGS =
 
 CFLAGS = -Ofast -fomit-frame-pointer -fno-asynchronous-unwind-tables -fno-exceptions -Wl,-S -Wl,-x -Wl,--gc-sections \
-         -Wl,--no-eh-frame-hdr $(OPTFLAGS)
+         $(OPTFLAGS)
 
 all: basefiles
 	$(CC) -shared -fPIC $(CFLAGS) build/libplum.c -o build/$(OUTPUT)
