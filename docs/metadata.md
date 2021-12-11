@@ -145,9 +145,9 @@ Next: [Function reference](functions.md)
 
 Up: [README](README.md)
 
-[constants]: #
+[constants]: constants.md#metadata-node-types
 [copy]: functions.md#plum_copy_image
-[disposal-constants]: #
+[disposal-constants]: constants.md#frame-disposal-methods
 [formats]: colors.md
 [indexed]: colors.md#indexed-color-mode
 [load]: functions.md#plum_load_image

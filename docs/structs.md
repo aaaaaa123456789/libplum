@@ -187,8 +187,8 @@ Up: [README](README.md)
 [load]: functions.md#plum_load_image
 [memory]: memory.md
 [metadata]: metadata.md
-[metadata-constants]: #
+[metadata-constants]: constants.md#metadata-node-types
 [new]: functions.md#plum_new_image
-[size-constants]: #
+[size-constants]: constants.md#special-loading-and-storing-modes
 [store]: functions.md#plum_store_image
-[types]: #
+[types]: constants.md#image-types
