@@ -1,6 +1,7 @@
 # Constants and enumerations
 
 This page lists all constants defined by the library, including constants that are part of `enum` types.
+These constants are _not_ meant to be used in preprocessor directives like `#if`.
 
 Some `enum` types contain an extra constant at the end indicating the number of constants they define, prefixed with
 `PLUM_NUM`.
