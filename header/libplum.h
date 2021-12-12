@@ -32,6 +32,7 @@
 
 #include "enum.h"
 #include "color.h"
+#include "pixeldata.h"
 #include "struct.h"
 
 /* keep declarations readable: redefine the "restrict" keyword, and undefine it later

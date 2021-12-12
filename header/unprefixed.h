@@ -1,8 +1,18 @@
 #define PIXEL(image, col, row, frame) PLUM_PIXEL_INDEX(image, col, row, frame)
 
+#define PIXEL8(image, col, row, frame) PLUM_PIXEL_8(image, col, row, frame)
+#define PIXEL16(image, col, row, frame) PLUM_PIXEL_16(image, col, row, frame)
+#define PIXEL32(image, col, row, frame) PLUM_PIXEL_32(image, col, row, frame)
+#define PIXEL64(image, col, row, frame) PLUM_PIXEL_64(image, col, row, frame)
+
 #if PLUM_VLA_SUPPORT
 #define PIXARRAY_T(image) PLUM_PIXEL_ARRAY_TYPE(image)
 #define PIXARRAY(declarator, image) PLUM_PIXEL_ARRAY(declarator, image)
+
+#define PIXELS8(image) PLUM_PIXELS_8(image)
+#define PIXELS16(image) PLUM_PIXELS_16(image)
+#define PIXELS32(image) PLUM_PIXELS_32(image)
+#define PIXELS64(image) PLUM_PIXELS_64(image)
 #endif
 
 #define COLOR32(red, green, blue, alpha) PLUM_COLOR_32(red, green, blue, alpha)

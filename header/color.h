@@ -1,10 +1,3 @@
-#define PLUM_PIXEL_INDEX(image, col, row, frame) (((size_t) frame * (size_t) (image) -> height + (size_t) row) * (size_t) (image) -> width + (size_t) col)
-
-#if PLUM_VLA_SUPPORT
-#define PLUM_PIXEL_ARRAY_TYPE(image) ((*)[(image) -> height][(image) -> width])
-#define PLUM_PIXEL_ARRAY(declarator, image) ((* (declarator))[(image) -> height][(image) -> width])
-#endif
-
 #define PLUM_COLOR_32(red, green, blue, alpha) ((uint32_t) (((uint32_t) (red) & 0xff) | (((uint32_t) (green) & 0xff) << 8) | \
                                                             (((uint32_t) (blue) & 0xff) << 16) | (((uint32_t) (alpha) & 0xff) << 24)))
 #define PLUM_COLOR_64(red, green, blue, alpha) ((uint64_t) (((uint64_t) (red) & 0xffffu) | (((uint64_t) (green) & 0xffffu) << 16) | \
