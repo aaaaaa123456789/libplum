@@ -57,7 +57,7 @@ long as they aren't performing mutable operations on the same image.
 
 * * *
 
-Next: [Building and including the library](building.md)
+Next: Introduction and tutorial
 
 Up: [README](README.md)
 

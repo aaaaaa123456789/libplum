@@ -101,7 +101,7 @@ typedef __u64 uint64_t; /* unsigned long long is not available in C89;
 
 * * *
 
-Prev: [Overview](overview.md)
+Prev: Introduction and tutorial
 
 Next: [Conventions and limitations](conventions.md)
 
