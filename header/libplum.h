@@ -9,7 +9,7 @@
 
 #if !defined(__cplusplus) && (__STDC_VERSION__ >= 199901L)
 /* C99 or later, not C++, we can use restrict, and check for VLAs and anonymous struct members (C11) */
-/* indented preprocessor directives and // comments are also allowed here, but we'll avoid them for consistence */
+/* indented preprocessor directives and // comments are also allowed here, but we'll avoid them for consistency */
 #define PLUM_RESTRICT restrict
 #define PLUM_ANON_MEMBERS (__STDC_VERSION__ >= 201112L)
 /* protect against really broken preprocessor implementations */
