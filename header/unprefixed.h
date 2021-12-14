@@ -15,10 +15,10 @@
 #define PIXELS64(image) PLUM_PIXELS_64(image)
 #endif
 
-#define COLOR32(red, green, blue, alpha) PLUM_COLOR_32(red, green, blue, alpha)
-#define COLOR64(red, green, blue, alpha) PLUM_COLOR_64(red, green, blue, alpha)
-#define COLOR16(red, green, blue, alpha) PLUM_COLOR_16(red, green, blue, alpha)
-#define COLOR32X(red, green, blue, alpha) PLUM_COLOR_32X(red, green, blue, alpha)
+#define COLOR32(red, green, blue, alpha) PLUM_COLOR_VALUE_32(red, green, blue, alpha)
+#define COLOR64(red, green, blue, alpha) PLUM_COLOR_VALUE_64(red, green, blue, alpha)
+#define COLOR16(red, green, blue, alpha) PLUM_COLOR_VALUE_16(red, green, blue, alpha)
+#define COLOR32X(red, green, blue, alpha) PLUM_COLOR_VALUE_32X(red, green, blue, alpha)
 
 #define RED32(color) PLUM_RED_32(color)
 #define RED64(color) PLUM_RED_64(color)
