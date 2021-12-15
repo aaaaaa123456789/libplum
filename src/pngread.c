@@ -211,7 +211,7 @@ struct PNG_chunk_locations * load_PNG_chunk_locations (struct context * context)
     context -> image -> frames = frameinfo_count;
   }
   ctxfree(context, framedata);
-  return result;	
+  return result;
 }
 
 void append_PNG_chunk_location (struct context * context, size_t ** locations, size_t location, size_t * count) {

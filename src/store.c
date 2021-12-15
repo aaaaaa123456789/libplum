@@ -21,7 +21,7 @@ size_t plum_store_image (const struct plum_image * image, void * restrict buffer
     case PLUM_IMAGE_PNM: generate_PNM_data(context); break;
     default: throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   }
-	size_t output_size = get_total_output_size(context);
+  size_t output_size = get_total_output_size(context);
   switch (size) {
     case PLUM_FILENAME:
       write_generated_image_data_to_file(context, buffer);

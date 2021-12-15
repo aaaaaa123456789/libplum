@@ -127,7 +127,7 @@ void generate_GIF_data_from_raw (struct context * context, unsigned char * heade
   ctxfree(context, colorbuffer);
 }
 
-void generate_GIF_frame_data (struct context * context, uint32_t * restrict pixels, unsigned char * restrict framebuffer, uint32_t frame, 
+void generate_GIF_frame_data (struct context * context, uint32_t * restrict pixels, unsigned char * restrict framebuffer, uint32_t frame,
                               const struct plum_metadata * durations, const struct plum_metadata * disposals) {
   size_t index, framesize = (size_t) context -> source -> height * context -> source -> width;
   uint32_t transparent = 0;

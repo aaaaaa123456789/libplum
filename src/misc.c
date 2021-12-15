@@ -29,7 +29,7 @@ unsigned plum_validate_image (const struct plum_image * image) {
         size_t p;
         for (p = 0; p < metadata -> size; p ++) if (p[(uint8_t *) metadata -> data] >= PLUM_NUM_DISPOSAL_METHODS) return PLUM_ERR_INVALID_METADATA;
       }
-    } 
+    }
   }
   return 0;
 }

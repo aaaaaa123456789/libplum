@@ -1,6 +1,6 @@
 #include "proto.h"
 
-void load_JPEG_DCT_frame (struct context * context, const struct JPEG_marker_layout * layout, uint32_t components, size_t frameindex, 
+void load_JPEG_DCT_frame (struct context * context, const struct JPEG_marker_layout * layout, uint32_t components, size_t frameindex,
                           struct JPEG_decoder_tables * tables, size_t * metadata_index, double ** output, unsigned precision, size_t width, size_t height) {
   const size_t * scans = layout -> framescans[frameindex];
   const size_t ** offsets = (const size_t **) layout -> framedata[frameindex];
