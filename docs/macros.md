@@ -171,7 +171,7 @@ Some of these features are instead used by the library user to enable or disable
 Those macros must be defined _before_ the library header is included for the first time.
 
 The following macros are defined by the library, and can be used for conditional compilation (e.g., in an `#if`
-directive): 
+directive):
 
 - `PLUM_VLA_SUPPORT`: expands to a non-zero value if [VLA-based macros](#pixel-array-macros) are available, or zero
   otherwise.

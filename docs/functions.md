@@ -300,7 +300,8 @@ In addition to those results, the following error codes may be set:
 - `PLUM_ERR_TOO_MANY_COLORS`: the chosen image format (given by the image's `type` member) only supports images with
   a certain number of colors, and the image uses more than that.
 - `PLUM_ERR_IMAGE_TOO_LARGE`: the image's dimensions are larger than what the chosen image format (given by the
-  image's `type` member) supports.
+  image's `type` member) supports, or the image is too large to fit in the specified buffer size (which can only occur
+  if `size` isn't set to any of the [special storing mode constants][mode-constants]).
   (Note: this does **not** apply when the chosen format only supports single-frame images and the image's `frames`
   member is larger than one; the `PLUM_ERR_NO_MULTI_FRAME` error code is used instead in that case.)
 - `PLUM_ERR_NO_MULTI_FRAME`: the chosen image format (given by the image's `type` member) only supports single-frame
@@ -1164,7 +1165,7 @@ Up: [README](README.md)
 [image]: structs.md#plum_image
 [indexed]: colors.md#indexed-color-mode
 [loading-flags]: constants.md#loading-flags
-[loading-modes]: #
+[loading-modes]: modes.md
 [memory]: memory.md
 [metadata]: metadata.md
 [metadata-constants]: constants.md#metadata-node-types

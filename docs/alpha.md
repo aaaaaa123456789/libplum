@@ -189,7 +189,7 @@ corresponding long-form macros) in the [Unprefixed macros][unprefixed] section.
 
 Prev: [Macros](macros.md)
 
-Next: Loading and storing modes
+Next: [Loading and storing modes](modes.md)
 
 Up: [README](README.md)
 

@@ -258,7 +258,7 @@ Up: [README](README.md)
 [image]: structs.md#plum_image
 [indexed]: colors.md#indexed-color-mode
 [load]: functions.md#plum_load_image
-[loading-modes]: #
+[loading-modes]: modes.md
 [metadata]: metadata.md
 [new]: functions.md#plum_new_image
 [sort-palette]: functions.md#plum_sort_palette

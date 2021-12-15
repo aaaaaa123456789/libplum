@@ -178,7 +178,7 @@ Next: [Memory management](memory.md)
 Up: [README](README.md)
 
 [accessing]: colors.md#accessing-pixel-and-color-data
-[callbacks]: #
+[callbacks]: modes.md#data-callbacks
 [colors]: colors.md
 [constructors]: functions.md#basic-functionality
 [copy]: functions.md#plum_copy_image

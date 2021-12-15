@@ -14,6 +14,6 @@ All documentation for the current version of the library can be found here.
 - [Constants and enumerations](constants.md)
 - [Macros](macros.md)
 - [Alphabetical declaration list](alpha.md)
-- Loading and storing modes
+- [Loading and storing modes](modes.md)
 - C++ helper methods
 - Supported file formats
