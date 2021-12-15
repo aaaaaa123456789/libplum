@@ -69,4 +69,4 @@ Up: [README](README.md)
 [colors]: colors.md
 [image]: structs.md#plum_image
 [store]: functions.md#plum_store_image
-[unprefixed]: #
+[unprefixed]: macros.md#unprefixed-macros

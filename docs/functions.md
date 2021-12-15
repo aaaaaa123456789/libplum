@@ -1,7 +1,8 @@
 # Function reference
 
 This page lists all functions exposed by the library's API, their arguments and return values, and their behavior.
-The functions are grouped by functionality, but an alphabetical list (with links) is provided at the end.
+The functions are grouped by functionality.
+An alphabetical list (with links) is provided [in a separate page][alphabetical].
 
 As it is mentioned in the [Conventions][conventions] page, all functions that take a pointer to `const` as an argument
 treat the `const` qualifier as deep.
@@ -42,7 +43,6 @@ In other words, the function won't modify any of the data accessible through tha
 - [Library information](#library-information)
     - [`plum_get_file_format_name`](#plum_get_file_format_name)
     - [`plum_get_error_text`](#plum_get_error_text)
-- [Alphabetical function index](#alphabetical-function-index)
 
 ## Basic functionality
 
@@ -1147,37 +1147,6 @@ If `error` is a valid [error constant][errors] (including [`PLUM_OK`][errors]), 
 describing it.
 If `error` is out of range, the function returns `NULL`.
 
-## Alphabetical function index
-
-- [`plum_allocate_metadata`](#plum_allocate_metadata)
-- [`plum_calloc`](#plum_calloc)
-- [`plum_check_valid_image_size`](#plum_check_valid_image_size)
-- [`plum_color_buffer_size`](#plum_color_buffer_size)
-- [`plum_convert_color`](#plum_convert_color)
-- [`plum_convert_colors`](#plum_convert_colors)
-- [`plum_convert_colors_to_indexes`](#plum_convert_colors_to_indexes)
-- [`plum_convert_indexes_to_colors`](#plum_convert_indexes_to_colors)
-- [`plum_copy_image`](#plum_copy_image)
-- [`plum_destroy_image`](#plum_destroy_image)
-- [`plum_find_metadata`](#plum_find_metadata)
-- [`plum_free`](#plum_free)
-- [`plum_get_error_text`](#plum_get_error_text)
-- [`plum_get_file_format_name`](#plum_get_file_format_name)
-- [`plum_get_highest_palette_index`](#plum_get_highest_palette_index)
-- [`plum_load_image`](#plum_load_image)
-- [`plum_malloc`](#plum_malloc)
-- [`plum_new_image`](#plum_new_image)
-- [`plum_palette_buffer_size`](#plum_palette_buffer_size)
-- [`plum_pixel_buffer_size`](#plum_pixel_buffer_size)
-- [`plum_realloc`](#plum_realloc)
-- [`plum_remove_alpha`](#plum_remove_alpha)
-- [`plum_rotate_image`](#plum_rotate_image)
-- [`plum_sort_colors`](#plum_sort_colors)
-- [`plum_sort_palette`](#plum_sort_palette)
-- [`plum_store_image`](#plum_store_image)
-- [`plum_validate_image`](#plum_validate_image)
-- [`plum_validate_palette_indexes`](#plum_validate_palette_indexes)
-
 * * *
 
 Prev: [Metadata](metadata.md)
@@ -1186,6 +1155,7 @@ Next: [Constants and enumerations](constants.md)
 
 Up: [README](README.md)
 
+[alphabetical]: alpha.md
 [buffer]: structs.md#plum_buffer
 [colors]: colors.md
 [conventions]: conventions.md#conventions

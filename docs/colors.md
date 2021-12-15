@@ -58,6 +58,8 @@ Therefore, the bit masks for each component are:
 |`PLUM_COLOR_32X`|        `0x000003ff`|        `0x000ffc00`|        `0x3ff00000`|        `0xc0000000`|
 |`PLUM_COLOR_64` |`0x000000000000ffff`|`0x00000000ffff0000`|`0x0000ffff00000000`|`0xffff000000000000`|
 
+These bit masks are also available as [constants][mask-constants].
+
 Since most applications don't need transparency, in order to make those applications simpler, alpha isn't stored in
 the conventional way, but rather, it is negated.
 In other words, by default, **zero alpha means a color is fully opaque, and maximum alpha means a color is fully
@@ -142,7 +144,8 @@ Up: [README](README.md)
 [copy]: functions.md#plum_copy_image
 [image]: structs.md#plum_image
 [load]: functions.md#plum_load_image
-[macros]: #
+[macros]: macros.md#color-macros
+[mask-constants]: constants.md#color-mask-constants
 [methods]: #
 [new]: functions#plum_new_image
-[vla]: #
+[vla]: macros.md#pixel-array-macros

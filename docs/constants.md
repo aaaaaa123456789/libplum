@@ -2,6 +2,7 @@
 
 This page lists all constants defined by the library, including constants that are part of `enum` types.
 These constants are _not_ meant to be used in preprocessor directives like `#if`.
+An alphabetical list (with links) is provided [in a separate page][alphabetical].
 
 Some `enum` types contain an extra constant at the end indicating the number of constants they define, prefixed with
 `PLUM_NUM`.
@@ -21,6 +22,7 @@ values in the `enum`.
 - [Loading flags](#loading-flags)
 - [Errors](#errors)
 - [Number of constants](#number-of-constants)
+- [Color mask constants](#color-mask-constants)
 
 ## Special loading and storing modes
 
@@ -220,16 +222,34 @@ They are therefore one greater than the highest constant of that type.
 - `PLUM_NUM_DISPOSAL_METHODS`: number of [frame disposal methods](#frame-disposal-methods)
 - `PLUM_NUM_ERRORS`: number of [error constants](#errors)
 
+## Color mask constants
+
+These constants represent the bit masks needed to extract each component (red, green, blue, alpha) from a color value.
+Naturally, they are also the maximum value for the corresponding components.
+
+There are separate constants for each [color format][color-formats], since the bit positions for each format are
+different.
+
+These constants don't belong to an `enum`, and they are all of the same type as the corresponding color values
+(`uint16_t`, `uint32_t` and `uint64_t`).
+
+- `PLUM_RED_MASK_32`, `PLUM_RED_MASK_64`, `PLUM_RED_MASK_16`, `PLUM_RED_MASK_32X`: red component bit mask.
+- `PLUM_GREEN_MASK_32`, `PLUM_GREEN_MASK_64`, `PLUM_GREEN_MASK_16`, `PLUM_GREEN_MASK_32X`: green component bit mask.
+- `PLUM_BLUE_MASK_32`, `PLUM_BLUE_MASK_64`, `PLUM_BLUE_MASK_16`, `PLUM_BLUE_MASK_32X`: blue component bit mask.
+- `PLUM_ALPHA_MASK_32`, `PLUM_ALPHA_MASK_64`, `PLUM_ALPHA_MASK_16`, `PLUM_ALPHA_MASK_32X`: alpha component bit mask.
+
 * * *
 
 Prev: [Function reference](functions.md)
 
-Next: Macros
+Next: [Macros](macros.md)
 
 Up: [README](README.md)
 
+[alphabetical]: alpha.md
 [buffer]: structs.md#plum_buffer
 [callback]: structs.md#plum_callback
+[color-formats]: colors.md#formats
 [colors]: colors.md
 [convert-colors]: functions.md#plum_convert_colors_to_indexes
 [disposal]: metadata.md#plum_metadata_frame_disposal

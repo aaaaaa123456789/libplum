@@ -12,7 +12,8 @@ All documentation for the current version of the library can be found here.
 - [Metadata](metadata.md)
 - [Function reference](functions.md)
 - [Constants and enumerations](constants.md)
-- Macros
+- [Macros](macros.md)
+- [Alphabetical declaration list](alpha.md)
 - Loading and storing modes
 - C++ helper methods
 - Supported file formats
