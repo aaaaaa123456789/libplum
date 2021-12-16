@@ -27,30 +27,42 @@ void generate_PNM_data (struct context * context) {
 }
 
 uint32_t * get_true_PNM_frame_sizes (struct context * context) {
-  // returns width, height pairs for each frame if the only transparency in those frames is a black transparent border on the bottom and right edges
-  unsigned char format = context -> source -> color_format & (PLUM_COLOR_MASK | PLUM_ALPHA_INVERT);
-  uint64_t color = format[(const uint64_t []) {0xff000000u, 0xffff000000000000u, 0x8000u, 0xc0000000u, 0, 0, 0, 0}];
-  uint64_t mask = format[(const uint64_t []) {0xff000000u, 0xffff000000000000u, 0x8000u, 0xc0000000u, 0xff000000u, 0xffff000000000000u, 0x8000u, 0xc0000000u}];
-  uint64_t check = format[(const uint64_t []) {0, 0, 0, 0, 0xff000000u, 0xffff000000000000u, 0x8000u, 0xc0000000u}];
+  // returns width, height pairs for each frame if the only transparency in those frames is an empty border on the bottom and right edges
+  unsigned char format = context -> source -> color_format & PLUM_COLOR_MASK;
+  uint64_t mask = format[(const uint64_t []) {0xff000000u, 0xffff000000000000u, 0x8000u, 0xc0000000u}];
+  uint64_t check = 0, color = get_background_color(context -> source, 0) & ~mask;
+  if (context -> source -> color_format & PLUM_ALPHA_INVERT)
+    check = mask;
+  else
+    color |= mask;
   uint32_t * result = ctxmalloc(context, sizeof *result * 2 * context -> source -> frames);
   size_t p, frame, offset = (size_t) context -> source -> width * context -> source -> height;
-  format &= PLUM_COLOR_MASK;
   size_t row, col, width, height;
   if (context -> source -> palette) {
-    unsigned char mask[0x100];
+    unsigned char colorclass[0x100]; // 0 for a solid color, 1 for empty pixels (fully transparent background), 2 for everything else
+    #define checkclasses(bits) do                                              \
+      for (p = 0; p <= context -> source -> max_palette_index; p ++)           \
+        if (context -> source -> palette ## bits[p] == color)                  \
+          colorclass[p] = 1;                                                   \
+        else if ((context -> source -> palette ## bits[p] & mask) == check)    \
+          colorclass[p] = 0;                                                   \
+        else                                                                   \
+          colorclass[p] = 2;                                                   \
+    while (0)
     if (format == PLUM_COLOR_16)
-      for (p = 0; p <= context -> source -> max_palette_index; p ++) mask[p] = context -> source -> palette16[p] == color;
+      checkclasses(16);
     else if (format == PLUM_COLOR_64)
-      for (p = 0; p <= context -> source -> max_palette_index; p ++) mask[p] = context -> source -> palette64[p] == color;
+      checkclasses(64);
     else
-      for (p = 0; p <= context -> source -> max_palette_index; p ++) mask[p] = context -> source -> palette32[p] == color;
+      checkclasses(32);
+    #undef checkclasses
     for (frame = 0; frame < context -> source -> frames; frame ++) {
       const uint8_t * data = context -> source -> data8 + offset * frame;
-      if (mask[*data]) goto fail;
-      for (width = 1; width < context -> source -> width; width ++) if (mask[data[width]]) break;
-      for (height = 1; height < context -> source -> height; height ++) if (mask[data[height * context -> source -> width]]) break;
-      for (row = 0; row < context -> source -> height; row ++) for (col = (row < height) ? width : 0; col < context -> source -> width; col ++)
-        if (mask[data[row * context -> source -> width + col]]) goto fail;
+      if (colorclass[*data]) goto fail;
+      for (width = 1; width < context -> source -> width; width ++) if (colorclass[data[width]]) break;
+      for (height = 1; height < context -> source -> height; height ++) if (colorclass[data[height * context -> source -> width]]) break;
+      for (row = 0; row < context -> source -> height; row ++) for (col = 0; col < context -> source -> width; col ++)
+        if (colorclass[data[row * context -> source -> width + col]] != ((row >= height) || (col >= width))) goto fail;
       result[frame * 2] = width;
       result[frame * 2 + 1] = height;
     }

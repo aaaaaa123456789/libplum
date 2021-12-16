@@ -67,3 +67,14 @@ void add_animation_metadata (struct context * context, uint64_t ** durations, ui
   append_metadata(context -> image, metadata);
   *durations = metadata -> data;
 }
+
+uint64_t get_background_color (const struct plum_image * image, uint64_t fallback) {
+  const struct plum_metadata * background = plum_find_metadata(image, PLUM_METADATA_BACKGROUND);
+  if (!background) return fallback;
+  if ((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_64)
+    return *(const uint64_t *) background -> data;
+  else if ((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_16)
+    return *(const uint16_t *) background -> data;
+  else
+    return *(const uint32_t *) background -> data;
+}
