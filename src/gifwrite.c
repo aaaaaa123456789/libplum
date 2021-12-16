@@ -197,10 +197,10 @@ void write_GIF_palette (struct context * context, const uint32_t * palette, unsi
 void write_GIF_loop_info (struct context * context) {
   const struct plum_metadata * metadata = plum_find_metadata(context -> source, PLUM_METADATA_LOOP_COUNT);
   if (!metadata) return;
-  const uint32_t * count = metadata -> data;
-  if (*count > 0xffff) count = 0; // too many loops, so just make it loop forever
-  if (*count == 1) return;
-  unsigned char data[] = {0x21, 0xff, 0x0b, 0x4e, 0x45, 0x54, 0x53, 0x43, 0x41, 0x50, 0x45, 0x32, 0x2e, 0x30, 0x03, 0x01, *count, *count >> 8, 0x00};
+  uint_fast32_t count = *(const uint32_t *) metadata -> data;
+  if (count > 0xffffu) count = 0; // too many loops, so just make it loop forever
+  if (count == 1) return;
+  unsigned char data[] = {0x21, 0xff, 0x0b, 0x4e, 0x45, 0x54, 0x53, 0x43, 0x41, 0x50, 0x45, 0x32, 0x2e, 0x30, 0x03, 0x01, count, count >> 8, 0x00};
   char * output = append_output_node(context, sizeof data);
   memcpy(output, data, sizeof data);
 }
