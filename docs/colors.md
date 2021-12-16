@@ -146,6 +146,6 @@ Up: [README](README.md)
 [load]: functions.md#plum_load_image
 [macros]: macros.md#color-macros
 [mask-constants]: constants.md#color-mask-constants
-[methods]: #
+[methods]: helpers.md
 [new]: functions#plum_new_image
 [vla]: macros.md#pixel-array-macros

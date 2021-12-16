@@ -1161,7 +1161,7 @@ Up: [README](README.md)
 [colors]: colors.md
 [conventions]: conventions.md#conventions
 [errors]: constants.md#errors
-[formats]: #
+[formats]: formats.md
 [image]: structs.md#plum_image
 [indexed]: colors.md#indexed-color-mode
 [loading-flags]: constants.md#loading-flags

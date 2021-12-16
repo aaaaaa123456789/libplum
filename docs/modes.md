@@ -171,7 +171,7 @@ number of bytes written through the callback.
 
 Prev: [Alphabetical declaration list](alpha.md)
 
-Next: C++ helper methods
+Next: [C++ helper methods](methods.md)
 
 Up: [README](README.md)
 

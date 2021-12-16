@@ -254,7 +254,7 @@ Up: [README](README.md)
 [convert-colors]: functions.md#plum_convert_colors_to_indexes
 [disposal]: metadata.md#plum_metadata_frame_disposal
 [error-text]: functions.md#plum_get_error_text
-[formats]: #
+[formats]: formats.md
 [image]: structs.md#plum_image
 [indexed]: colors.md#indexed-color-mode
 [load]: functions.md#plum_load_image

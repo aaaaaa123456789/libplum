@@ -15,5 +15,5 @@ All documentation for the current version of the library can be found here.
 - [Macros](macros.md)
 - [Alphabetical declaration list](alpha.md)
 - [Loading and storing modes](modes.md)
-- C++ helper methods
-- Supported file formats
+- [C++ helper methods](methods.md)
+- [Supported file formats](formats.md)

@@ -182,7 +182,7 @@ Up: [README](README.md)
 [colors]: colors.md
 [constructors]: functions.md#basic-functionality
 [copy]: functions.md#plum_copy_image
-[helpers]: #
+[helpers]: methods.md
 [indexed]: colors.md#indexed-color-mode
 [load]: functions.md#plum_load_image
 [memory]: memory.md
