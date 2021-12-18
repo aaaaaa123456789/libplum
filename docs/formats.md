@@ -278,6 +278,9 @@ The exact conditions for this to happen are:
 
 If all of these conditions are met, the generated file will be a binary PPM file, where each frame's dimensions will
 be set to its true width and height as defined above.
+These conditions are mostly intended to ensure that multi-frame images that were loaded from PBM, PGM or PPM files can
+be stored as PPM files instead of PAM files, since the transparent borders in those cases are artificially introduced
+by the library to pad all frames to a common width and height.
 
 The library supports reading PNM files with their maximum value set to any number between 1 and 65,535, even if it
 isn't one less than a power of two.
@@ -289,6 +292,8 @@ Other maximum values are not supported and will fail with [`PLUM_ERR_INVALID_FIL
 
 While PNM files can contain multiple frames, they cannot contain animations.
 All [animation-related metadata][animation] will be ignored when generating a PNM file.
+
+PNM files don't support palettes; [indexed-color mode images][indexed] will be converted when a PNM file is generated.
 
 * * *
 
