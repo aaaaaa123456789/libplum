@@ -256,7 +256,7 @@ void sort_PNG_animation_chunks (struct context * context, struct PNG_chunk_locat
 
 uint8_t load_PNG_palette (struct context * context, const struct PNG_chunk_locations * chunks, uint8_t bitdepth, uint64_t * restrict palette) {
   if (!chunks -> palette) throw(context, PLUM_ERR_UNDEFINED_PALETTE);
-  unsigned p, count = read_be32_unaligned(context -> data + chunks -> palette - 8) / 3;
+  size_t p, count = read_be32_unaligned(context -> data + chunks -> palette - 8) / 3;
   if (count > (1 << bitdepth)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   const unsigned char * data = context -> data + chunks -> palette;
   uint64_t color;
