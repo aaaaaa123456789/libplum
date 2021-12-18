@@ -192,6 +192,11 @@ The following macros can be defined by the user (before including the library he
   By default, the library header will `#include <stdint.h>`; defining this macro will prevent it from doing that.
   If this macro is defined, the user **must** provide their own `typedef` definitions for the `uint8_t`, `uint16_t`,
   `uint32_t` and `uint64_t` types _before_ including the library header; otherwise, compilation will fail.
+- `PLUM_NO_VLA`: disables the use of [VLA-based macros](#pixel-array-macros) and sets `PLUM_VLA_SUPPORT` to zero.
+  This can be used to avoid compilation errors if the compiler doesn't support VLAs, but it also doesn't use the
+  standard macros that indicate that.
+- `PLUM_NO_ANON_MEMBERS`: disables anonymous unions in the [`plum_image`] struct and sets `PLUM_ANON_MEMBERS` to zero.
+  This can be used if the compiler doesn't support this feature, even in C99 or C++ mode.
 
 Note that the library will internally use some additional feature-test macros to function properly; all of these
 macros are properly prefixed with `PLUM_` to avoid colliding with user-defined macros.

@@ -30,6 +30,16 @@
 #define PLUM_VLA_SUPPORT 0
 #endif
 
+#ifdef PLUM_NO_ANON_MEMBERS
+#undef PLUM_ANON_MEMBERS
+#define PLUM_ANON_MEMBERS 0
+#endif
+
+#ifdef PLUM_NO_VLA
+#undef PLUM_VLA_SUPPORT
+#define PLUM_VLA_SUPPORT 0
+#endif
+
 #include "enum.h"
 #include "color.h"
 #include "pixeldata.h"
