@@ -3,7 +3,7 @@
 All documentation for the current version of the library can be found here.
 
 - [Overview](overview.md)
-- Introduction and tutorial
+- [Introduction and tutorial](tutorial.md)
 - [Building and including the library](building.md)
 - [Conventions and limitations](conventions.md)
 - [Color formats](colors.md)

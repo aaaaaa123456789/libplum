@@ -57,7 +57,7 @@ long as they aren't performing mutable operations on the same image.
 
 * * *
 
-Next: Introduction and tutorial
+Next: [Introduction and tutorial](tutorial.md)
 
 Up: [README](README.md)
 
