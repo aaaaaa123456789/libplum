@@ -115,7 +115,7 @@ static inline int16_t make_signed_16 (uint16_t value) {
   return (value >= 0x8000u) ? -(int16_t) (~value) - 1 : value;
 }
 
-static inline unsigned bit_width (unsigned value) {
+static inline unsigned bit_width (uintmax_t value) {
   unsigned result;
   for (result = 0; value; result ++) value >>= 1;
   return result;

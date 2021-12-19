@@ -83,7 +83,7 @@ internal void emit_GIF_data(struct context *, const struct compressed_GIF_code *
 internal void load_GIF_data(struct context *, unsigned);
 internal uint64_t ** load_GIF_palettes(struct context *, unsigned, size_t *, uint64_t *);
 internal void load_GIF_palette(struct context *, uint64_t *, size_t *, unsigned);
-internal void * load_GIF_data_blocks(struct context *, size_t *, size_t *);
+internal void * load_GIF_data_blocks(struct context *, size_t * restrict, size_t * restrict);
 internal void skip_GIF_data_blocks(struct context *, size_t *);
 internal void load_GIF_loop_count(struct context *, size_t *);
 internal void load_GIF_frame(struct context *, size_t *, unsigned, uint32_t, const uint64_t *, uint64_t, uint64_t * restrict, uint8_t * restrict);
@@ -143,7 +143,7 @@ internal struct JPEG_encoded_value * generate_JPEG_luminance_data_stream(struct 
                                                                          size_t * restrict);
 internal struct JPEG_encoded_value * generate_JPEG_chrominance_data_stream(struct context *, double (* restrict)[64], double (* restrict)[64], size_t,
                                                                            const uint8_t [restrict static 64], size_t * restrict);
-internal double generate_JPEG_data_unit(struct context *, struct JPEG_encoded_value **, size_t * restrict, const double [restrict static 64],
+internal double generate_JPEG_data_unit(struct context *, struct JPEG_encoded_value *, size_t * restrict, const double [restrict static 64],
                                         const uint8_t [restrict static 64], double);
 internal void encode_JPEG_value(struct JPEG_encoded_value *, int16_t, unsigned, unsigned char);
 internal size_t generate_JPEG_Huffman_table(struct context *, const struct JPEG_encoded_value *, size_t, unsigned char * restrict,
@@ -211,6 +211,7 @@ internal void subsample_JPEG_component(double (* restrict)[64], double (* restri
 internal void load_image_buffer_data(struct context *, unsigned);
 internal void load_file(struct context *, const char *);
 internal void load_from_callback(struct context *, const struct plum_callback *);
+internal void * resize_read_buffer(struct context *, void *, size_t * restrict);
 
 // metadata.c
 internal void add_color_depth_metadata(struct context *, unsigned, unsigned, unsigned, unsigned, unsigned);

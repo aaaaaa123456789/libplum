@@ -88,14 +88,15 @@ void load_image_buffer_data (struct context * context, unsigned flags) {
 void load_file (struct context * context, const char * filename) {
   FILE * fp = fopen(filename, "rb");
   if (!fp) throw(context, PLUM_ERR_FILE_INACCESSIBLE);
-  char * buffer = ctxmalloc(context, 0x4000 - sizeof(union allocator_node)); // keep the buffer aligned to memory pages
-  size_t size = fread(buffer, 1, 0x4000 - sizeof(union allocator_node), fp);
+  size_t allocated;
+  char * buffer = resize_read_buffer(context, NULL, &allocated);
+  size_t size = fread(buffer, 1, allocated, fp);
   if (ferror(fp)) {
     fclose(fp);
     throw(context, PLUM_ERR_FILE_ERROR);
   }
   while (!feof(fp)) {
-    buffer = ctxrealloc(context, buffer, size + 0x4000);
+    if ((allocated - size) < 0x4000) buffer = resize_read_buffer(context, buffer, &allocated);
     size += fread(buffer + size, 1, 0x4000, fp);
     if (ferror(fp)) {
       fclose(fp);
@@ -103,20 +104,33 @@ void load_file (struct context * context, const char * filename) {
     }
   }
   fclose(fp);
-  context -> data = buffer;
+  context -> data = ctxrealloc(context, buffer, size);
   context -> size = size;
 }
 
 void load_from_callback (struct context * context, const struct plum_callback * callback) {
-  char * buffer = ctxmalloc(context, 0x4000 - sizeof(union allocator_node)); // keep the buffer aligned to memory pages
+  size_t allocated;
+  char * buffer = resize_read_buffer(context, NULL, &allocated);
   int iteration = callback -> callback(callback -> userdata, buffer, 0x4000 - sizeof(union allocator_node));
   if (iteration < 0) throw(context, PLUM_ERR_FILE_ERROR);
   context -> size = iteration;
   while (iteration) {
-    buffer = ctxrealloc(context, buffer, context -> size + 0x4000);
+    if ((allocated - context -> size) < 0x4000) buffer = resize_read_buffer(context, buffer, &allocated);
     iteration = callback -> callback(callback -> userdata, buffer + context -> size, 0x4000);
     if (iteration < 0) throw(context, PLUM_ERR_FILE_ERROR);
     context -> size += iteration;
   }
   context -> data = buffer;
+}
+
+void * resize_read_buffer (struct context * context, void * buffer, size_t * restrict allocated) {
+  // will set the buffer to its initial size on first call (buffer = NULL, allocated = ignored), or extend it on further calls
+  if (buffer)
+    if (*allocated <= 0x20000u)
+      *allocated += 0x4000;
+    else
+      *allocated += (size_t) 0x4000 << (bit_width(*allocated - 1) - 17);
+  else
+    *allocated = 0x4000 - sizeof(union allocator_node); // keep the buffer aligned to memory pages
+  return ctxrealloc(context, buffer, *allocated);
 }
