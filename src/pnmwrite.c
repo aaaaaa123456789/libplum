@@ -80,7 +80,7 @@ uint32_t * get_true_PNM_frame_sizes (struct context * context) {
         result[frame * 2] = width;                                                                                                                   \
         result[frame * 2 + 1] = height;                                                                                                              \
       }                                                                                                                                              \
-    while(0)
+    while (0)
     if (format == PLUM_COLOR_16)
       checkframe(16);
     else if (format == PLUM_COLOR_64)
