@@ -36,6 +36,10 @@ struct plum_image * plum_load_image (const void * restrict buffer, size_t size, 
       if (colors < 0) throw(context, -colors);
       context -> image -> max_palette_index = colors;
       if (flags & PLUM_SORT_EXISTING) sort_palette(context -> image, flags);
+      if (flags & PLUM_PALETTE_REDUCE) {
+        reduce_palette(context -> image);
+        context -> image -> palette = plum_realloc(context -> image, context -> image -> palette, plum_palette_buffer_size(context -> image));
+      }
     } else {
       generate_palette(context, flags);
       // PLUM_PALETTE_FORCE == PLUM_PALETTE_LOAD | PLUM_PALETTE_GENERATE
@@ -44,12 +48,13 @@ struct plum_image * plum_load_image (const void * restrict buffer, size_t size, 
   else if (context -> image -> palette)
     if ((flags & PLUM_PALETTE_MASK) == PLUM_PALETTE_NONE)
       remove_palette(context);
-    else if (flags & PLUM_SORT_EXISTING)
-      sort_palette(context -> image, flags);
-  if (context -> image -> palette && (flags & PLUM_PALETTE_REDUCE)) {
-    reduce_palette(context -> image);
-    context -> image -> palette = plum_realloc(context -> image, context -> image -> palette, plum_palette_buffer_size(context -> image));
-  }
+    else {
+      if (flags & PLUM_SORT_EXISTING) sort_palette(context -> image, flags);
+      if (flags & PLUM_PALETTE_REDUCE) {
+        reduce_palette(context -> image);
+        context -> image -> palette = plum_realloc(context -> image, context -> image -> palette, plum_palette_buffer_size(context -> image));
+      }
+    }
   done:
   if (error) *error = context -> status;
   struct plum_image * image = context -> image;
