@@ -10,6 +10,8 @@ Note: the library contains no public `typedef` declarations. All named structure
 `struct plum_image`, not `plum_image`).
 C users who prefer `typedef` declarations might want to declare `typedef struct plum_image plum_image_t` instead;
 these `_t` suffixed aliases will never be defined by the library and are available for users for this purpose.
+(It should be noted that POSIX reserves the `_t` suffix, so users might prefer `_T` as an alternative, which is also
+available.)
 
 - [`plum_image`](#plum_image)
 - [`plum_metadata`](#plum_metadata)
