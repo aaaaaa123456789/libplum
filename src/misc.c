@@ -68,6 +68,10 @@ const char * plum_get_file_format_name (unsigned format) {
   return formats[format];
 }
 
+uint32_t plum_get_version_number (void) {
+  return PLUM_VERSION;
+}
+
 int compare64 (const void * first, const void * second) {
   const uint64_t * p1 = first;
   const uint64_t * p2 = second;

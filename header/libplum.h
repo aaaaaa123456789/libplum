@@ -2,6 +2,8 @@
 
 #define PLUM_HEADER
 
+#define PLUM_VERSION 10
+
 #include <stddef.h>
 #ifndef PLUM_NO_STDINT
 #include <stdint.h>
