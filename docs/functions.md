@@ -28,6 +28,7 @@ In other words, the function won't modify any of the data accessible through tha
     - [`plum_convert_colors_to_indexes`](#plum_convert_colors_to_indexes)
     - [`plum_convert_indexes_to_colors`](#plum_convert_indexes_to_colors)
     - [`plum_sort_palette`](#plum_sort_palette)
+    - [`plum_reduce_palette`](#plum_reduce_palette)
     - [`plum_get_highest_palette_index`](#plum_get_highest_palette_index)
 - [Miscellaneous image operations](#miscellaneous-image-operations)
     - [`plum_find_metadata`](#plum_find_metadata)
@@ -182,6 +183,9 @@ See the [Memory management][memory] page for more details.
     - `PLUM_SORT_EXISTING`: indicates that, if the image already has a palette (and that palette is being loaded), the
       existing palette should be sorted (and the pixels' index values adjusted accordingly).
       By default, existing palettes are left untouched; only generated palettes are sorted.
+    - `PLUM_PALETTE_REDUCE`: indicates that, if the image already has a palette (and that palette is being loaded),
+      the palette should be reduced to a minimal palette, like [`plum_reduce_palette`](#plum_reduce_palette) would do
+      (by removing duplicate and unused colors).
 - `error`: pointer to an `unsigned` value that will be set to [an error constant][errors] if the function fails.
   If the function succeeds, that value will be set to zero.
   This argument can be `NULL` if the caller isn't interested in the reason why loading failed, as the failure itself
@@ -755,6 +759,44 @@ It also updates the image's color values (i.e., indexes) to point to the new ind
     - `PLUM_SORT_LIGHT_FIRST` (default): specifies that the brighest colors should be sorted first.
       This constant has a value of zero, so 0 may be used instead of the constant.
     - `PLUM_SORT_DARK_FIRST`: specifies that the darkest colors should be sorted first.
+
+**Return value:**
+
+Zero ([`PLUM_OK`][errors]) on success, or a non-zero [error constant][errors] on error.
+
+**Error values:**
+
+The function may fail for any of the reasons specified for [`plum_validate_image`](#plum_validate_image), returning
+one of the error constants listed there.
+
+It can also return one of the following [error constants][errors]:
+
+- `PLUM_OK` (zero): success.
+  This value will be used only if the function executes without errors.
+- `PLUM_ERR_INVALID_COLOR_INDEX`: the image contains an invalid color index (i.e.,
+  [`plum_validate_palette_indexes`](#plum_validate_palette_indexes) returns a non-`NULL` value).
+- `PLUM_ERR_UNDEFINED_PALETTE`: the image doesn't use [indexed-color mode][image] at all (i.e., it doesn't have a
+  palette to begin with).
+
+### `plum_reduce_palette`
+
+```c
+unsigned plum_reduce_palette(struct plum_image * image);
+```
+
+**Description:**
+
+This function reduces an image's palette to the minimal palette that will still represent the same image, by removing
+duplicate and unused colors from the palette.
+The remaining colors remain sorted in the same order as before; duplicate colors are sorted by their first appearance
+in the image's palette.
+
+This function will also update the image's `max_palette_index` member to reflect the number of colors in the image's
+palette after reducing it.
+
+**Arguments:**
+
+- `image`: image whose palette will be reduced.
 
 **Return value:**
 

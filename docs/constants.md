@@ -178,6 +178,8 @@ Leave them out to not enable the operations they request.
 - `PLUM_SORT_EXISTING`: indicates that, if the image has a palette and that palette is loaded, that palette must be
   sorted.
   (By default, only generated palettes are sorted.)
+- `PLUM_PALETTE_REDUCE`: indicates that, if the image has a palette, that palette should be reduced to a minimum
+  palette by removing unused and duplicate colors.
 
 ## Errors
 
