@@ -169,6 +169,8 @@ For more information, see the [Data callbacks][callbacks] section.
   the write.
 - `userdata`: value that will be passed to the callback as its first argument.
 
+**Warning:** in C++ mode, the callback function must be marked `extern "C"` and it must not throw any exceptions.
+
 * * *
 
 Prev: [Color formats](colors.md)

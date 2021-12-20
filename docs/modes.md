@@ -149,6 +149,8 @@ must write the loaded data in that buffer, and when called by [`plum_store_image
 data in that buffer wherever it shall.
 The `size` argument is the size of the supplied buffer, and it will always be positive and no larger than `0x7fff`.
 
+**Warning:** in C++ mode, the callback function must be marked `extern "C"` and it must not throw any exceptions.
+
 If the callback is successful, it must return the number of bytes read or written.
 It is always permissible for the callback to read or write fewer bytes than `size` indicates; the library will adjust
 future calls accordingly if a smaller value is returned.
