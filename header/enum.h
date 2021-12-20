@@ -4,14 +4,12 @@
 
 enum plum_flags {
   /* color formats */
-  PLUM_COLOR_32   = 0, /* RGBA 8.8.8.8 */
-  PLUM_COLOR_64   = 1, /* RGBA 16.16.16.16 */
-  PLUM_COLOR_16   = 2, /* RGBA 5.5.5.1 */
-  PLUM_COLOR_32X  = 3, /* RGBA 10.10.10.2 */
-  PLUM_COLOR_MASK = 3,
-  /* alpha */
-  PLUM_ALPHA_INVERT =     4,
-  PLUM_ALPHA_REMOVE = 0x100,
+  PLUM_COLOR_32     = 0, /* RGBA 8.8.8.8 */
+  PLUM_COLOR_64     = 1, /* RGBA 16.16.16.16 */
+  PLUM_COLOR_16     = 2, /* RGBA 5.5.5.1 */
+  PLUM_COLOR_32X    = 3, /* RGBA 10.10.10.2 */
+  PLUM_COLOR_MASK   = 3,
+  PLUM_ALPHA_INVERT = 4,
   /* palettes */
   PLUM_PALETTE_NONE     =     0,
   PLUM_PALETTE_LOAD     = 0x200,
@@ -19,9 +17,12 @@ enum plum_flags {
   PLUM_PALETTE_FORCE    = 0x600,
   PLUM_PALETTE_MASK     = 0x600,
   /* palette sorting */
-  PLUM_SORT_LIGHT_FIRST =      0,
-  PLUM_SORT_DARK_FIRST  =  0x800,
-  PLUM_SORT_EXISTING    = 0x1000
+  PLUM_SORT_LIGHT_FIRST =     0,
+  PLUM_SORT_DARK_FIRST  = 0x800,
+  /* other bit flags */
+  PLUM_ALPHA_REMOVE   =  0x100,
+  PLUM_SORT_EXISTING  = 0x1000,
+  PLUM_PALETTE_REDUCE = 0x2000
 };
 
 enum plum_image_types {

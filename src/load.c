@@ -46,6 +46,10 @@ struct plum_image * plum_load_image (const void * restrict buffer, size_t size, 
       remove_palette(context);
     else if (flags & PLUM_SORT_EXISTING)
       sort_palette(context -> image, flags);
+  if (context -> image -> palette && (flags & PLUM_PALETTE_REDUCE)) {
+    reduce_palette(context -> image);
+    context -> image -> palette = plum_realloc(context -> image, context -> image -> palette, plum_palette_buffer_size(context -> image));
+  }
   done:
   if (error) *error = context -> status;
   struct plum_image * image = context -> image;

@@ -33,12 +33,9 @@ void remove_palette (struct context * context) {
 }
 
 unsigned plum_sort_palette (struct plum_image * image, unsigned flags) {
-  unsigned result = plum_validate_image(image);
-  if (result) return result;
-  if (!image -> palette) return PLUM_ERR_UNDEFINED_PALETTE;
-  if (plum_validate_palette_indexes(image)) return PLUM_ERR_INVALID_COLOR_INDEX;
-  sort_palette(image, image -> color_format | (flags & PLUM_SORT_DARK_FIRST));
-  return 0;
+  unsigned result = check_image_palette(image);
+  if (!result) sort_palette(image, image -> color_format | (flags & PLUM_SORT_DARK_FIRST));
+  return result;
 }
 
 void sort_palette (struct plum_image * image, unsigned flags) {
@@ -59,6 +56,54 @@ void sort_palette (struct plum_image * image, unsigned flags) {
     for (p = 0; p <= image -> max_palette_index; p ++) colors[p] = image -> palette32[sorted[p]];
     memcpy(image -> palette32, colors, p * sizeof *colors);
   }
+}
+
+unsigned plum_reduce_palette (struct plum_image * image) {
+  unsigned result = check_image_palette(image);
+  if (!result) reduce_palette(image);
+  return result;
+}
+
+void reduce_palette (struct plum_image * image) {
+  uint8_t map[0x100];
+  uint8_t used[0x100] = {0};
+  size_t p, ref = 0, size = (size_t) image -> width * image -> height * image -> frames;
+  for (p = 0; p < size; p ++) used[image -> data8[p]] = 1;
+  uint64_t colors[0x200];
+  // converting up to 64-bit and later back to the original format is lossless
+  plum_convert_colors(colors, image -> palette, image -> max_palette_index + 1, PLUM_COLOR_64, image -> color_format);
+  for (p = image -> max_palette_index; p != SIZE_MAX; p --) {
+    colors[2 * p + 1] = colors[p];
+    colors[2 * p] = p;
+  }
+  qsort(colors, image -> max_palette_index + 1, 2 * sizeof *colors, &compare_index_value_pairs);
+  for (p = image -> max_palette_index; p; p --) if (colors[2 * p + 1] == colors[2 * p - 1]) {
+    used[colors[2 * p - 2]] |= used[colors[2 * p]];
+    used[colors[2 * p]] = 0;
+  }
+  for (p = 0; p <= image -> max_palette_index; p ++)
+    if (used[colors[2 * p]])
+      ref = map[colors[2 * p]] = colors[2 * p];
+    else
+      map[colors[2 * p]] = ref;
+  plum_convert_colors(colors + 0x100, image -> palette, image -> max_palette_index + 1, PLUM_COLOR_64, image -> color_format);
+  for (p = 0, ref = 0; p <= image -> max_palette_index; p ++)
+    if (used[p]) {
+      map[p] = ref;
+      colors[ref ++] = colors[0x100 + p];
+    } else
+      map[p] = map[map[p]];
+  image -> max_palette_index = ref - 1;
+  plum_convert_colors(image -> palette, colors, ref, image -> color_format, PLUM_COLOR_64);
+  for (p = 0; p < size; p ++) image -> data8[p] = map[image -> data8[p]];
+}
+
+unsigned check_image_palette (const struct plum_image * image) {
+  unsigned result = plum_validate_image(image);
+  if (result) return result;
+  if (!image -> palette) return PLUM_ERR_UNDEFINED_PALETTE;
+  if (plum_validate_palette_indexes(image)) return PLUM_ERR_INVALID_COLOR_INDEX;
+  return 0;
 }
 
 const uint8_t * plum_validate_palette_indexes (const struct plum_image * image) {

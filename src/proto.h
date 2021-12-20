@@ -231,6 +231,8 @@ internal struct context * create_context(void);
 internal void generate_palette(struct context *, unsigned);
 internal void remove_palette(struct context *);
 internal void sort_palette(struct plum_image *, unsigned);
+internal void reduce_palette(struct plum_image *);
+internal unsigned check_image_palette(const struct plum_image *);
 internal uint64_t get_color_sorting_score(uint64_t, unsigned);
 
 // pngcompress.c
