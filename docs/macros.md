@@ -180,6 +180,10 @@ directive):
   which case that struct will only contain the `palette` and `data` members instead of their respective unions).
 - `PLUM_HEADER`: defined when the library header has been included.
   Used by the header itself in its `#ifdef` include guards.
+- `PLUM_VERSION`: expands to the version number of the library for which the header file was generated, in the format
+  described in the [Version constants][version] section. This value can be compared to the value returned by the
+  [`plum_get_version_number`][version-function] function to validate that the library header matches the binary, or
+  used in a conditional compilation directive to ensure that the right version of the library is being used.
 
 The following macros can be defined by the user (before including the library header) to toggle some of its features:
 
@@ -253,3 +257,5 @@ Up: [README](README.md)
 [conventions]: conventions.md#conventions
 [image]: structs.md#plum_image
 [indexed]: colors.md#indexed-color-mode
+[version]: version.md#version-constants
+[version-function]: functions.md#plum_get_version_number

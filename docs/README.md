@@ -17,3 +17,4 @@ All documentation for the current version of the library can be found here.
 - [Loading and storing modes](modes.md)
 - [C++ helper methods](methods.md)
 - [Supported file formats](formats.md)
+- [Library versioning](version.md)

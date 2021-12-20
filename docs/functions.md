@@ -44,6 +44,7 @@ In other words, the function won't modify any of the data accessible through tha
 - [Library information](#library-information)
     - [`plum_get_file_format_name`](#plum_get_file_format_name)
     - [`plum_get_error_text`](#plum_get_error_text)
+    - [`plum_get_version_number`](#plum_get_version_number)
 
 ## Basic functionality
 
@@ -1190,6 +1191,26 @@ If `error` is a valid [error constant][errors] (including [`PLUM_OK`][errors]), 
 describing it.
 If `error` is out of range, the function returns `NULL`.
 
+### `plum_get_version_number`
+
+``` c
+uint32_t plum_get_version_number(void);
+```
+
+**Description:**
+
+This function returns the library's version number, in the format described in the [Version constants][version]
+section.
+
+This value will be equal to [`PLUM_VERSION`][feature-macros] if the included library header has the same version
+number as the compiled library source.
+
+**Arguments:** none.
+
+**Return value:**
+
+Version number, as described in the [Version constants][version] section.
+
 * * *
 
 Prev: [Metadata](metadata.md)
@@ -1203,6 +1224,7 @@ Up: [README](README.md)
 [colors]: colors.md
 [conventions]: conventions.md#conventions
 [errors]: constants.md#errors
+[feature-macros]: macros.md#feature-test-macros
 [formats]: formats.md
 [image]: structs.md#plum_image
 [indexed]: colors.md#indexed-color-mode
@@ -1215,3 +1237,4 @@ Up: [README](README.md)
 [mode-constants]: constants.md#special-loading-and-storing-modes
 [rotation]: rotation.md
 [types]: constants.md#image-types
+[version]: version.md#version-constants
