@@ -126,8 +126,7 @@ uint64_t ** load_GIF_palettes (struct context * context, unsigned flags, size_t 
         seen_extension = 0;
       } break;
       case 0x3b:
-        if (seen_extension) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-        if (scan_offset == context -> size) goto done;
+        if (!seen_extension) goto done;
       default:
         throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     }
