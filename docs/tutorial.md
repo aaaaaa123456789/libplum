@@ -11,6 +11,7 @@ Note: all code samples use C, not C++, unless otherwise noted.
 (**TODO:** finish tutorial)
 
 - [1. Loading an image](#1-loading-an-image)
+- [2. Storing an image](#2-storing-an-image)
 
 ## 1. Loading an image
 
@@ -88,6 +89,77 @@ A few things can be noted in this example:
   (such as the PNM family of formats).
   If an image contains more than one frame, all frames will have the same dimensions.
 
+## 2. Storing an image
+
+The counterpart to [`plum_load_image`][load] is [`plum_store_image`][store], a function that converts the image data
+from a [`plum_image`][image] struct into actual image data in some file format and stores that data.
+(Much like [`plum_load_image`][load], [`plum_store_image`][store] can store image data in many different locations,
+but the first part of this tutorial will focus on files.)
+The file format will be determined by the image's `type` member; the remaining members will determine the
+characteristics of the image file that will be generated.
+
+Not all file formats can contain all of the information that a [`struct plum_image`][image] can hold.
+The library will store as much as it can possibly store in that format.
+For example:
+
+- BMP files are limited to 32 bits per pixel; if an image's color depth is higher, it will be reduced.
+- JPEG compression is lossy, and therefore, the generated image won't be an exact representation of the original.
+- Images can contain a certain amount of [metadata][metadata].
+  However, only the metadata supported by the chosen format will be stored.
+
+However, limitations that would completely prevent parts of the image from being stored properly will cause the
+conversion to fail.
+For example:
+
+- GIF files may only contain up to 256 colors per frame.
+  An image with more will fail to convert with a [`PLUM_ERR_TOO_MANY_COLORS`][errors] error.
+- JPEG files are limited to 65,535 pixels in each dimension.
+  Larger images will fail to convert with a [`PLUM_ERR_IMAGE_TOO_LARGE`][errors] error.
+- Many file formats only support a single image (i.e., a single frame).
+  Images with two or more frames will fail to convert to those formats with a [`PLUM_ERR_NO_MULTI_FRAME`][errors]
+  error.
+
+This sample program converts an image to PNG:
+
+``` c
+#include <stdio.h>
+#include "libplum.h"
+
+int main (int argc, char ** argv) {
+  if (argc != 3) {
+    fprintf(stderr, "usage: %s <input> <output.png>\n", *argv);
+    return 2;
+  }
+  unsigned error;
+  struct plum_image * image = plum_load_image(argv[1], PLUM_FILENAME, PLUM_COLOR_32, &error);
+  if (!image) {
+    fprintf(stderr, "load error: %s\n", plum_get_error_text(error));
+    return 1;
+  }
+  image -> type = PLUM_IMAGE_PNG;
+  plum_store_image(image, argv[2], PLUM_FILENAME, &error);
+  plum_destroy_image(image);
+  if (error) {
+    fprintf(stderr, "store error: %s\n", plum_get_error_text(error));
+    return 1;
+  }
+  return 0;
+}
+```
+
+As the example shows, no configuration is needed to generate an image file.
+The image data is already contained in the [`plum_image`][image] struct, and the library will automatically choose any
+parameters that the chosen file format requires when generating the image file.
+
+The image conversion may fail: for example, if the loaded image file is a GIF animation with multiple frames, it
+cannot be encoded as a PNG.
+(The library does support APNG, but it is treated as a separate format; the `type` member would have to be set to
+[`PLUM_IMAGE_APNG`][format-constants] to emit an APNG file.)
+In that case, [`plum_store_image`][store] will fail with an error.
+This doesn't indicate that the image is invalid: the image can be validated with [`plum_validate_image`][validate],
+and all images loaded by [`plum_load_image`][load] will be reported as valid by that function.
+Instead, it indicates that the conversion to the chosen file format (in this case, PNG) failed for some reason.
+
 * * *
 
 Prev: [Overview](overview.md)
@@ -99,8 +171,11 @@ Up: [README](README.md)
 [color-formats]: colors.md#formats
 [destroy]: functions.md#plum_destroy_image
 [errors]: constants.md#errors
+[format-constants]: constants.md#image-types
 [image]: structs.md#plum_image
 [indexed]: colors.md#indexed-color-mode
 [load]: functions.md#plum_load_image
 [loading-flags]: constants.md#loading-flags
+[metadata]: metadata.md
 [store]: functions.md#plum_store_image
+[validate]: functions.md#plum_validate_image
