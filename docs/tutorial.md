@@ -131,7 +131,8 @@ int main (int argc, char ** argv) {
     return 2;
   }
   unsigned error;
-  struct plum_image * image = plum_load_image(argv[1], PLUM_FILENAME, PLUM_COLOR_32, &error);
+  struct plum_image * image = plum_load_image(argv[1], PLUM_FILENAME,
+                                              PLUM_COLOR_32, &error);
   if (!image) {
     fprintf(stderr, "load error: %s\n", plum_get_error_text(error));
     return 1;
@@ -156,8 +157,9 @@ cannot be encoded as a PNG.
 (The library does support APNG, but it is treated as a separate format; the `type` member would have to be set to
 [`PLUM_IMAGE_APNG`][format-constants] to emit an APNG file.)
 In that case, [`plum_store_image`][store] will fail with an error.
-This doesn't indicate that the image is invalid: the image can be validated with [`plum_validate_image`][validate],
-and all images loaded by [`plum_load_image`][load] will be reported as valid by that function.
+This doesn't necessarily indicate that the image is invalid: the image data can be validated with the
+[`plum_validate_image`][validate] function, and all images loaded by [`plum_load_image`][load] will be reported as
+valid by that function.
 Instead, it indicates that the conversion to the chosen file format (in this case, PNG) failed for some reason.
 
 * * *
