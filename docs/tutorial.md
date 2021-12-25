@@ -8,10 +8,15 @@ All code samples are released to the public domain, just like the rest of the re
 
 Note: all code samples use C, not C++, unless otherwise noted.
 
-(**TODO:** finish tutorial)
-
-- [1. Loading an image](#1-loading-an-image)
-- [2. Storing an image](#2-storing-an-image)
+1. [Loading an image](#1-loading-an-image)
+2. [Storing an image](#2-storing-an-image)
+3. [Accessing pixel data](#3-accessing-pixel-data)
+4. [Using pixel coordinates](#4-using-pixel-coordinates)
+5. [Palettes and indexed-color mode](#5-palettes-and-indexed-color-mode)
+6. [Metadata](#6-metadata)
+7. [Animations](#7-animations)
+8. [Conversions](#8-conversions)
+9. [Further resources](#9-further-resources)
 
 ## 1. Loading an image
 
@@ -161,6 +166,34 @@ This doesn't necessarily indicate that the image is invalid: the image data can 
 [`plum_validate_image`][validate] function, and all images loaded by [`plum_load_image`][load] will be reported as
 valid by that function.
 Instead, it indicates that the conversion to the chosen file format (in this case, PNG) failed for some reason.
+
+## 3. Accessing pixel data
+
+TBD
+
+## 4. Using pixel coordinates
+
+TBD
+
+## 5. Palettes and indexed-color mode
+
+TBD
+
+## 6. Metadata
+
+TBD
+
+## 7. Animations
+
+TBD
+
+## 8. Conversions
+
+TBD
+
+## 9. Further resources
+
+TBD
 
 * * *
 
