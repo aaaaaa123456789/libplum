@@ -15,8 +15,10 @@ Note: all code samples use C, not C++, unless otherwise noted.
 5. [Palettes and indexed-color mode](#5-palettes-and-indexed-color-mode)
 6. [Metadata](#6-metadata)
 7. [Animations](#7-animations)
-8. [Conversions](#8-conversions)
-9. [Further resources](#9-further-resources)
+8. [Color and palette conversions](#8-color-and-palette-conversions)
+9. [Memory management](#9-memory-management)
+10. [Accessing images not in files](#10-accessing-images-not-in-files)
+11. [Further resources](#11-further-resources)
 
 ## 1. Loading an image
 
@@ -169,7 +171,112 @@ Instead, it indicates that the conversion to the chosen file format (in this cas
 
 ## 3. Accessing pixel data
 
-TBD
+Images' pixel data is stored in the `data` member of the [`plum_image`][image] struct.
+This member is a three-dimensional array of color values, where the dimensions are the number of frames, the image's
+height, and the image's width.
+
+Pixel data is just a series of color values (or palette indexes for images using [indexed-color mode][indexed]; that
+mode will be explained [in a later section](#5-palettes-and-indexed-color-mode)); color values can take one of four
+[different formats][color-formats], chosen when the image is created/loaded.
+(This is the meaning of the [`PLUM_COLOR_32`][loading-flags] constant used previously as an argument to the
+[`plum_load_image`][load] function.)
+
+The four available [color formats][color-formats] are:
+
+- [`PLUM_COLOR_32`][loading-flags]: RGBA 8.8.8.8, `uint32_t` color values
+- [`PLUM_COLOR_64`][loading-flags]: RGBA 16.16.16.16, `uint64_t` color values
+- [`PLUM_COLOR_16`][loading-flags]: RGBA 5.5.5.1, `uint16_t` color values
+- [`PLUM_COLOR_32X`][loading-flags]: RGBA 10.10.10.2, `uint32_t` color values
+
+In all cases, the components are listed LSB first (i.e., the least significant bits always correspond to the red
+component).
+The suffixes `32`, `64`, `16` and `32X` are used consistently to represent these four formats throughout the library.
+(Where only data width matters, not the actual bit layout, `32` is also used for the `32X` format.)
+
+The alpha channel is inverted by default: 0 means opaque, and a maximum value means fully transparent.
+This allows programs that don't use transparency to leave it at zero without accidentally creating a fully-transparent
+image.
+However, since programs that do use transparency might find this convention inconvenient, it is possible to combine
+these color formats with the [`PLUM_ALPHA_INVERT`][loading-flags] flag through a bitwise OR with the color format
+constant.
+(For example, the `PLUM_COLOR_32 | PLUM_ALPHA_INVERT` color format uses 0 as fully transparent and 255 (highest 8-bit
+value) as fully opaque.)
+Everything explained for these color formats also works with their alpha-inverted variants; they merely use opposite
+alpha values.
+
+Given the descriptions above, it is perfectly possible to construct color values by hand.
+For example, in the [`PLUM_COLOR_32`][loading-flags] color format, a color value of `0x0000ffff` (maximum red and
+green, zero blue and alpha) would represent solid yellow.
+However, to make color calculations simpler, the library offers a number of [macros][color-macros].
+These macros are also available as shorter, [unprefixed macros][unprefixed], intended to make user code more readable;
+in order to make unprefixed macros available, `#define` the [`PLUM_UNPREFIXED_MACROS`][feature-macros] constant before
+including the library header.
+
+Macros are available for each color format; they differ only in their suffix.
+The macros for the [`PLUM_COLOR_32`][loading-flags] color format are:
+
+- [`PLUM_COLOR_VALUE_32`][color-macros]: takes four components (red, green, blue, alpha) and generates a single color
+  value from them; the resulting value is of the right type (`uint32_t` in this case).
+  Short form: [`COLOR32`][unprefixed].
+- [`PLUM_RED_32`][color-macros]: takes a color value and extracts its red component; the resulting value will still be
+  of the type expected by the color format (`uint32_t` in this case).
+  Similar macros exist for the other three components; replace `RED` with `GREEN`, `BLUE` or `ALPHA`.
+  Short form: [`RED32`][unprefixed].
+
+While the image's pixel data is accessible through its `data` member, that member is of `void *` type, making it
+inconvenient to access the pixels directly.
+Therefore, in sufficiently recent versions of C and C++ (C99 onwards and all standard versions of C++), the library
+header defines aliases for this member, `data16`, `data32` and `data64`, which are pointers to the correct integer
+type.
+(There is also a `data8` alias for [indexed-color mode][indexed], but that will be explained in a later section.)
+
+Using all of these elements, the following program will darken an image by reducing its color components by 10%:
+
+``` c
+#include <stdio.h>
+#include <stddef.h>
+#define PLUM_UNPREFIXED_MACROS
+#include "libplum.h"
+
+#define COEF 90 /* multiply all color values by 90% */
+
+int main (int argc, char ** argv) {
+  if (argc != 2) {
+    fprintf(stderr, "usage: %s <filename>\n", *argv);
+    return 2;
+  }
+  unsigned error;
+  struct plum_image * image = plum_load_image(argv[1], PLUM_FILENAME,
+                                              PLUM_COLOR_64, &error);
+  if (!image) {
+    fprintf(stderr, "load error: %s\n", plum_get_error_text(error));
+    return 1;
+  }
+  size_t index;
+  size_t size = (size_t) image -> width * image -> height * image -> frames;
+  for (index = 0; index < size; index ++)
+    image -> data64[index] = COLOR64(
+      (RED64(image -> data64[index]) * COEF + 50) / 100,
+      (GREEN64(image -> data64[index]) * COEF + 50) / 100,
+      (BLUE64(image -> data64[index]) * COEF + 50) / 100,
+      ALPHA64(image -> data64[index])
+    );
+  plum_store_image(image, argv[1], PLUM_FILENAME, &error);
+  plum_destroy_image(image);
+  if (!error) return 0;
+  fprintf(stderr, "store error: %s\n", plum_get_error_text(error));
+  return 1;
+}
+```
+
+It should be noted that the program above accesses the pixel data through `image -> data64` as a linear array;
+`data64` is just a `uint64_t *` member.
+This is simple when a program merely needs to iterate through all pixels in an image.
+However, it can be inconvenient when a program needs to know the location of the pixels it is accessing.
+
+While pixel data is laid out in the obvious order (frame by frame, row by row, top to bottom, left to right, and
+without gaps), and the way to access it [is well defined][accessing], accessing it through computed array indexes
+isn't always practical, which leads to the next section of this tutorial.
 
 ## 4. Using pixel coordinates
 
@@ -187,11 +294,19 @@ TBD
 
 TBD
 
-## 8. Conversions
+## 8. Color and palette conversions
 
 TBD
 
-## 9. Further resources
+## 9. Memory management
+
+TBD
+
+## 10. Accessing images not in files
+
+TBD
+
+## 11. Further resources
 
 TBD
 
@@ -203,9 +318,13 @@ Next: [Building and including the library](building.md)
 
 Up: [README](README.md)
 
+[accessing]: colors.md#accessing-pixel-and-color-data
 [color-formats]: colors.md#formats
+[color-macros]: macros.md#color-macros
+[color-masks]: constants.md#color-mask-constants
 [destroy]: functions.md#plum_destroy_image
 [errors]: constants.md#errors
+[feature-macros]: macros.md#feature-test-macros
 [format-constants]: constants.md#image-types
 [image]: structs.md#plum_image
 [indexed]: colors.md#indexed-color-mode
@@ -213,4 +332,5 @@ Up: [README](README.md)
 [loading-flags]: constants.md#loading-flags
 [metadata]: metadata.md
 [store]: functions.md#plum_store_image
+[unprefixed]: macros.md#unprefixed-macros
 [validate]: functions.md#plum_validate_image
