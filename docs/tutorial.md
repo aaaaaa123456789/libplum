@@ -280,7 +280,135 @@ isn't always practical, which leads to the next section of this tutorial.
 
 ## 4. Using pixel coordinates
 
-TBD
+When working with image data, it is almost always desirable to be able to address that data using its coordinates.
+Since this library allows handling multi-frame images, a pixel is always identified by three coordinates: the column
+(i.e., X coordinate), the row (i.e., Y coordinate) and the frame number.
+All coordinates start counting from 0 at the top-left corner of the first frame of the image.
+
+For all examples in this section, an image using the [`PLUM_COLOR_32`][loading-flags] color format will be used.
+To access data of a different bit width, replace all instances of `32` with `64` or `16` (or `8` for images using
+[indexed-color mode][indexed], as it will be shown in a later section).
+Note that images using the [`PLUM_COLOR_32X`][loading-flags] color format will use the same mechanisms described here,
+since the underlying data type (`uint32_t`) is the same.
+
+It is entirely possible to access a pixel directly using its coordinates, since the pixels are laid out sequentially,
+one frame after the other, one row after the other.
+For example:
+
+``` c
+uint32_t get_color_at_coordinates (const struct plum_image * image,
+                                   uint32_t col, uint32_t row, uint32_t frame) {
+  assert((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_32);
+  return image -> data32[((size_t) frame * image -> height + row)
+                         * image -> width + col];
+}
+```
+
+(Note that the cast from `uint32_t` to `size_t` may be needed to prevent overflow on particularly large images.)
+
+However, having to do this every time is inconvenient.
+The library therefore offers several convenience mechanisms that address a single pixel from its coordinates.
+All of them result in an lvalue, i.e., a value that can also be used to assign a new color, not just read it.
+
+The simplest method is to just use the [`PLUM_PIXEL_INDEX`][pixel-index] macro, which is also available as `PIXEL`
+if [unprefixed macros][unprefixed] are enabled.
+This macro just takes the image and the three coordinates as arguments, and returns a `size_t` value that can be used
+as an array index, like so:
+
+``` c
+uint32_t get_color_at_coordinates (const struct plum_image * image,
+                                   uint32_t col, uint32_t row, uint32_t frame) {
+  assert((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_32);
+  return image -> data32[PIXEL(image, col, row, frame)];
+}
+```
+
+It is also possible to use a macro that expands to the pixel value directly; there is a different macro for each
+possible bit width.
+For the 32-bit data example, the corresponding macro is [`PLUM_PIXEL_32`][pixel-index], or `PIXEL32` if
+[unprefixed macros][unprefixed] are enabled.
+This macro is good for both reading from a pixel and assigning a new value to it.
+For example, the following snippet will invert all the colors along an image's main diagonal:
+
+``` c
+void invert_diagonal (struct plum_image * image) {
+  assert((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_32);
+  uint32_t p, frame, limit = (image -> width < image -> height) ?
+                               image -> width : image -> height;
+  uint32_t mask = PLUM_RED_MASK_32 | PLUM_GREEN_MASK_32 | PLUM_BLUE_MASK_32;
+  for (frame = 0; frame < image -> frames; frame ++)
+    for (p = 0; p < limit; p ++)
+      PIXEL32(image, p, p, frame) ^= mask;
+}
+```
+
+If the compiler supports VLAs (which requires using C99 or later, and isn't available in C++), it is possible to
+declare a suitable array pointer to which the `data` member of the image may be converted; this array can be used to
+access the pixels directly.
+The [`PLUM_PIXEL_ARRAY`][pixel-array] macro (or `PIXARRAY` if [unprefixed macros][unprefixed] are enabled) will expand
+to a declarator for such an array; the first argument is the name of the variable being declared, and the second
+argument is the image that the declarator is based on.
+
+(Note: C declarations are comprised of three components: _declaration specifiers_ (including the type names),
+_declarators_ (including the variable names), and optional _initializers_ (self-explanatory).
+This macro only expands to the declarator; it doesn't include the type name, because that depends on the color format
+in use.
+Therefore, the type name must be added manually, as in `uint32_t PIXARRAY(array, image);` to declare `array`.)
+
+Since the above mechanism requires declaring a new variable, the library also provides macros to cast the image's
+`data` member to the correct array type directly.
+For example, for the [`PLUM_COLOR_32`][loading-flags] color format, the [`PLUM_PIXELS_32`][pixel-casts] macro (or
+`PIXELS32` if [unprefixed macros][unprefixed] are enabled; note the difference with `PIXEL32`) will expand to the
+image's `data` member cast to the corresponding pointer to array of `uint32_t` values.
+
+**Note:** since arrays are indexed by their major dimension first, array indexes are backwards with respect to all
+other access methods: first the frame, then the row (Y coordinate), then the column (X coordinate).
+
+The following example rewrites the functions above using both VLA-based array macros (one for each):
+
+``` c
+uint32_t get_color_at_coordinates (const struct plum_image * image,
+                                   uint32_t col, uint32_t row, uint32_t frame) {
+  assert((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_32);
+  return PIXELS32(image)[frame][row][col];
+}
+
+void invert_diagonal (struct plum_image * image) {
+  assert((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_32);
+  uint32_t p, frame, limit = (image -> width < image -> height) ?
+                               image -> width : image -> height;
+  uint32_t mask = PLUM_RED_MASK_32 | PLUM_GREEN_MASK_32 | PLUM_BLUE_MASK_32;
+  uint32_t PIXARRAY(data, image) = image -> data;
+  for (frame = 0; frame < image -> frames; frame ++)
+    for (p = 0; p < limit; p ++) data[frame][p][p] ^= mask;
+}
+```
+
+Finally, in C++ mode, while the macros above will not be available, the [`plum_image`][image] struct has instead some
+[helper methods][methods] that can be used to access the pixel data directly.
+These methods all return lvalue references (e.g., `uint32_t &` for 32-bit color formats) and exist in both `const` and
+non-`const` variants.
+There are separate methods for each bit width, since they return different data types; for example, for the
+[`PLUM_COLOR_32`][loading-flags] color format, the method is called `pixel32`.
+
+The following example rewrites the functions above using that method:
+
+``` cpp
+uint32_t get_color_at_coordinates (const struct plum_image * image,
+                                   uint32_t col, uint32_t row, uint32_t frame) {
+  assert((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_32);
+  return image -> pixel32(col, row, frame);
+}
+
+void invert_diagonal (struct plum_image * image) {
+  assert((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_32);
+  uint32_t p, frame, limit = (image -> width < image -> height) ?
+                               image -> width : image -> height;
+  uint32_t mask = PLUM_RED_MASK_32 | PLUM_GREEN_MASK_32 | PLUM_BLUE_MASK_32;
+  for (frame = 0; frame < image -> frames; frame ++)
+    for (p = 0; p < limit; p ++) image -> pixel32(p, p, frame) ^= mask;
+}
+```
 
 ## 5. Palettes and indexed-color mode
 
@@ -331,6 +459,10 @@ Up: [README](README.md)
 [load]: functions.md#plum_load_image
 [loading-flags]: constants.md#loading-flags
 [metadata]: metadata.md
+[methods]: methods.md
+[pixel-array]: macros.md#array-declaration
+[pixel-casts]: macros.md#array-casts
+[pixel-index]: macros.md#pixel-index-macros
 [store]: functions.md#plum_store_image
 [unprefixed]: macros.md#unprefixed-macros
 [validate]: functions.md#plum_validate_image
