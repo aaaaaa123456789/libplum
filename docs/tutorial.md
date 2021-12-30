@@ -412,7 +412,122 @@ void invert_diagonal (struct plum_image * image) {
 
 ## 5. Palettes and indexed-color mode
 
-TBD
+Some images may use a fixed palette of colors: instead of assigning each pixel a color, they assign them an index into
+a palette of colors used by the whole image.
+This is called [indexed-color mode][indexed] (because pixel values are indexes), and it may be used for many reasons:
+it ensures that images use a known number of colors, it makes them easier to replace globally, and it results in
+smaller image files as long as they restrict themselves to a known palette, amongst others.
+
+The library natively supports [indexed-color mode][indexed] with palettes of up to 256 colors.
+Images using this mode use 8-bit (`uint8_t`) pixel data; each pixel contains an index into the image's palette.
+The palette is defined by the `palette` member of the [`plum_image`][image] struct, and it contains an array of
+colors, in the format defined by the image's [color format][color-formats].
+(Like with the `data` member, the struct has typed aliases (in C99 and C++ mode) for this member: `palette16`,
+`palette32` and `palette64`.)
+The struct's `max_palette_index` member indicates the maximum valid palette index, and thus implicitly the size of the
+palette (which is one greater than this value); pixel values (i.e., indexes) **must not** be larger than this value in
+a valid image.
+
+(The choice of representing the maximum valid index instead of the palette size might seem strange at first, but it
+ensures that all possible values for this member are valid: the `max_palette_index` member is declared as a `uint8_t`,
+and all values from 0 through 255 are valid, representing a palette with 1 to 256 colors.
+The library imposes no limitation on the number of colors a palette may have other than this range: for example, it is
+not required to be a power of two.)
+
+Whether an image uses [indexed-color mode][indexed] is determined entirely by its `palette` member: if this member is
+not `NULL`, then the image has a palette and uses [indexed-color mode][indexed]; if it is `NULL`, the image has no
+palette and it uses direct-color mode (i.e., pixel values are colors, as shown in the examples in previous sections).
+Note that the image's `max_palette_index` member is meaningless if the image doesn't use a palette.
+
+When loading an image, whether that image will use [indexed-color mode][indexed] or not is determined by a number of
+flags that can be passed to [`plum_load_image`][load].
+All of these flags are ORed into the third argument (the one that contains the [color format flags][loading-flags]);
+omitting them (as it has been done so far) will use the defaults for each category.
+
+The most important flags are the ones that control whether palettes will be loaded at all:
+
+- [`PLUM_PALETTE_NONE`][loading-flags] (default): never load a palette.
+  This is the default because most programs don't expect to deal with palettes.
+  If the image has a palette, it will be removed on load.
+- [`PLUM_PALETTE_LOAD`][loading-flags]: load a palette if the image has one.
+  This mode will faithfully reproduce the image's contents.
+- [`PLUM_PALETTE_GENERATE`][loading-flags]: load a palette if the image has one, or try to generate one otherwise.
+  Generating a palette will succeed if the image has 256 or fewer colors.
+  This mode is intended for applications that prefer to deal with images with palettes.
+- [`PLUM_PALETTE_FORCE`][loading-flags]: always load a palette; this mode is the opposite to
+  [`PLUM_PALETTE_NONE`][loading-flags].
+  It works like [`PLUM_PALETTE_GENERATE`][loading-flags], but fails with [`PLUM_ERR_TOO_MANY_COLORS`][errors] if it
+  cannot generate a palette.
+  This mode is intended for applications that only intend to deal with [indexed-color mode][indexed] images.
+
+When generating a palette, the colors in the palette will always be sorted from brightest to darkest, with ties being
+broken by transparency.
+Note that the library will never dither or approximate colors in any way when generating a palette: if it attempts to
+generate a palette, but the image has too many colors, it will simply fail.
+When loading an image that already has a palette using the [`PLUM_PALETTE_GENERATE`][loading-flags] flag (or the 
+[`PLUM_PALETTE_FORCE`][loading-flags] flag), if the image's palette has some unused colors at the end, the resulting
+image's `max_palette_index` member will be adjusted to reflect the highest color index that is actually in use.
+(Those modes may already generate palette data that isn't present in the image, after all, so this small change is
+made to account for image file formats that only support fixed palette sizes and will pad palettes with unused colors
+up to those sizes.)
+
+Some additional flags may be ORed into that argument to specify some additional behaviors:
+
+- [`PLUM_SORT_EXISTING`][loading-flags]: indicates that, if the image already has a palette, that palette must also be
+  sorted when loaded.
+  (By default, only generated palettes are sorted.)
+  Note that the [`plum_sort_palette`][sort] function can also do this for already-loaded images.
+- [`PLUM_SORT_DARK_FIRST`][loading-flags]: when sorting a palette (generated or existing), it indicates that it should
+  sort it from darkest to brightest instead of the other way around.
+- [`PLUM_PALETTE_REDUCE`][loading-flags]: when loading an existing palette, it indicates that the palette should be
+  reduced by removing all duplicate and unused colors.
+  Note that the [`plum_reduce_palette`][reduce] function can also do this for already-loaded images.
+
+Putting all of this together, the following program will load an image with a palette and find its most common color:
+
+``` c
+#include <stdio.h>
+#include <stddef.h>
+#include "libplum.h"
+
+#define TIE (-(size_t) 1)
+
+int main (int argc, char ** argv) {
+  if (argc != 2) {
+    fprintf(stderr, "usage: %s <filename>\n", *argv);
+    return 2;
+  }
+  unsigned error;
+  struct plum_image * image = plum_load_image(argv[1], PLUM_FILENAME,
+    PLUM_COLOR_64 | PLUM_PALETTE_FORCE | PLUM_PALETTE_REDUCE, &error);
+  if (!image) {
+    fprintf(stderr, "error: %s\n", plum_get_error_text(error));
+    return 1;
+  }
+  size_t pixels = (size_t) image -> width * image -> height * image -> frames;
+  size_t counts[256] = {0};
+  size_t current, max, maxcount;
+  for (current = 0; current < pixels; current ++)
+    counts[image -> data8[current]] ++;
+  max = 0;
+  maxcount = *counts; // assume the maximum is the first
+  for (current = 1; current <= image -> max_palette_index; current ++)
+    if (counts[current] >= maxcount) {
+      if (counts[current] == maxcount)
+        max = TIE;
+      else
+        max = current;
+      maxcount = counts[current];
+    }
+  if (max == TIE)
+    printf("Most common color: tied (%zu pixels)\n", maxcount);
+  else
+    printf("Most common color: 0x%016llx (%zu pixels)\n",
+           (unsigned long long) image -> palette64[max], maxcount);
+  plum_destroy_image(image);
+  return 0;
+}
+```
 
 ## 6. Metadata
 
@@ -463,6 +578,8 @@ Up: [README](README.md)
 [pixel-array]: macros.md#array-declaration
 [pixel-casts]: macros.md#array-casts
 [pixel-index]: macros.md#pixel-index-macros
+[reduce]: functions.md#plum_reduce_palette
+[sort]: functions.md#plum_sort_palette
 [store]: functions.md#plum_store_image
 [unprefixed]: macros.md#unprefixed-macros
 [validate]: functions.md#plum_validate_image
