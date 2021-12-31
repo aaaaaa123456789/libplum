@@ -16,9 +16,10 @@ Note: all code samples use C, not C++, unless otherwise noted.
 6. [Metadata](#6-metadata)
 7. [Animations](#7-animations)
 8. [Color and palette conversions](#8-color-and-palette-conversions)
-9. [Memory management](#9-memory-management)
-10. [Accessing images not in files](#10-accessing-images-not-in-files)
-11. [Further resources](#11-further-resources)
+9. [Generating images from scratch](#9-generating-images-from-scratch)
+10. [Memory management](#10-memory-management)
+11. [Accessing images not in files](#11-accessing-images-not-in-files)
+12. [Further resources](#12-further-resources)
 
 ## 1. Loading an image
 
@@ -498,6 +499,9 @@ int main (int argc, char ** argv) {
     return 2;
   }
   unsigned error;
+  /* use PLUM_PALETTE_FORCE to ensure that the image will always have a    *
+   * palette, and PLUM_PALETTE_REDUCE to remove duplicates from it so that *
+   * they won't mess up the counts                                         */
   struct plum_image * image = plum_load_image(argv[1], PLUM_FILENAME,
     PLUM_COLOR_64 | PLUM_PALETTE_FORCE | PLUM_PALETTE_REDUCE, &error);
   if (!image) {
@@ -531,25 +535,153 @@ int main (int argc, char ** argv) {
 
 ## 6. Metadata
 
-TBD
+This library's goal is to provide a unified interface for all image file formats, and therefore, metadata is not the
+primary focus.
+However, a small amount of metadata is supported, since it represents data that is commonly available across several
+file formats.
+
+Metadata is accessed through the `metadata` member of the [`plum_image`][image] struct.
+This member points to a linked list of [`plum_metadata`][metadata-struct] nodes; the nodes are unordered, and new
+metadata may be inserted anywhere in the list.
+(The library uses a linked list for this data because the number of nodes is small (typically single-digit) and
+because it facilitates insertion and removal.)
+
+Each metadata node has a `type`, which describes what kind of metadata that node represents, and a `data` and a `size`
+containing the data; the layout for each metadata node is described in [the corresponding page][metadata].
+(Since metadata is represented by a linked list, the `next` member points to the following node or to `NULL` for the
+last node in the list, as usual.)
+
+It is possible for users to create their own metadata types, too.
+Nodes with a negative value of `type` are reserved for the user.
+However, this tutorial will focus on metadata nodes with a positive `type`, since those are the ones with semantics
+defined by the library.
+(A `type` value of zero, represented by the [`PLUM_METADATA_NONE`][metadata-constants] constant, indicates an unused
+node and may be used instead of removing the node entirely.)
+
+An image may only contain one of each (positive) type of metadata node.
+([`PLUM_METADATA_NONE`][metadata-constants] nodes and user-defined nodes may be repeated.)
+The library will load and store metadata nodes whenever possible, i.e., whenever they are meaningful for the
+underlying file format (and present in the image file data, when loading).
+
+Metadata nodes defined by the library are:
+
+- [`PLUM_METADATA_COLOR_DEPTH`][metadata-constants]: describes the actual bit depth for each color channel.
+  The library will always load this node; when storing an image, this node (if present) will be used to determine the
+  true color depth that should be stored.
+  (If this node isn't present, the library will use the color depth determined by the [color format][color-formats]
+  instead.)
+- [`PLUM_METADATA_BACKGROUND`][metadata-constants]: contains a single color value indicating the image's background
+  color, i.e., the color against which it should be presented.
+  (Note that this node will always contain a color, even for [indexed-color mode][indexed] images.)
+- [`PLUM_METADATA_LOOP_COUNT`][metadata-constants]: indicates how many times an animation will loop; defaults to 1 if
+  not present.
+- [`PLUM_METADATA_FRAME_DURATION`][metadata-constants]: indicates the duration of each frame in an animation, in
+  nanoseconds; defaults to 0 for all frames if not present.
+- [`PLUM_METADATA_FRAME_DISPOSAL`][metadata-constants]: indicates how a frame will be removed from the canvas once its
+  duration expires; defaults to [`PLUM_DISPOSAL_NONE`][disposals] for all frames if not present.
+
+The exact layout of the data for each node is described in [the Metadata page][metadata].
+The last three types in that list are related to animation and will be analyzed in [a later section](#7-animations).
+
+The [`plum_find_metadata`][find-metadata] function can be used to find a metadata node in an image; this is a simple
+search through the linked list, but it is available as a convenience function so that users aren't required to
+reimplement this functionality.
+
+This function will return an image's background color, or a default value if none is defined:
+
+``` c
+uint32_t background_color (const struct plum_image * image, uint32_t dflt) {
+  assert(image -> color_format == PLUM_COLOR_32);
+  const struct plum_metadata * metadata =
+    plum_find_metadata(image, PLUM_METADATA_BACKGROUND);
+  if (!metadata) return dflt;
+  return *(const uint32_t *) (metadata -> data);
+}
+```
+
+And this function will replace an image's background color with yellow before storing it:
+
+``` c
+size_t store_yellow_image (struct plum_image * image, void * buffer,
+                           size_t size, unsigned * restrict error) {
+  // note: the arguments replicate plum_store_image's arguments
+  if (!image) {
+    if (error) *error = PLUM_ERR_INVALID_ARGUMENTS;
+    return 0;
+  }
+  assert(image -> color_format == PLUM_COLOR_32);
+  // create a new metadata node, to be inserted at the head of the list
+  uint32_t yellow = 0xffff; // color value for yellow
+  struct plum_metadata new_metadata = {
+    .next = image -> metadata,
+    .type = PLUM_METADATA_BACKGROUND,
+    .size = sizeof yellow,
+    .data = &yellow
+  };
+  // if there was a background, suppress it temporarily
+  struct plum_metadata * old_metadata =
+    plum_find_metadata(image, PLUM_METADATA_BACKGROUND);
+  if (old_metadata) old_metadata -> type = PLUM_METADATA_NONE;
+  image -> metadata = &new_metadata;
+  size_t result = plum_store_image(image, buffer, size, error);
+  // restore the old metadata, and restore the old background if needed
+  image -> metadata = new_metadata.next;
+  if (old_metadata) old_metadata -> type = PLUM_METADATA_BACKGROUND;
+  return result;
+}
+```
 
 ## 7. Animations
 
-TBD
+Since the library supports multi-frame images, it follows that it is capable of handling animated images.
+Image file formats such as GIF and APNG can specify an animation as a sequence of image frames, and the library can
+load and generate such files.
+
+Animations are represented as multi-frame images, using [metadata nodes][metadata] to contain the animation
+parameters.
+If a file format supports animations, whenever an image contains animation metadata, it will be used to generate the
+corresponding animation when generating the image file; otherwise, defaults will be used.
+
+The [metadata nodes][metadata] containing animation parameters are:
+
+- [`PLUM_METADATA_LOOP_COUNT`][metadata-constants]: contains a single `uint32_t` value indicating how many times the
+  animation will loop; if this value is 0, the animation loops forever.
+  If this value is missing, the animation doesn't loop at all; this is equivalent to a loop count of 1.
+- [`PLUM_METADATA_FRAME_DURATION`][metadata-constants]: array of `uint64_t` values containing the durations for each
+  frame, in nanoseconds; 0 is a special value that indicates that a frame is not part of the animation at all.
+  (For a frame to be displayed as briefly as possible, use 1 instead; the library follows this convention when loading
+  an image.)
+  If this value is missing, or if it is shorter than the number of frames in the image, remaining frames are assumed
+  to have zero duration.
+- [`PLUM_METADATA_FRAME_DISPOSAL`][metadata-constants]: array of `uint8_t` values containing the disposal methods for
+  each frame, i.e., the actions that will be taken to remove the frame from the canvas once its duration expires.
+  Possible values are any of the [disposal constants][disposals].
+  If this value is missing, or if it is shorter than the number of frames in the image, remaining frames are assumed
+  to have a disposal method of [`PLUM_DISPOSAL_NONE`][disposals].
+
+Note that image file formats can impose limitations on the values of these parameters.
+The library will approximate them as best as possible when generating an image file.
+
+The sample program for this chapter will create a slideshow out of a list of image files.
+As it is significantly longer than the examples shown before, this sample is located [in a separate file][slideshow].
 
 ## 8. Color and palette conversions
 
 TBD
 
-## 9. Memory management
+## 9. Generating images from scratch
 
 TBD
 
-## 10. Accessing images not in files
+## 10. Memory management
 
 TBD
 
-## 11. Further resources
+## 11. Accessing images not in files
+
+TBD
+
+## 12. Further resources
 
 TBD
 
@@ -566,19 +698,24 @@ Up: [README](README.md)
 [color-macros]: macros.md#color-macros
 [color-masks]: constants.md#color-mask-constants
 [destroy]: functions.md#plum_destroy_image
+[disposals]: constants.md#frame-disposal-methods
 [errors]: constants.md#errors
 [feature-macros]: macros.md#feature-test-macros
+[find-metadata]: functions.md#plum_find_metadata
 [format-constants]: constants.md#image-types
 [image]: structs.md#plum_image
 [indexed]: colors.md#indexed-color-mode
 [load]: functions.md#plum_load_image
 [loading-flags]: constants.md#loading-flags
 [metadata]: metadata.md
+[metadata-constants]: constants.md#metadata-node-types
+[metadata-struct]: structs.md#plum_metadata
 [methods]: methods.md
 [pixel-array]: macros.md#array-declaration
 [pixel-casts]: macros.md#array-casts
 [pixel-index]: macros.md#pixel-index-macros
 [reduce]: functions.md#plum_reduce_palette
+[slideshow]: slideshow.c
 [sort]: functions.md#plum_sort_palette
 [store]: functions.md#plum_store_image
 [unprefixed]: macros.md#unprefixed-macros
