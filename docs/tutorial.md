@@ -667,11 +667,173 @@ As it is significantly longer than the examples shown before, this sample is loc
 
 ## 8. Color and palette conversions
 
-TBD
+All examples so far have used a single [color format][color-formats].
+This is the intended use of the library: the user will choose which color format they want to use, and always use that
+format throughout; the library supports multiple color formats to adapt to different use cases, but it is not expected
+(nor necessary) for user programs to support multiple color formats at once.
+
+However, it is sometimes necessary to convert between color formats; for example, different parts of the same program
+may use different color formats.
+It might also be necessary to convert an image from direct-color pixel values into [indexed-color mode][indexed] or
+vice-versa.
+
+To convert a single color value, use the [`plum_convert_color`][convert-color] function; this function simply takes a
+color value and the source and destination color formats as arguments, and returns the converted color value.
+For example, `plum_convert_color(0x123456, PLUM_COLOR_32, PLUM_COLOR_64)` will return `0x121234345656`.
+
+Converting more than one color can be done by simply calling this function in a loop.
+However, different [color formats][color-formats] have different data sizes, which makes it more complex to iterate
+over an array of colors when either the source or the destination format aren't known in advance.
+Therefore, the [`plum_convert_colors`][convert-colors] function will convert an entire array of colors from one
+[color format][color-formats] to another.
+This function takes as arguments the destination and source buffers, the number of colors to convert, and the
+destination and source [color formats][color-formats] (note that these last two arguments are flipped with respect to
+[`plum_convert_color`][convert-color], to match the order of the first two arguments).
+
+For example, this function will convert an image's palette to the [`PLUM_COLOR_64`][loading-flags] color format:
+
+``` c
+void make_palette_64 (struct plum_image * image) {
+  if (!image -> palette) return;
+  uint64_t * new_palette =
+    plum_malloc(image, (image -> max_palette_index + 1) * sizeof *new_palette);
+  plum_convert_colors(new_palette, image -> palette,
+                      image -> max_palette_index + 1,
+                      PLUM_COLOR_64, image -> color_format);
+  image -> palette = new_palette;
+  image -> color_format = PLUM_COLOR_64;
+  // if there was background color metadata, remove it (easier than converting)
+  struct plum_metadata * metadata =
+    plum_find_metadata(image, PLUM_METADATA_BACKGROUND);
+  if (metadata) metadata -> type = PLUM_METADATA_NONE;
+}
+```
+
+(Note: the [`plum_malloc`][malloc] function allocates a buffer, like `malloc` does, but associated to an image, so
+that [`plum_destroy_image`][destroy] will later release it.
+This will be explained in detail in [a later section](#10-memory-management).)
+
+A more interesting case is converting an image to or from [indexed-color mode][indexed].
+This is already done by [`plum_load_image`][load] as needed, but it can also be done by the user manually whenever it
+becomes necessary to operate in the other mode.
+
+Converting an image to [indexed-color mode][indexed] requires generating a palette and assigning each pixel the index
+of its color into the generated palette.
+The [`plum_convert_colors_to_indexes`][convert-colors-indexes] function handles both steps, but it requires the user
+to preallocate the buffers where the data will be held.
+The following function shows an example (although it doesn't handle releasing the memory buffers for the old pixel
+data after conversion is finished):
+
+``` c
+unsigned make_image_indexed (struct plum_image * image) {
+  // will return an error constant if an error occurs
+  if (image -> palette) return 0; // nothing to do here
+  void * palette = plum_malloc(image,
+    plum_color_buffer_size(256, image -> color_format));
+  // plum_color_buffer_size returns the size of a memory buffer that fits the
+  // specified number of colors in the chosen color format
+  if (!palette) return PLUM_ERR_OUT_OF_MEMORY;
+  uint8_t * pixeldata = plum_malloc(image,
+    (size_t) image -> width * image -> height * image -> frames);
+  if (!pixeldata) {
+    plum_free(image, palette);
+    return PLUM_ERR_OUT_OF_MEMORY;
+  }
+  int result = plum_convert_colors_to_indexes(
+    pixeldata, image -> data, palette,
+    (size_t) image -> width * image -> height * image -> frames,
+    image -> color_format | PLUM_SORT_LIGHT_FIRST);
+  if (result < 0) {
+    plum_free(image, palette);
+    plum_free(image, pixeldata);
+    return -result;
+  }
+  image -> palette = palette;
+  image -> data = pixeldata;
+  image -> max_palette_index = result;
+  return 0;
+}
+```
+
+Note that the [`plum_convert_colors_to_indexes`][convert-colors-indexes] function may fail, in which case it returns a
+negative error code.
+(If it doesn't fail, it returns the new value for `max_palette_index`.)
+For example, if the pixel data contains more than 256 distinct colors, the function will fail with a
+[`PLUM_ERR_TOO_MANY_COLORS`][errors] error (i.e., it will return `-PLUM_ERR_TOO_MANY_COLORS`).
+
+The opposite case is handled by the [`plum_convert_indexes_to_colors`][convert-indexes-colors] function, which will
+render an array of pixels from an array of indexes and its palette.
+This is a much simpler case that cannot return an error code.
+The equivalent example to the function above (also without releasing the original buffer) is:
+
+``` c
+unsigned make_image_direct (struct plum_image * image) {
+  if (!image -> palette) return 0; // nothing to do here
+  size_t pixels = (size_t) image -> width * image -> height * image -> frames;
+  void * pixeldata = plum_malloc(image,
+    plum_color_buffer_size(pixels, image -> color_format));
+  if (!pixeldata) return PLUM_ERR_OUT_OF_MEMORY;
+  plum_convert_indexes_to_colors(pixeldata, image -> data8, image -> palette,
+                                 pixels, image -> color_format);
+  image -> data = pixeldata;
+  image -> palette = NULL; // mark the image as not indexed
+  return 0;
+}
+```
 
 ## 9. Generating images from scratch
 
-TBD
+So far, this tutorial has mostly been dealing with images loaded from a file.
+However, it is obviously possible to generate image data directly, without loading it from anywhere, by writing the
+corresponding data to a [`plum_image`][image] struct.
+
+The library doesn't require images to be allocated in any particular way, nor it makes any assumptions about their
+layout in memory beyond what is implied by the data types in use.
+Therefore, it is perfectly possible to allocate image data in any way: as local variables (i.e., on the stack), via
+`malloc`, etc.
+
+Simple images are easy enough to generate.
+The following example will generate a red-blue gradient that fades to white towards the bottom:
+
+``` c
+#include <stdio.h>
+#include <stdint.h>
+#define PLUM_UNPREFIXED_MACROS
+#include "libplum.h"
+
+int main (int argc, char ** argv) {
+  if (argc != 2) {
+    fprintf(stderr, "usage: %s <output>\n", *argv);
+    return 2;
+  }
+  uint32_t pixeldata[256][256];
+  struct plum_image image = {
+    .type = PLUM_IMAGE_PNG,
+    .width = 256,
+    .height = 256,
+    .frames = 1,
+    .color_format = PLUM_COLOR_32,
+    .data32 = (uint32_t *) pixeldata
+  };
+  uint32_t row, col;
+  for (row = 0; row < 256; row ++) for (col = 0; col < 256; col ++) {
+    unsigned red = (row < col) ? 255 + row - col : 255;
+    unsigned blue = ((row + col) < 255) ? row + col : 255;
+    pixeldata[row][col] = COLOR32(red, row, blue, 0);
+  }
+  unsigned error;
+  plum_store_image(&image, argv[1], PLUM_FILENAME, &error);
+  if (error) fprintf(stderr, "error: %s\n", plum_get_error_text(error));
+  return !!error;
+}
+```
+
+Note that the example above doesn't allocate anything on the heap: there are no calls to `malloc` or any similar
+functions.
+This is completely valid, and the library can deal with image data laid out that way.
+However, this can easily become inconvenient when images get large and complex.
+The following section will explain how memory can be bound to an image and thus quickly released with
+[`plum_destroy_image`][destroy] after finishing working with the image, like with the examples above.
 
 ## 10. Memory management
 
@@ -697,6 +859,10 @@ Up: [README](README.md)
 [color-formats]: colors.md#formats
 [color-macros]: macros.md#color-macros
 [color-masks]: constants.md#color-mask-constants
+[convert-color]: functions.md#plum_convert_color
+[convert-colors]: functions.md#plum_convert_colors
+[convert-colors-indexes]: functions.md#plum_convert_colors_to_indexes
+[convert-indexes-colors]: functions.md#plum_convert_indexes_to_colors
 [destroy]: functions.md#plum_destroy_image
 [disposals]: constants.md#frame-disposal-methods
 [errors]: constants.md#errors
@@ -707,6 +873,7 @@ Up: [README](README.md)
 [indexed]: colors.md#indexed-color-mode
 [load]: functions.md#plum_load_image
 [loading-flags]: constants.md#loading-flags
+[malloc]: functions.md#plum_malloc
 [metadata]: metadata.md
 [metadata-constants]: constants.md#metadata-node-types
 [metadata-struct]: structs.md#plum_metadata

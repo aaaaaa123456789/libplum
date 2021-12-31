@@ -1,3 +1,5 @@
+// This program is referenced by the tutorial at tutorial.md, chapter 7. See that page for more information.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -31,6 +33,7 @@ int main (int argc, char ** argv) {
     plum_destroy_image(input);
     return 1;
   }
+  // calloc initializes all pixels (of all frames) to 0, so that borders for smaller images remain transparent black
   output.data32 = calloc((size_t) output.width * output.height * output.frames, sizeof *output.data32);
   uint32_t PIXARRAY(outpixels, &output) = (void *) output.data32;
   // generate the output image's metadata: loop count, frame durations and disposals, and background color
