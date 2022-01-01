@@ -709,7 +709,7 @@ void make_palette_64 (struct plum_image * image) {
 }
 ```
 
-(Note: the [`plum_malloc`][malloc] function allocates a buffer, like `malloc` does, but associated to an image, so
+(Note: the [`plum_malloc`][malloc] function allocates a buffer, like `malloc` does, but associated with an image, so
 that [`plum_destroy_image`][destroy] will later release it.
 This will be explained in detail in [a later section](#10-memory-management).)
 
@@ -839,16 +839,16 @@ The following section will explain how memory can be bound to an image and thus 
 
 Throughout this tutorial, whenever an image was created by [`plum_load_image`][load], that image's memory was later
 released by [`plum_destroy_image`][destroy].
-This function releases all memory associated to an image that has been allocated by the library.
-However, memory associated to an image isn't limited to what [`plum_load_image`][load] allocates.
-This facility is made available to the user as well, so that users can allocate memory associated to an image that
+This function releases all memory associated with an image that has been allocated by the library.
+However, memory associated with an image isn't limited to what [`plum_load_image`][load] allocates.
+This facility is made available to the user as well, so that users can allocate memory associated with an image that
 will later be released all at once by [`plum_destroy_image`][destroy].
 
 Memory allocations are tracked through the `allocator` member of the [`plum_image`][image] struct.
 This is a private-use member that the library uses for this purpose; it must not be modified by user code.
 
 The [`plum_malloc`][malloc] and [`plum_calloc`][calloc] functions will allocate memory in the same way as their
-standard library counterparts, but the memory they allocate will be associated to an image.
+standard library counterparts, but the memory they allocate will be associated with an image.
 Their first argument is the image they will associate the memory with, and their second argument is the size of the
 buffer that will be allocated.
 The [`plum_realloc`][realloc] function can be used to redimension a buffer allocated this way, just like `realloc`
