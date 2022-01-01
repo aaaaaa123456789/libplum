@@ -967,11 +967,160 @@ size_t store_without_transparency (const struct plum_image * image,
 
 ## 11. Accessing images not in files
 
-TBD
+So far, all examples have loaded images directly from a file, or stored them directly to a file.
+While this is most likely the most common use case, it is also possible to access image files in memory, or from
+arbitrary locations using callbacks.
+(For example, an OS-aware user may prefer to map a file to memory and point [`plum_load_image`][load] at that memory
+buffer for performance reasons.)
+
+The [`plum_load_image`][load] and [`plum_store_image`][store] functions take two arguments that describe the location
+of the image data, called `buffer` and `size`.
+The `size` argument also indicates what type of location `buffer` will refer to; so far, all examples have used
+[`PLUM_FILENAME`][mode-constants] for that argument, indicating that `buffer` points to a filename.
+
+Other possibilities are described in the [Loading and storing modes][modes] page.
+These are:
+
+- [`PLUM_BUFFER`][mode-constants]: indicates that `buffer` points to a [`plum_buffer`][buffer] struct; this struct
+  can be used to dynamically allocate memory when generating an image.
+- [`PLUM_CALLBACK`][mode-constants]: indicates that `buffer` points to a [`plum_callback`][callback] struct that
+  describes how to read or write data in terms of a callback function.
+- An actual size: indicates that `buffer` points to a memory buffer of that size; this possibility is what gives the
+  argument its name.
+
+(Note that [`PLUM_CALLBACK`][mode-constants], [`PLUM_BUFFER`][mode-constants] and [`PLUM_FILENAME`][mode-constants]
+take up the highest possible `size_t` values, and therefore won't collide in practice with actual size values.)
+
+The full semantics for each mode are explained in the page [mentioned above][modes].
+As a quick summary:
+
+- A fixed-size memory buffer (i.e., where `size` is the size) works as expected.
+- [`PLUM_FILENAME`][mode-constants] accesses a file; `buffer` is a `const char *` containing a filename, as shown in
+  the examples throughout this tutorial.
+- [`PLUM_BUFFER`][mode-constants] accesses a variable length buffer (through the [`plum_buffer`][buffer] struct); its
+  `size` and `data` members describe it.
+  When generating an image, the `data` member will be set to an allocated memory buffer (through `malloc`) containing
+  the generated data, and the `size` member will be set to the size of the generated data; this data must be freed
+  (using `free`) by the user after using it.
+- [`PLUM_CALLBACK`][mode-constants] reads or writes data through a callback (from a [`plum_callback`][callback]
+  struct), which receives a buffer (to write from or read into) and its size and returns the number of bytes written
+  (or 0 for EOF or a negative value for an error) repeatedly until it finishes or fails.
+
+The following sample program converts image data to the PNG format, like the program shown near the beginning of the
+tutorial in [an earlier section](#2-storing-an-image), but reading from standard input and writing to standard output
+using a callback:
+
+``` c
+#include <stdio.h>
+#include "libplum.h"
+
+int readcb(void *, void *, int);
+int writecb(void *, void *, int);
+
+int main (void) {
+  struct plum_callback callback = {.callback = &readcb, .userdata = stdin};
+  unsigned error;
+  struct plum_image * image = plum_load_image(&callback, PLUM_CALLBACK,
+                                              PLUM_COLOR_32, &error);
+  if (error) {
+    fprintf(stderr, "load error: %s\n", plum_get_error_text(error));
+    return 1;
+  }
+  image -> type = PLUM_IMAGE_PNG;
+  callback = (struct plum_callback) {.callback = &writecb, .userdata = stdout};
+  plum_store_image(image, &callback, PLUM_CALLBACK, &error);
+  plum_destroy_image(image);
+  if (error) fprintf(stderr, "store error: %s\n", plum_get_error_text(error));
+  return !!error;
+}
+
+int readcb (void * file, void * buffer, int size) {
+  size_t result = fread(buffer, 1, size, file);
+  if (ferror(file)) return -1; // negative result on error
+  return result; // return number of bytes read (0 on EOF)
+}
+
+int writecb (void * file, void * buffer, int size) {
+  size_t result = fwrite(buffer, 1, size, file);
+  if (ferror(file) || feof(file)) return -1; // negative result on error
+  return result;
+}
+```
+
+And the following program will generate a red-blue gradient that fades to white, like a sample program from
+[an earlier section](#9-generating-images-from-scratch), but instead of writing out the gradient to a file, it will
+write out a hexadecimal dump of the image to standard output:
+
+``` c
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#define PLUM_UNPREFIXED_MACROS
+#include "libplum.h"
+
+void print_safe_char (unsigned char c) {
+  putchar(((c >= 0x20) && (c <= 0x7e)) ? c : '.');
+}
+
+int main (void) {
+  uint32_t pixeldata[256][256];
+  struct plum_image image = {
+    .type = PLUM_IMAGE_PNG,
+    .width = 256,
+    .height = 256,
+    .frames = 1,
+    .color_format = PLUM_COLOR_32,
+    .data32 = (uint32_t *) pixeldata
+  };
+  uint32_t row, col;
+  for (row = 0; row < 256; row ++) for (col = 0; col < 256; col ++) {
+    unsigned red = (row < col) ? 255 + row - col : 255;
+    unsigned blue = ((row + col) < 255) ? row + col : 255;
+    pixeldata[row][col] = COLOR32(red, row, blue, 0);
+  }
+  unsigned error;
+  struct plum_buffer buffer;
+  plum_store_image(&image, &buffer, PLUM_BUFFER, &error);
+  if (error) {
+    fprintf(stderr, "error: %s\n", plum_get_error_text(error));
+    return 1;
+  }
+  const unsigned char * ptr = buffer.data;
+  // print rows of 16 bytes each
+  for (row = 0; row < (buffer.size >> 4); row ++) {
+    printf("%04x: ", (unsigned) row * 16);
+    for (col = 0; col < 16; col ++) printf("%02x ", ptr[row * 16 + col]);
+    for (col = 0; col < 16; col ++) print_safe_char(ptr[row * 16 + col]);
+    putchar('\n');
+  }
+  // print a last row with the remaining bytes if needed
+  if (buffer.size & 15) {
+    printf("%04x: ", (unsigned) row * 16);
+    for (col = 0; col < (buffer.size & 15); col ++)
+      printf("%02x ", ptr[row * 16 + col]);
+    for (; col < 16; col ++) fputs("   ", stdout); // pad the row length
+    for (col = 0; col < (buffer.size & 15); col ++)
+      print_safe_char(ptr[row * 16 + col]);
+    putchar('\n');
+  }
+  free(buffer.data);
+  return 0;
+}
+```
 
 ## 12. Further resources
 
-TBD
+Previous chapters of this tutorial have focused on the most important functions in the library, key concepts, and the
+necessary code to use the library successfully.
+However, some more specific parts of it remain unexplored, as it would be impractical to write a tutorial to cover
+absolutely every corner case.
+
+There are separate pages listing every [function][functions], [struct][structs], [constant][constants] and
+[macro][macros] in the library, as well as a list of [supported file formats][formats].
+Another starting point is the [alphabetical list of declared identifiers].
+
+Finally, there are additional pages for many other specific topics linked from the [documentation main page][readme]
+that will contain further information about the library that users should check out.
 
 * * *
 
@@ -983,10 +1132,14 @@ Up: [README](README.md)
 
 [accessing]: colors.md#accessing-pixel-and-color-data
 [allocate-metadata]: functions.md#plum_allocate_metadata
+[alphabetical]: alpha.md
+[buffer]: structs.md#plum_buffer
+[callback]: structs.md#plum_callback
 [calloc]: functions.md#plum_calloc
 [color-formats]: colors.md#formats
 [color-macros]: macros.md#color-macros
 [color-masks]: constants.md#color-mask-constants
+[constants]: constants.md
 [convert-color]: functions.md#plum_convert_color
 [convert-colors]: functions.md#plum_convert_colors
 [convert-colors-indexes]: functions.md#plum_convert_colors_to_indexes
@@ -998,24 +1151,31 @@ Up: [README](README.md)
 [feature-macros]: macros.md#feature-test-macros
 [find-metadata]: functions.md#plum_find_metadata
 [format-constants]: constants.md#image-types
+[formats]: formats.md
 [free]: functions.md#plum_free
+[functions]: functions.md
 [image]: structs.md#plum_image
 [indexed]: colors.md#indexed-color-mode
 [load]: functions.md#plum_load_image
 [loading-flags]: constants.md#loading-flags
+[macros]: macros.md
 [malloc]: functions.md#plum_malloc
 [metadata]: metadata.md
 [metadata-constants]: constants.md#metadata-node-types
 [metadata-struct]: structs.md#plum_metadata
 [methods]: methods.md
+[mode-constants]: constants.md#special-loading-and-storing-modes
+[modes]: modes.md
 [new]: functions.md#plum_new_image
 [pixel-array]: macros.md#array-declaration
 [pixel-casts]: macros.md#array-casts
 [pixel-index]: macros.md#pixel-index-macros
+[readme]: README.md
 [realloc]: functions.md#plum_realloc
 [reduce]: functions.md#plum_reduce_palette
 [slideshow]: slideshow.c
 [sort]: functions.md#plum_sort_palette
 [store]: functions.md#plum_store_image
+[structs]: structs.md
 [unprefixed]: macros.md#unprefixed-macros
 [validate]: functions.md#plum_validate_image
