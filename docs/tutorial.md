@@ -837,7 +837,133 @@ The following section will explain how memory can be bound to an image and thus 
 
 ## 10. Memory management
 
-TBD
+Throughout this tutorial, whenever an image was created by [`plum_load_image`][load], that image's memory was later
+released by [`plum_destroy_image`][destroy].
+This function releases all memory associated to an image that has been allocated by the library.
+However, memory associated to an image isn't limited to what [`plum_load_image`][load] allocates.
+This facility is made available to the user as well, so that users can allocate memory associated to an image that
+will later be released all at once by [`plum_destroy_image`][destroy].
+
+Memory allocations are tracked through the `allocator` member of the [`plum_image`][image] struct.
+This is a private-use member that the library uses for this purpose; it must not be modified by user code.
+
+The [`plum_malloc`][malloc] and [`plum_calloc`][calloc] functions will allocate memory in the same way as their
+standard library counterparts, but the memory they allocate will be associated to an image.
+Their first argument is the image they will associate the memory with, and their second argument is the size of the
+buffer that will be allocated.
+The [`plum_realloc`][realloc] function can be used to redimension a buffer allocated this way, just like `realloc`
+does; its three arguments are the associated image (which must be the same as the one used to allocate the buffer),
+the buffer to be redimensioned and its new size.
+The [`plum_free`][free] function can be used to release a buffer allocated this way; its arguments are the image that
+the buffer is associated with and the buffer itself.
+(It is not necessary to call [`plum_free`][free] on buffers allocated this way, as [`plum_destroy_image`][destroy]
+will deallocate all buffers allocated for an image.
+However, it can be desirable in many circumstances to release a buffer once the user is done using it.)
+
+Finally, the [`plum_allocate_metadata`][allocate-metadata] function will allocate a
+[`struct plum_metadata`][metadata-struct] node and its data as a single allocation, initializing the struct's `data`
+and `size` members (and zero-initializing the rest); while this can also be achieved using [`plum_malloc`][malloc],
+this function allocates both the node itself and its associated data buffer in a single allocation (that can be
+released with a single call to [`plum_free`][free] if needed), simplifying its deallocation if necessary.
+(Note that it is not advisable to call [`plum_realloc`][realloc] on a buffer allocated this way.)
+
+Note that [`plum_load_image`][load] (and [`plum_copy_image`][copy], which will be described later on) will allocate
+the `data` and `palette` buffers as if by [`plum_malloc`][malloc] and all of the image's metadata as if by
+[`plum_allocate_metadata`][allocate-metadata], so it is possible to release these buffers with [`plum_free`][free] if
+the user intends to stop using them (perhaps to replace them).
+
+This sample function will scale up an image by an integer factor.
+Doing so requires redimensioning the image, and thus it requires allocating a new buffer for the pixel data.
+
+``` c
+void scale_up (struct plum_image * image, unsigned factor) {
+  if (factor < 2) return;
+  assert((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_32);
+  assert(!image -> palette);
+  uint32_t PIXARRAY(in, image) = image -> data;
+  // assume that the new dimensions will be valid
+  image -> width *= factor;
+  image -> height *= factor;
+  // allocate a new array based on the new dimensions
+  uint32_t PIXARRAY(out, image) =
+    plum_malloc(image, plum_pixel_buffer_size(image));
+  if (!out) abort();
+  uint32_t frame, row, col;
+  for (frame = 0; frame < image -> frames; frame ++)
+    for (row = 0; row < image -> height; row ++)
+      for (col = 0; col < image -> width; col ++)
+        out[frame][row][col] = in[frame][row / factor][col / factor];
+  // assume that the previous image data was allocated with plum_malloc
+  // (true if it comes directly from plum_load_image, for example)
+  plum_free(image, image -> data);
+  image -> data = out;
+}
+```
+
+This method of allocation can be used for all images, not only images created by the library.
+For instance, it is accessible for images statically initialized by the user as well, like the example shown in the
+previous section.
+For those images, the `allocator` member must be initialized to `NULL` (which will happen automatically if that member
+is left out in an initializer, as in the example in that section); the library will manage it from that point on.
+Calling [`plum_destroy_image`][destroy] on such an image works as expected: all memory associated with the image is
+released (and its `allocator` member is reinitialized to `NULL`).
+However, the struct itself won't be released, as it hasn't been allocated by the library: only memory associated with
+the image (by explicit library calls) is released by [`plum_destroy_image`][destroy].
+Therefore, it is always safe to call this function when the user is finished working with an image, regardless of how
+the image itself or any buffers it uses were allocated.
+
+However, it is often desirable to allocate a new image on the heap altogether, like so:
+
+``` c
+struct plum_image * image = calloc(1, sizeof *image);
+```
+
+An allocation like this, performed by a function that doesn't belong to the library, is not managed by the library,
+and therefore, not associated with the image.
+In particular, this means that [`plum_destroy_image`][destroy] will **not** release that particular buffer if called
+on that image, increasing the chances of an accidental memory leak.
+It is also impossible to perform this allocation via [`plum_calloc`][calloc], as [`plum_calloc`][calloc] requires a
+pointer to the image with which the buffer will be associated, but since the image itself is being allocated, such an
+image doesn't exist yet.
+The [`plum_new_image`][new] function solves this problem, allocating a zero-initialized image like `calloc` would, but
+associating its own memory with itself, so that it can be released by [`plum_destroy_image`][destroy].
+(Note that [`plum_load_image`][load] and [`plum_copy_image`][copy] also allocate the image itself as if by
+[`plum_new_image`][new], which is why [`plum_destroy_image`][destroy] can release that memory too.)
+The above snippet would simply become:
+
+``` c
+struct plum_image * image = plum_new_image();
+```
+
+Finally, sometimes it is useful to create a full copy of an image, with its own independent pixel data, metadata, and
+so on.
+This requires allocating multiple buffers, determining their sizes, copying their contents, etc.
+The [`plum_copy_image`][copy] function will handle this, creating a full (deep) copy of an image and copying all its
+data, palette (if any) and metadata (in the same order as the original).
+(Note that the [`plum_image`][image] struct contains a member, `user`, whose only purpose is to hold a pointer to any
+data the user wants; it is initialized to `NULL` by [`plum_new_image`][new] and [`plum_load_image`][load] and ignored
+by all other functions in the library.
+This member will simply be copied directly by [`plum_copy_image`][copy], since the library has no way of knowing the
+internal structure or size of any data placed there by the user.)
+
+For example, the following function stores an image, but without transparency, by creating a temporary copy:
+
+``` c
+size_t store_without_transparency (const struct plum_image * image,
+                                   void * buffer, size_t size,
+                                   unsigned * restrict error) {
+  // note: same arguments as plum_store_image
+  struct plum_image * copy = plum_copy_image(image);
+  if (!copy) {
+    if (error) *error = PLUM_ERR_OUT_OF_MEMORY;
+    return 0;
+  }
+  plum_remove_alpha(copy);
+  size_t result = plum_store_image(copy, buffer, size, error);
+  plum_destroy_image(copy);
+  return result;
+}
+```
 
 ## 11. Accessing images not in files
 
@@ -856,6 +982,8 @@ Next: [Building and including the library](building.md)
 Up: [README](README.md)
 
 [accessing]: colors.md#accessing-pixel-and-color-data
+[allocate-metadata]: functions.md#plum_allocate_metadata
+[calloc]: functions.md#plum_calloc
 [color-formats]: colors.md#formats
 [color-macros]: macros.md#color-macros
 [color-masks]: constants.md#color-mask-constants
@@ -863,12 +991,14 @@ Up: [README](README.md)
 [convert-colors]: functions.md#plum_convert_colors
 [convert-colors-indexes]: functions.md#plum_convert_colors_to_indexes
 [convert-indexes-colors]: functions.md#plum_convert_indexes_to_colors
+[copy]: functions.md#plum_copy_image
 [destroy]: functions.md#plum_destroy_image
 [disposals]: constants.md#frame-disposal-methods
 [errors]: constants.md#errors
 [feature-macros]: macros.md#feature-test-macros
 [find-metadata]: functions.md#plum_find_metadata
 [format-constants]: constants.md#image-types
+[free]: functions.md#plum_free
 [image]: structs.md#plum_image
 [indexed]: colors.md#indexed-color-mode
 [load]: functions.md#plum_load_image
@@ -878,9 +1008,11 @@ Up: [README](README.md)
 [metadata-constants]: constants.md#metadata-node-types
 [metadata-struct]: structs.md#plum_metadata
 [methods]: methods.md
+[new]: functions.md#plum_new_image
 [pixel-array]: macros.md#array-declaration
 [pixel-casts]: macros.md#array-casts
 [pixel-index]: macros.md#pixel-index-macros
+[realloc]: functions.md#plum_realloc
 [reduce]: functions.md#plum_reduce_palette
 [slideshow]: slideshow.c
 [sort]: functions.md#plum_sort_palette
