@@ -18,3 +18,4 @@ All documentation for the current version of the library can be found here.
 - [C++ helper methods](methods.md)
 - [Supported file formats](formats.md)
 - [Library versioning](version.md)
+- [Changelog](changelog.md)
