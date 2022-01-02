@@ -12,6 +12,7 @@
 #include "multibyte.h"
 
 // allocator.c
+internal void * attach_allocator_node(union allocator_node **, union allocator_node *);
 internal void * allocate(union allocator_node **, size_t);
 internal void * clear_allocate(union allocator_node **, size_t);
 internal void deallocate(union allocator_node **, void *);

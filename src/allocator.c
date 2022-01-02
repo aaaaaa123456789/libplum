@@ -1,7 +1,6 @@
 #include "proto.h"
 
-void * allocate (union allocator_node ** list, size_t size) {
-  union allocator_node * node = malloc(sizeof *node + size);
+void * attach_allocator_node (union allocator_node ** list, union allocator_node * node) {
   if (!node) return NULL;
   node -> previous = NULL;
   node -> next = *list;
@@ -10,10 +9,12 @@ void * allocate (union allocator_node ** list, size_t size) {
   return node + 1;
 }
 
+void * allocate (union allocator_node ** list, size_t size) {
+  return attach_allocator_node(list, malloc(sizeof(union allocator_node) + size));
+}
+
 void * clear_allocate (union allocator_node ** list, size_t size) {
-  void * result = allocate(list, size);
-  if (result) memset(result, 0, size);
-  return result;
+  return attach_allocator_node(list, calloc(1, sizeof(union allocator_node) + size));
 }
 
 void deallocate (union allocator_node ** list, void * item) {
