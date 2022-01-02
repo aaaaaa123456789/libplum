@@ -51,7 +51,7 @@ void decompress_JPEG_Huffman_scan (struct context * context, struct JPEG_decompr
               p[*outputunit] = 0;
               if (skipcount) skipcount --;
             } else {
-              p[*outputunit] = nextvalue << shift;
+              p[*outputunit] = nextvalue * (1 << shift);
               nextvalue = 0;
             }
             if (!(p || differential)) prevDC[*decodepos] = **outputunit = make_signed_16(prevDC[*decodepos] + (uint16_t) **outputunit);
@@ -127,7 +127,7 @@ void decompress_JPEG_Huffman_bit_scan (struct context * context, struct JPEG_dec
               } else if (skipcount || skipunits) {
                 if (skipcount) skipcount --;
               } else {
-                p[*outputunit] = nextvalue << shift;
+                p[*outputunit] = nextvalue * (1 << shift);
                 nextvalue = 0;
               }
             }

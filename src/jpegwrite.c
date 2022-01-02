@@ -168,9 +168,9 @@ void convert_JPEG_colors_to_YCbCr (struct context * context, const void * colors
 
 void subsample_JPEG_component (double (* restrict component)[64], double (* restrict output)[64], size_t unitsH, size_t unitsV) {
   size_t unitrow, unitcol, row, col, p;
-  #define reduce(offset, shift) do {                                                           \
-    const double * ref = component[(offset) * unitsH] + row * 16 + col * 2 - 64 * (offset);    \
-    (*output)[row * 8 + col + (shift)] = (*ref + ref[1] + ref[8] + ref[9]) * 0.25;             \
+  #define reduce(offset, shift) do {                                                             \
+    const double * ref = component[(offset) * unitsH] + (row * 16 + col * 2 - 64 * (offset));    \
+    (*output)[row * 8 + col + (shift)] = (*ref + ref[1] + ref[8] + ref[9]) * 0.25;               \
   } while (0)
   for (unitrow = 0; unitrow < (unitsV >> 1); unitrow ++) {
     for (unitcol = 0; unitcol < (unitsH >> 1); unitcol ++) {
