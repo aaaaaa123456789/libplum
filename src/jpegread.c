@@ -304,7 +304,7 @@ short * process_JPEG_Huffman_table (struct context * context, const unsigned cha
   const unsigned char * data = *markerdata + 16;
   for (size = 0; size < 16; size ++) {
     count += lengths[size];
-    totalsize += lengths[size] * (size + 1); // not necessarily the real size of the table, but an easily calculated upper bound
+    totalsize += lengths[size] * (size + 1) * 2; // not necessarily the real size of the table, but an easily calculated upper bound
   }
   if (*markersize < count) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   *markersize -= count;
