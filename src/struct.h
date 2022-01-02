@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdint.h>
 #include <setjmp.h>
 
 #include "../header/libplum.h"
