@@ -10,10 +10,12 @@ void * attach_allocator_node (union allocator_node ** list, union allocator_node
 }
 
 void * allocate (union allocator_node ** list, size_t size) {
+  if (size >= -sizeof(union allocator_node)) return NULL;
   return attach_allocator_node(list, malloc(sizeof(union allocator_node) + size));
 }
 
 void * clear_allocate (union allocator_node ** list, size_t size) {
+  if (size >= -sizeof(union allocator_node)) return NULL;
   return attach_allocator_node(list, calloc(1, sizeof(union allocator_node) + size));
 }
 
@@ -29,6 +31,7 @@ void deallocate (union allocator_node ** list, void * item) {
 }
 
 void * reallocate (union allocator_node ** list, void * item, size_t size) {
+  if (size >= -sizeof(union allocator_node)) return NULL;
   if (!item) return allocate(list, size);
   union allocator_node * node = (union allocator_node *) item - 1;
   node = realloc(node, sizeof *node + size);
