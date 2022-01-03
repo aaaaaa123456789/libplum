@@ -67,6 +67,7 @@ void extract_PNG_code_table (struct context * context, const unsigned char ** co
   for (p = 0; p < lengths; p ++) internal_sizes[p[(const unsigned char []) {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15}]] =
     shift_in_left(context, 3, dataword, bits, compressed, size);
   short * tree = decode_PNG_Huffman_tree(context, internal_sizes, sizeof internal_sizes);
+  if (!tree) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   p = 0;
   while (p < (literals + distances)) {
     uint_fast8_t code = next_PNG_Huffman_code(context, tree, compressed, size, dataword, bits);
@@ -103,6 +104,7 @@ void decompress_PNG_block (struct context * context, const unsigned char ** comp
                            const unsigned char codesizes[restrict static 0x140]) {
   // a single list of codesizes for all codes: 0x00-0xff for literals, 0x100 for end of codes, 0x101-0x11d for lengths, 0x120-0x13d for distances
   short * codetree = decode_PNG_Huffman_tree(context, codesizes, 0x120);
+  if (!codetree) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   short * disttree = decode_PNG_Huffman_tree(context, codesizes + 0x120, 0x20);
   while (1) {
     uint_fast16_t code = next_PNG_Huffman_code(context, codetree, compressed, size, dataword, bits);
