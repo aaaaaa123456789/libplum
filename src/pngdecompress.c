@@ -147,8 +147,8 @@ short * decode_PNG_Huffman_tree (struct context * context, const unsigned char *
     if (codesizes[p] > codelength) codelength = codesizes[p];
   }
   if (!total) return NULL;
-  short * result = ctxmalloc(context, (count * 2) * sizeof *result);
-  for (p = 0; p < (count * 2); p ++) result[p] = -1;
+  short * result = ctxmalloc(context, (count * 2 * codelength) * sizeof *result);
+  for (p = 0; p < (count * 2 * codelength); p ++) result[p] = -1;
   uint_fast16_t index, curlength, code = 0;
   last = 2;
   for (curlength = 1; curlength <= codelength; curlength ++) {
