@@ -59,6 +59,8 @@ void load_PNM_header (struct context * context, size_t offset, struct PNM_image_
       break;
     default:
       header -> datalength = context -> size - offset;
+      if (header -> datalength < (header -> type[(const size_t []) {1, 1, 2, 6}] * header -> width * header -> height - 1))
+        throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   }
 }
 
