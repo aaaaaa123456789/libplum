@@ -200,7 +200,7 @@ The following macros can be defined by the user (before including the library he
   This can be used to avoid compilation errors if the compiler doesn't support VLAs, but it also doesn't use the
   standard macros that indicate that.
 - `PLUM_NO_ANON_MEMBERS`: disables anonymous unions in the [`plum_image`] struct and sets `PLUM_ANON_MEMBERS` to zero.
-  This can be used if the compiler doesn't support this feature, even in C99 or C++ mode.
+  This can be used if the compiler doesn't support this feature, even in C11+ or C++ mode.
 
 Note that the library will internally use some additional feature-test macros to function properly; all of these
 macros are properly prefixed with `PLUM_` to avoid colliding with user-defined macros.

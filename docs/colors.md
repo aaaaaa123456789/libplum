@@ -104,7 +104,7 @@ Regular images (i.e., images in direct-color mode) will contain their pixel data
 or `uint64_t` values depending on the color format they are using.
 This data must always be accessed through a pointer of the correct type; failure to do so will result in the usual
 errors that derive from accessing a buffer through a pointer of a different type, up to undefined behavior.
-The [`plum_image` struct][image] contains a `void * data` member that points to this data; in C99+ and C++ modes,
+The [`plum_image` struct][image] contains a `void * data` member that points to this data; in C11+ and C++ modes,
 there are also `data16`, `data32` and `data64` aliases of the corresponding integer types to avoid the need to cast
 this pointer member.
 Note that both `PLUM_COLOR_32` and `PLUM_COLOR_32X` color data is accessed through `uint32_t` values, and therefore
@@ -115,8 +115,8 @@ their data types.)
 Indexed-color mode images will contain their pixel data as an array of `uint8_t` values; these values are indexes
 into the palette, and they must all be less than or equal to the image's `max_palette_index` member.
 (Images created through [`plum_load_image`][load] will always fulfill this restriction.)
-In C99+ and C++ modes, there is a `data8` alias for the `data` member that allows this 8-bit access without a cast.
-The palette itself is accessed through the `void * palette` member; much like the image data, in C99+ and C++ modes it
+In C11+ and C++ modes, there is a `data8` alias for the `data` member that allows this 8-bit access without a cast.
+The palette itself is accessed through the `void * palette` member; much like the image data, in C11+ and C++ modes it
 has `palette16`, `palette32` and `palette64` aliases to access it without a cast.
 The palette uses the color format defined for the image and is subject to the same constraints as the image data in
 direct-color mode.

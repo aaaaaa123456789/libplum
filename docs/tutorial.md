@@ -226,7 +226,7 @@ The macros for the [`PLUM_COLOR_32`][loading-flags] color format are:
 
 While the image's pixel data is accessible through its `data` member, that member is of `void *` type, making it
 inconvenient to access the pixels directly.
-Therefore, in sufficiently recent versions of C and C++ (C99 onwards and all standard versions of C++), the library
+Therefore, in sufficiently recent versions of C and C++ (C11 onwards and all standard versions of C++), the library
 header defines aliases for this member, `data16`, `data32` and `data64`, which are pointers to the correct integer
 type.
 (There is also a `data8` alias for [indexed-color mode][indexed], but that will be explained in a later section.)
@@ -423,7 +423,7 @@ The library natively supports [indexed-color mode][indexed] with palettes of up 
 Images using this mode use 8-bit (`uint8_t`) pixel data; each pixel contains an index into the image's palette.
 The palette is defined by the `palette` member of the [`plum_image`][image] struct, and it contains an array of
 colors, in the format defined by the image's [color format][color-formats].
-(Like with the `data` member, the struct has typed aliases (in C99 and C++ mode) for this member: `palette16`,
+(Like with the `data` member, the struct has typed aliases (in C11+ and C++ mode) for this member: `palette16`,
 `palette32` and `palette64`.)
 The struct's `max_palette_index` member indicates the maximum valid palette index, and thus implicitly the size of the
 palette (which is one greater than this value); pixel values (i.e., indexes) **must not** be larger than this value in
