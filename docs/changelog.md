@@ -2,7 +2,7 @@
 
 Note: releases are listed from latest to oldest.
 
-## Version 0.2 (in development)
+## Version 0.2 (4 January 2022)
 
 - Fixed a number of decoding bugs involving unusual image parameters
 - Fixed a bug with `plum_malloc` and related functions underflowing the allocation size on excessively large arguments
