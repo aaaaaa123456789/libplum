@@ -213,6 +213,7 @@ internal void load_image_buffer_data(struct context *, unsigned);
 internal void load_file(struct context *, const char *);
 internal void load_from_callback(struct context *, const struct plum_callback *);
 internal void * resize_read_buffer(struct context *, void *, size_t * restrict);
+internal void update_loaded_palette(struct context *, unsigned);
 
 // metadata.c
 internal void add_color_depth_metadata(struct context *, unsigned, unsigned, unsigned, unsigned, unsigned);

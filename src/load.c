@@ -6,12 +6,8 @@ struct plum_image * plum_load_image (const void * restrict buffer, size_t size, 
     if (error) *error = PLUM_ERR_OUT_OF_MEMORY;
     return NULL;
   }
-  if (error) *error = 0;
-  if (!buffer) {
-    context -> status = PLUM_ERR_INVALID_ARGUMENTS;
-    goto done;
-  }
   if (setjmp(context -> target)) goto done;
+  if (!buffer) throw(context, PLUM_ERR_INVALID_ARGUMENTS);
   if (!(context -> image = plum_new_image())) throw(context, PLUM_ERR_OUT_OF_MEMORY);
   switch (size) {
     case PLUM_FILENAME:
@@ -35,11 +31,7 @@ struct plum_image * plum_load_image (const void * restrict buffer, size_t size, 
       int colors = plum_get_highest_palette_index(context -> image);
       if (colors < 0) throw(context, -colors);
       context -> image -> max_palette_index = colors;
-      if (flags & PLUM_SORT_EXISTING) sort_palette(context -> image, flags);
-      if (flags & PLUM_PALETTE_REDUCE) {
-        reduce_palette(context -> image);
-        context -> image -> palette = plum_realloc(context -> image, context -> image -> palette, plum_palette_buffer_size(context -> image));
-      }
+      update_loaded_palette(context, flags);
     } else {
       generate_palette(context, flags);
       // PLUM_PALETTE_FORCE == PLUM_PALETTE_LOAD | PLUM_PALETTE_GENERATE
@@ -48,13 +40,8 @@ struct plum_image * plum_load_image (const void * restrict buffer, size_t size, 
   else if (context -> image -> palette)
     if ((flags & PLUM_PALETTE_MASK) == PLUM_PALETTE_NONE)
       remove_palette(context);
-    else {
-      if (flags & PLUM_SORT_EXISTING) sort_palette(context -> image, flags);
-      if (flags & PLUM_PALETTE_REDUCE) {
-        reduce_palette(context -> image);
-        context -> image -> palette = plum_realloc(context -> image, context -> image -> palette, plum_palette_buffer_size(context -> image));
-      }
-    }
+    else
+      update_loaded_palette(context, flags);
   done:
   if (error) *error = context -> status;
   struct plum_image * image = context -> image;
@@ -142,4 +129,13 @@ void * resize_read_buffer (struct context * context, void * buffer, size_t * res
   else
     *allocated = 0x4000 - sizeof(union allocator_node); // keep the buffer aligned to memory pages
   return ctxrealloc(context, buffer, *allocated);
+}
+
+void update_loaded_palette (struct context * context, unsigned flags) {
+  if (flags & PLUM_SORT_EXISTING) sort_palette(context -> image, flags);
+  if (flags & PLUM_PALETTE_REDUCE) {
+    reduce_palette(context -> image);
+    context -> image -> palette = plum_realloc(context -> image, context -> image -> palette, plum_palette_buffer_size(context -> image));
+    if (!context -> image -> palette) throw(context, PLUM_ERR_OUT_OF_MEMORY);
+  }
 }
