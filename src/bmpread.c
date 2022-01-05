@@ -11,9 +11,9 @@ void load_BMP_data (struct context * context, unsigned flags) {
   context -> image -> frames = 1;
   context -> image -> width = read_le32_unaligned(context -> data + 18);
   context -> image -> height = read_le32_unaligned(context -> data + 22);
-  if (context -> image -> width >= 0x7fffffffu) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  if (context -> image -> width > 0x7fffffffu) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   int inverted = 1;
-  if (context -> image -> height >= 0x7fffffffu) {
+  if (context -> image -> height > 0x7fffffffu) {
     context -> image -> height = -context -> image -> height;
     inverted = 0;
   }
