@@ -12,11 +12,13 @@ In other words, the function won't modify any of the data accessible through tha
     - [`plum_new_image`](#plum_new_image)
     - [`plum_copy_image`](#plum_copy_image)
     - [`plum_load_image`](#plum_load_image)
+    - [`plum_load_image_limited`](#plum_load_image_limited)
     - [`plum_store_image`](#plum_store_image)
     - [`plum_destroy_image`](#plum_destroy_image)
 - [Validation](#validation)
     - [`plum_validate_image`](#plum_validate_image)
     - [`plum_check_valid_image_size`](#plum_check_valid_image_size)
+    - [`plum_check_limited_image_size`](#plum_check_limited_image_size)
     - [`plum_validate_palette_indexes`](#plum_validate_palette_indexes)
 - [Color operations](#color-operations)
     - [`plum_convert_color`](#plum_convert_color)
@@ -53,9 +55,9 @@ releasing images.
 Most simple uses of the library require these functions alone; users are encouraged to familiarize themselves with
 them first.
 
-The [`plum_new_image`](#plum_new_image), [`plum_copy_image`](#plum_copy_image) and
-[`plum_load_image`](#plum_load_image) functions all serve the purpose of creating an image with some data; therefore,
-they are collectively referred to elsewhere in the documentation as the _constructor functions_.
+The [`plum_new_image`](#plum_new_image), [`plum_copy_image`](#plum_copy_image), [`plum_load_image`](#plum_load_image)
+and [`plum_load_image_limited`](#plum_load_image_limited) functions all serve the purpose of creating an image with
+some data; therefore, they are collectively referred to elsewhere in the documentation as the _constructor functions_.
 Likewise, the [`plum_destroy_image`](#plum_destroy_image) behaves as the corresponding destructor, releasing all
 memory used by an image.
 The [`plum_store_image`](#plum_store_image) function implements the other critical library feature: generating an
@@ -227,6 +229,49 @@ The error constants signal the following reasons for failure:
   This error can only occur when `size` is set to [`PLUM_FILENAME`][mode-constants] or
   [`PLUM_CALLBACK`][mode-constants].
 - `PLUM_ERR_OUT_OF_MEMORY`: there is not enough memory available to load the image.
+
+### `plum_load_image_limited`
+
+``` c
+struct plum_image * plum_load_image_limited(const void * restrict buffer,
+                                            size_t size, unsigned flags,
+                                            size_t limit,
+                                            unsigned * restrict error);
+```
+
+**Description:**
+
+This function is identical to [`plum_load_image`](#plum_load_image), but it enforces a limit on the number of pixels
+that the loaded image can have.
+This function is intended to deal with untrusted image data, where a specially-crafted malicious image file can create
+a massive image out of a seemingly small amount of input data.
+
+The limit applies to the image as a whole, not to each dimension: the library will enforce that the number of pixels
+in the entire image (i.e., `width * height * frames`) is not greater than the specified limit.
+Specifying a limit of `SIZE_MAX` will make this function behave like [`plum_load_image`](#plum_load_image).
+
+**Arguments:**
+
+The `buffer`, `size`, `flags` and `error` arguments have the same meanings as for the
+[`plum_load_image`](#plum_load_image) function.
+
+- `limit`: maximum number of pixels the loaded image is allowed to have; attempting to load an image with more pixels
+  than the specified value will fail.
+
+**Return value:**
+
+Pointer to the (newly-created) loaded [`struct plum_image`][image], or `NULL` on failure.
+If the function fails and `error` is not `NULL`, `*error` will indicate the reason.
+(This is the same as for [`plum_load_image`](#plum_load_image).)
+
+**Error values:**
+
+If the `error` argument isn't `NULL`, the value it points to will be set to [an error constant][errors].
+
+This function can fail for any of the reasons specified in the [`plum_load_image`](#plum_load_image) function.
+In addition, the following error may occur:
+
+- `PLUM_ERR_IMAGE_TOO_LARGE`: the image's pixel count exceeded the limit specified by `limit`.
 
 ### `plum_store_image`
 
@@ -434,6 +479,33 @@ This function only checks for overflow; it is intended to prevent security issue
 **Return value:**
 
 1 if the size is valid, or 0 if it overflows.
+
+### `plum_check_limited_image_size`
+
+``` c
+int plum_check_limited_image_size(uint32_t width, uint32_t height,
+                                  uint32_t frames, size_t limit);
+```
+
+**Description:**
+
+This function performs the same check as [`plum_check_valid_image_size`](#plum_check_valid_image_size), but it also
+ensures that the total number of pixels (i.e., the product of the three dimensions) is no larger than the value
+specified by the `limit` argument.
+
+This function's main purpose is to ensure that an image meets restrictions like those that can be imposed by
+[`plum_load_image_limited`](#plum_load_image_limited).
+
+**Arguments:**
+
+- `width`: width of the image.
+- `height`: height of the image.
+- `frames`: number of frames in the image.
+- `limit`: maximum number of pixels the image is allowed to have.
+
+**Return value:**
+
+1 if the size is valid and no greater than the specified limit, or 0 if it is too large or it overflows.
 
 ### `plum_validate_palette_indexes`
 
