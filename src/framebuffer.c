@@ -1,9 +1,19 @@
 #include "proto.h"
 
+void validate_image_size (struct context * context, size_t limit) {
+  if (!(context -> image -> width && context -> image -> height && context -> image -> frames)) throw(context, PLUM_ERR_NO_DATA);
+  if (!plum_check_limited_image_size(context -> image -> width, context -> image -> height, context -> image -> frames, limit))
+    throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
+}
+
 int plum_check_valid_image_size (uint32_t width, uint32_t height, uint32_t frames) {
+  return plum_check_limited_image_size(width, height, frames, SIZE_MAX);
+}
+
+int plum_check_limited_image_size (uint32_t width, uint32_t height, uint32_t frames, size_t limit) {
   if (!(width && height && frames)) return 0;
   size_t p = width;
-  const size_t limit = SIZE_MAX / sizeof(uint64_t);
+  if (limit > (SIZE_MAX / sizeof(uint64_t))) limit = SIZE_MAX / sizeof(uint64_t);
   if ((p * height / height) != p) return 0;
   p *= height;
   if ((p * frames / frames) != p) return 0;
@@ -35,8 +45,6 @@ size_t plum_palette_buffer_size (const struct plum_image * image) {
 }
 
 void allocate_framebuffers (struct context * context, unsigned flags, int palette) {
-  if (!plum_check_valid_image_size(context -> image -> width, context -> image -> height, context -> image -> frames))
-    throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
   size_t size = (size_t) context -> image -> width * context -> image -> height * context -> image -> frames;
   if (!palette) size = plum_color_buffer_size(size, flags);
   if (!(context -> image -> data = plum_malloc(context -> image, size))) throw(context, PLUM_ERR_OUT_OF_MEMORY);

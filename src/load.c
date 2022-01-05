@@ -1,6 +1,10 @@
 #include "proto.h"
 
 struct plum_image * plum_load_image (const void * restrict buffer, size_t size, unsigned flags, unsigned * restrict error) {
+  return plum_load_image_limited(buffer, size, flags, SIZE_MAX, error);
+}
+
+struct plum_image * plum_load_image_limited (const void * restrict buffer, size_t size, unsigned flags, size_t limit, unsigned * restrict error) {
   struct context * context = create_context();
   if (!context) {
     if (error) *error = PLUM_ERR_OUT_OF_MEMORY;
@@ -9,22 +13,8 @@ struct plum_image * plum_load_image (const void * restrict buffer, size_t size, 
   if (setjmp(context -> target)) goto done;
   if (!buffer) throw(context, PLUM_ERR_INVALID_ARGUMENTS);
   if (!(context -> image = plum_new_image())) throw(context, PLUM_ERR_OUT_OF_MEMORY);
-  switch (size) {
-    case PLUM_FILENAME:
-      load_file(context, buffer);
-      break;
-    case PLUM_BUFFER:
-      context -> data = ((struct plum_buffer *) buffer) -> data;
-      context -> size = ((struct plum_buffer *) buffer) -> size;
-      break;
-    case PLUM_CALLBACK:
-      load_from_callback(context, buffer);
-      break;
-    default:
-      context -> data = buffer;
-      context -> size = size;
-  }
-  load_image_buffer_data(context, flags);
+  prepare_image_buffer_data(context, buffer, size);
+  load_image_buffer_data(context, flags, limit);
   if (flags & PLUM_ALPHA_REMOVE) plum_remove_alpha(context -> image);
   if (flags & PLUM_PALETTE_GENERATE)
     if (context -> image -> palette) {
@@ -53,31 +43,49 @@ struct plum_image * plum_load_image (const void * restrict buffer, size_t size, 
   return image;
 }
 
-void load_image_buffer_data (struct context * context, unsigned flags) {
+void load_image_buffer_data (struct context * context, unsigned flags, size_t limit) {
   if (context -> size < 8) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   if (bytematch(context -> data, 0x42, 0x4d))
-    load_BMP_data(context, flags);
+    load_BMP_data(context, flags, limit);
   else if (bytematch(context -> data, 0x47, 0x49, 0x46, 0x38, 0x39, 0x61))
-    load_GIF_data(context, flags);
+    load_GIF_data(context, flags, limit);
   else if (bytematch(context -> data, 0x47, 0x49, 0x46, 0x38, 0x37, 0x61))
     // treat GIF87a as GIF89a for compatibility, since it's a strict subset anyway
-    load_GIF_data(context, flags);
+    load_GIF_data(context, flags, limit);
   else if (bytematch(context -> data, 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a))
     // APNG files disguise as PNG files, so handle them all as PNG and split them later
-    load_PNG_data(context, flags);
+    load_PNG_data(context, flags, limit);
   else if ((*context -> data == 0x50) && (context -> data[1] >= 0x31) && (context -> data[1] <= 0x37))
-    load_PNM_data(context, flags);
+    load_PNM_data(context, flags, limit);
   else if (bytematch(context -> data, 0xef, 0xbb, 0xbf, 0x50) && (context -> data[4] >= 0x31) && (context -> data[4] <= 0x37))
     // text-based PNM data destroyed by a UTF-8 BOM: load it anyway, just in case a broken text editor does this
-    load_PNM_data(context, flags);
+    load_PNM_data(context, flags, limit);
   else {
     // JPEG detection: one or more 0xff bytes followed by 0xd8
     size_t position;
     for (position = 0; (position < context -> size) && (context -> data[position] == 0xff); position ++);
     if (position && (position < context -> size) && (context -> data[position] == 0xd8))
-      load_JPEG_data(context, flags);
+      load_JPEG_data(context, flags, limit);
     else
       throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  }
+}
+
+void prepare_image_buffer_data (struct context * context, const void * restrict buffer, size_t size) {
+  switch (size) {
+    case PLUM_FILENAME:
+      load_file(context, buffer);
+      return;
+    case PLUM_BUFFER:
+      context -> data = ((struct plum_buffer *) buffer) -> data;
+      context -> size = ((struct plum_buffer *) buffer) -> size;
+      return;
+    case PLUM_CALLBACK:
+      load_from_callback(context, buffer);
+      return;
+    default:
+      context -> data = buffer;
+      context -> size = size;
   }
 }
 

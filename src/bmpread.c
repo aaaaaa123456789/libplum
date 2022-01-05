@@ -1,6 +1,6 @@
 #include "proto.h"
 
-void load_BMP_data (struct context * context, unsigned flags) {
+void load_BMP_data (struct context * context, unsigned flags, size_t limit) {
   if (context -> size < 54) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   uint_fast32_t dataoffset = read_le32_unaligned(context -> data + 10);
   uint_fast32_t subheader = read_le32_unaligned(context -> data + 14);
@@ -12,12 +12,12 @@ void load_BMP_data (struct context * context, unsigned flags) {
   context -> image -> width = read_le32_unaligned(context -> data + 18);
   context -> image -> height = read_le32_unaligned(context -> data + 22);
   if (context -> image -> width > 0x7fffffffu) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  validate_image_size(context, limit);
   int inverted = 1;
   if (context -> image -> height > 0x7fffffffu) {
     context -> image -> height = -context -> image -> height;
     inverted = 0;
   }
-  if (!(context -> image -> width && context -> image -> height)) throw(context, PLUM_ERR_NO_DATA);
   if (read_le16_unaligned(context -> data + 26) != 1) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   uint_fast16_t bits = read_le16_unaligned(context -> data + 28);
   uint_fast32_t compression = read_le32_unaligned(context -> data + 30);

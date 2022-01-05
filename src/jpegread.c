@@ -1,6 +1,6 @@
 #include "proto.h"
 
-void load_JPEG_data (struct context * context, unsigned flags) {
+void load_JPEG_data (struct context * context, unsigned flags, size_t limit) {
   struct JPEG_marker_layout * layout = load_JPEG_marker_layout(context);
   uint32_t components = determine_JPEG_components(context, layout -> hierarchical ? layout -> hierarchical : *layout -> frames);
   JPEG_component_transfer_function * transfer = get_JPEG_component_transfer_function(context, layout, components);
@@ -24,8 +24,7 @@ void load_JPEG_data (struct context * context, unsigned flags) {
         throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     }
   }
-  if (!(context -> image -> width && context -> image -> height)) throw(context, PLUM_ERR_NO_DATA);
-  if (!plum_check_valid_image_size(context -> image -> width, context -> image -> height, 1)) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
+  validate_image_size(context, limit);
   size_t count = (size_t) context -> image -> width * context -> image -> height;
   double * component_data[4] = {0};
   for (p = 0; p < get_JPEG_component_count(components); p ++) component_data[p] = ctxmalloc(context, sizeof **component_data * count);
@@ -36,13 +35,13 @@ void load_JPEG_data (struct context * context, unsigned flags) {
     bitdepth = load_single_frame_JPEG(context, layout, components, component_data);
   append_JPEG_color_depth_metadata(context, transfer, bitdepth);
   allocate_framebuffers(context, flags, 0);
-  unsigned limit = ((uint32_t) 1 << bitdepth) - 1;
+  unsigned maxvalue = ((uint32_t) 1 << bitdepth) - 1;
   if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_64) {
-    transfer(context -> image -> data64, count, limit, (const double **) component_data);
+    transfer(context -> image -> data64, count, maxvalue, (const double **) component_data);
     if (flags & PLUM_ALPHA_INVERT) for (p = 0; p < count; p ++) context -> image -> data64[p] ^= 0xffff000000000000u;
   } else {
     uint64_t * buffer = ctxmalloc(context, count * sizeof *buffer);
-    transfer(buffer, count, limit, (const double **) component_data);
+    transfer(buffer, count, maxvalue, (const double **) component_data);
     plum_convert_colors(context -> image -> data, buffer, count, flags, PLUM_COLOR_64);
     ctxfree(context, buffer);
   }

@@ -1,14 +1,14 @@
 #include "proto.h"
 
-void load_GIF_data (struct context * context, unsigned flags) {
+void load_GIF_data (struct context * context, unsigned flags, size_t limit) {
   if (context -> size < 14) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   context -> image -> type = PLUM_IMAGE_GIF;
   context -> image -> width = read_le16_unaligned(context -> data + 6);
   context -> image -> height = read_le16_unaligned(context -> data + 8);
-  if (!(context -> image -> width && context -> image -> height)) throw(context, PLUM_ERR_NO_DATA);
   size_t offset = 13;
   uint64_t transparent = 0xffff000000000000u;
   uint64_t ** palettes = load_GIF_palettes(context, flags, &offset, &transparent); // will be leaked (collected at the end)
+  validate_image_size(context, limit);
   load_GIF_loop_count(context, &offset);
   allocate_framebuffers(context, flags, !!(context -> image -> palette));
   uint64_t * durations;

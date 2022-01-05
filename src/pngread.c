@@ -1,6 +1,6 @@
 #include "proto.h"
 
-void load_PNG_data (struct context * context, unsigned flags) {
+void load_PNG_data (struct context * context, unsigned flags, size_t limit) {
   struct PNG_chunk_locations * chunks = load_PNG_chunk_locations(context);
   // load basic header data
   if (chunks -> animation) {
@@ -12,8 +12,8 @@ void load_PNG_data (struct context * context, unsigned flags) {
   }
   context -> image -> width = read_be32_unaligned(context -> data + 16);
   context -> image -> height = read_be32_unaligned(context -> data + 20);
-  if (!(context -> image -> width && context -> image -> height)) throw(context, PLUM_ERR_NO_DATA);
   if ((context -> image -> width > 0x7fffffffu) || (context -> image -> height > 0x7fffffffu)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  validate_image_size(context, limit);
   int interlaced = context -> data[28];
   unsigned char bitdepth = context -> data[24], imagetype = context -> data[25];
   if (context -> data[26] || context -> data[27] || (interlaced > 1) || (imagetype > 6) || (imagetype == 1) || (imagetype == 5) || !bitdepth ||

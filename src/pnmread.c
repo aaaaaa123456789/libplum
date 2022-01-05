@@ -1,6 +1,6 @@
 #include "proto.h"
 
-void load_PNM_data (struct context * context, unsigned flags) {
+void load_PNM_data (struct context * context, unsigned flags, size_t limit) {
   struct PNM_image_header * headers = NULL;
   size_t offset = 0;
   context -> image -> type = PLUM_IMAGE_PNM;
@@ -13,6 +13,7 @@ void load_PNM_data (struct context * context, unsigned flags) {
     if ((context -> size - header -> datastart) < header -> datalength) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     if (header -> width > context -> image -> width) context -> image -> width = header -> width;
     if (header -> height > context -> image -> height) context -> image -> height = header -> height;
+    validate_image_size(context, limit);
     offset = header -> datastart + header -> datalength;
     skip_PNM_whitespace(context, &offset);
   }
@@ -127,7 +128,7 @@ void load_PAM_header (struct context * context, size_t offset, struct PNM_image_
       throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   }
   if (fields || (header -> type == 7)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  if (!plum_check_valid_image_size(header -> width, header -> height, 1)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  if (!plum_check_valid_image_size(header -> width, header -> height, 1)) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
   value = header -> type - 11;
   if (depth != value[(const uint32_t []) {1, 1, 3, 2, 2, 4}]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   if ((header -> maxvalue != 1) && ((header -> type == 11) || (header -> type == 14))) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
