@@ -51,6 +51,7 @@ internal uint32_t compute_PNG_CRC(const unsigned char *, size_t);
 internal uint32_t compute_Adler32_checksum(const unsigned char *, size_t);
 
 // color.c
+internal int image_has_transparency(const struct plum_image *);
 internal uint32_t get_true_color_depth(const struct plum_image *);
 
 // fractions.c
