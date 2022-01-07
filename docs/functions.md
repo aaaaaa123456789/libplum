@@ -42,6 +42,7 @@ In other words, the function won't modify any of the data accessible through tha
     - [`plum_calloc`](#plum_calloc)
     - [`plum_realloc`](#plum_realloc)
     - [`plum_allocate_metadata`](#plum_allocate_metadata)
+    - [`plum_append_metadata`](#plum_append_metadata)
     - [`plum_free`](#plum_free)
 - [Library information](#library-information)
     - [`plum_get_file_format_name`](#plum_get_file_format_name)
@@ -1183,6 +1184,47 @@ allocated by these functions.
 Pointer to the allocated [`struct plum_metadata`][metadata-struct], or `NULL` if there isn't enough memory available
 (or if `image` is `NULL`).
 The allocated struct's `data` and `size` members will be initialized to the associated data buffer and its size.
+
+### `plum_append_metadata`
+
+``` c
+unsigned plum_append_metadata(struct plum_image * image, int type,
+                              const void * data, size_t size);
+```
+
+**Description:**
+
+This function will allocate a new [metadata node][metadata] through the
+[`plum_allocate_metadata`](#plum_allocate_metadata) function, fill it with the supplied type and data, and append it
+to the image's metadata at the head of its `metadata` linked list.
+
+This function is implemented merely as a convenience: it is equivalent to performing those steps manually.
+
+Note: the data is copied to the new node (via `memcpy`); the new node will _not_ contain a pointer to `data`.
+
+**Arguments:**
+
+- `image`: image where the metadata will be appended; the allocated node will be linked to it.
+- `type`: type of the metadata node; its `type` member will be set to this value.
+  For positive, library-defined types, this should be one of the [metadata constants][metadata-constants].
+- `data`: data that will be copied to the new [metadata node][metadata].
+  Should not be `NULL` unless `size` is zero.
+- `size`: size of the data that will be copied to the new [metadata node][metadata] (i.e., size of the buffer pointed
+  to by `data`); this value will also be used as the new node's `size` member.
+
+**Return value:**
+
+If appending a new [metadata node][metadata] is successful, this function returns zero (`PLUM_OK`).
+Otherwise, the function will return a non-zero [error constant][errors] indicating the reason for the failure.
+
+**Error values:**
+
+These are the possible error values that the function can return:
+
+- `PLUM_OK` (zero): success.
+  This value will be returned if the new node is appended to the image's metadata.
+- `PLUM_ERR_INVALID_ARGUMENTS`: `image` is `NULL`, or `data` is `NULL` while `size` is non-zero.
+- `PLUM_ERR_OUT_OF_MEMORY`: there is not enough memory available to allocate the new metadata node.
 
 ### `plum_free`
 

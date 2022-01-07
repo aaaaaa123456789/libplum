@@ -115,6 +115,7 @@ Ordering is pure ASCII (that is, all uppercase letters come before all lowercase
 - [`PLUM_VERSION` macro](macros.md#feature-test-macros)
 - [`PLUM_VLA_SUPPORT` macro](macros.md#feature-test-macros)
 - [`plum_allocate_metadata` function](functions.md#plum_allocate_metadata)
+- [`plum_append_metadata` function](functions.md#plum_append_metadata)
 - [`plum_buffer` struct tag](structs.md#plum_buffer)
 - [`plum_callback` struct tag](structs.md#plum_callback)
 - [`plum_calloc` function](functions.md#plum_calloc)
