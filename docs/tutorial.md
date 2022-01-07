@@ -664,7 +664,10 @@ Note that image file formats can impose limitations on the values of these param
 The library will approximate them as best as possible when generating an image file.
 
 The sample program for this chapter will create a slideshow out of a list of image files.
-As it is significantly longer than the examples shown before, this sample is located [in a separate file][slideshow].
+As it is significantly longer than the examples shown before, this sample is located in [a separate file][slideshow].
+
+(Note: there is a cleaner way of generating the metadata, using [memory management functions][memory].
+That version will be shown in [a later section](#10-memory-management).)
 
 ## 8. Color and palette conversions
 
@@ -842,8 +845,8 @@ Throughout this tutorial, whenever an image was created by [`plum_load_image`][l
 released by [`plum_destroy_image`][destroy].
 This function releases all memory associated with an image that has been allocated by the library.
 However, memory associated with an image isn't limited to what [`plum_load_image`][load] allocates.
-This facility is made available to the user as well, so that users can allocate memory associated with an image that
-will later be released all at once by [`plum_destroy_image`][destroy].
+This facility is made available to the user as well through [memory management functions][memory], so that users can
+allocate memory associated with an image that will later be released all at once by [`plum_destroy_image`][destroy].
 
 Memory allocations are tracked through the `allocator` member of the [`plum_image`][image] struct.
 This is a private-use member that the library uses for this purpose; it must not be modified by user code.
@@ -913,7 +916,15 @@ the image (by explicit library calls) is released by [`plum_destroy_image`][dest
 Therefore, it is always safe to call this function when the user is finished working with an image, regardless of how
 the image itself or any buffers it uses were allocated.
 
-However, it is often desirable to allocate a new image on the heap altogether, like so:
+As an example, the slideshow program shown in [the Animations section](#7-animations) can be rewritten to take
+advantage of [memory management functions][memory], even though the main [`struct plum_image`][image] defined by that
+program is statically initialized and not created by the library at all.
+Due to its length, this example is shown in [a separate file][slideshow2].
+
+(Note: the [`plum_append_metadata`][append-metadata] function will simply append a new metadata node to the image by
+allocating it via [`plum_allocate_metadata`][allocate-metadata] and inserting it at the head of the metadata list.)
+
+It is often desirable to allocate a new image on the heap altogether, like so:
 
 ``` c
 struct plum_image * image = calloc(1, sizeof *image);
@@ -1134,6 +1145,7 @@ Up: [README](README.md)
 [accessing]: colors.md#accessing-pixel-and-color-data
 [allocate-metadata]: functions.md#plum_allocate_metadata
 [alphabetical]: alpha.md
+[append-metadata]: functions.md#plum_append_metadata
 [buffer]: structs.md#plum_buffer
 [callback]: structs.md#plum_callback
 [calloc]: functions.md#plum_calloc
@@ -1161,6 +1173,7 @@ Up: [README](README.md)
 [loading-flags]: constants.md#loading-flags
 [macros]: macros.md
 [malloc]: functions.md#plum_malloc
+[memory]: memory.md
 [metadata]: metadata.md
 [metadata-constants]: constants.md#metadata-node-types
 [metadata-struct]: structs.md#plum_metadata
@@ -1175,6 +1188,7 @@ Up: [README](README.md)
 [realloc]: functions.md#plum_realloc
 [reduce]: functions.md#plum_reduce_palette
 [slideshow]: slideshow.c
+[slideshow2]: slideshow2.c
 [sort]: functions.md#plum_sort_palette
 [store]: functions.md#plum_store_image
 [structs]: structs.md
