@@ -177,7 +177,7 @@ This member is a three-dimensional array of color values, where the dimensions a
 height, and the image's width.
 
 Pixel data is just a series of color values (or palette indexes for images using [indexed-color mode][indexed]; that
-mode will be explained [in a later section](#5-palettes-and-indexed-color-mode)); color values can take one of four
+mode will be explained in [a later section](#5-palettes-and-indexed-color-mode)); color values can take one of four
 [different formats][color-formats], chosen when the image is created/loaded.
 (This is the meaning of the [`PLUM_COLOR_32`][loading-flags] constant used previously as an argument to the
 [`plum_load_image`][load] function.)
@@ -229,7 +229,8 @@ inconvenient to access the pixels directly.
 Therefore, in sufficiently recent versions of C and C++ (C11 onwards and all standard versions of C++), the library
 header defines aliases for this member, `data16`, `data32` and `data64`, which are pointers to the correct integer
 type.
-(There is also a `data8` alias for [indexed-color mode][indexed], but that will be explained in a later section.)
+(There is also a `data8` alias for [indexed-color mode][indexed], but that will be explained in
+[a later section](#5-palettes-and-indexed-color-mode).)
 
 Using all of these elements, the following program will darken an image by reducing its color components by 10%:
 
