@@ -14,6 +14,16 @@ struct plum_metadata * plum_allocate_metadata (struct plum_image * image, size_t
   return &(result -> result);
 }
 
+unsigned plum_append_metadata (struct plum_image * image, int type, const void * data, size_t size) {
+  if (!image || (size && !data)) return PLUM_ERR_INVALID_ARGUMENTS;
+  struct plum_metadata * metadata = plum_allocate_metadata(image, size);
+  if (!metadata) return PLUM_ERR_OUT_OF_MEMORY;
+  metadata -> type = type;
+  if (size) memcpy(metadata -> data, data, size);
+  append_metadata(image, metadata);
+  return 0;
+}
+
 struct plum_metadata * plum_find_metadata (const struct plum_image * image, int type) {
   struct plum_metadata * metadata;
   if (!image) return NULL;
@@ -23,11 +33,8 @@ struct plum_metadata * plum_find_metadata (const struct plum_image * image, int 
 
 void add_color_depth_metadata (struct context * context, unsigned red, unsigned green, unsigned blue, unsigned alpha, unsigned gray) {
   unsigned char counts[] = {red, green, blue, alpha, gray};
-  struct plum_metadata * metadata = plum_allocate_metadata(context -> image, sizeof counts);
-  if (!metadata) throw(context, PLUM_ERR_OUT_OF_MEMORY);
-  metadata -> type = PLUM_METADATA_COLOR_DEPTH;
-  memcpy(metadata -> data, counts, sizeof counts);
-  append_metadata(context -> image, metadata);
+  unsigned result = plum_append_metadata(context -> image, PLUM_METADATA_COLOR_DEPTH, counts, sizeof counts);
+  if (result) throw(context, result);
 }
 
 void add_background_color_metadata (struct context * context, uint64_t color, unsigned flags) {
@@ -46,11 +53,8 @@ void add_background_color_metadata (struct context * context, uint64_t color, un
 }
 
 void add_loop_count_metadata (struct context * context, uint32_t count) {
-  struct plum_metadata * metadata = plum_allocate_metadata(context -> image, sizeof count);
-  if (!metadata) throw(context, PLUM_ERR_OUT_OF_MEMORY);
-  metadata -> type = PLUM_METADATA_LOOP_COUNT;
-  *(uint32_t *) (metadata -> data) = count;
-  append_metadata(context -> image, metadata);
+  unsigned result = plum_append_metadata(context -> image, PLUM_METADATA_LOOP_COUNT, &count, sizeof count);
+  if (result) throw(context, result);
 }
 
 void add_animation_metadata (struct context * context, uint64_t ** durations, uint8_t ** disposals) {

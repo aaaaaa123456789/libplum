@@ -29,4 +29,5 @@ void * plum_calloc(struct plum_image * image, size_t size);
 void * plum_realloc(struct plum_image * image, void * buffer, size_t size);
 void plum_free(struct plum_image * image, void * buffer);
 struct plum_metadata * plum_allocate_metadata(struct plum_image * image, size_t size);
+unsigned plum_append_metadata(struct plum_image * image, int type, const void * data, size_t size);
 struct plum_metadata * plum_find_metadata(const struct plum_image * image, int type);
