@@ -2,6 +2,15 @@
 
 Note: releases are listed from latest to oldest.
 
+## Version 0.3 (in development)
+
+- New functions: `plum_load_image_limited`, `plum_check_limited_image_size`, `plum_append_metadata`
+- Added a missing check for an extremely unlikely memory allocation failure
+- Fixed BMP encoding of two-color images for some specific compression corner cases
+- Fixed BMP decoder to accept images that are exactly `0x7fffffff` pixels tall or wide
+- Updated the tutorial to use `plum_append_metadata` where relevant
+- Some refactorings and minor documentation changes
+
 ## Version 0.2 (4 January 2022)
 
 - Fixed a number of decoding bugs involving unusual image parameters
