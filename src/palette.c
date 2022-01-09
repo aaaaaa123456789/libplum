@@ -167,14 +167,14 @@ int plum_convert_colors_to_indexes (uint8_t * restrict destination, const void *
       counts[hash] ++;
       total ++;
     } else {
-      for (p = hash; counts[p] & 0x80; p ++) {
+      for (p = hash; counts[p] & 0x80; p = (p + 1) & 0xff) {
         index = (p << 3) | 7;
         if (colors[index] == color) goto found;
       }
       if (total >= 0x100) goto done;
       index = (p << 3) | 7;
       colors[index] = color;
-      counts[hash] |= 0x80;
+      counts[p] |= 0x80;
       total ++;
     }
     found:

@@ -8,6 +8,7 @@ Note: releases are listed from latest to oldest.
 - Added a missing check for an extremely unlikely memory allocation failure
 - Fixed some BMP encoding bugs that could arise under unusual circumstances
 - Fixed BMP decoder to accept images that are exactly `0x7fffffff` pixels tall or wide
+- Fixed palette generation for images with many similar colors
 - Updated the tutorial to use `plum_append_metadata` where relevant
 - Some refactorings and minor documentation changes
 
