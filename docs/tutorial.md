@@ -1129,7 +1129,7 @@ absolutely every corner case.
 
 There are separate pages listing every [function][functions], [struct][structs], [constant][constants] and
 [macro][macros] in the library, as well as a list of [supported file formats][formats].
-Another starting point is the [alphabetical list of declared identifiers].
+Another starting point is the [alphabetical list of declared identifiers][alphabetical].
 
 Finally, there are additional pages for many other specific topics linked from the [documentation main page][readme]
 that will contain further information about the library that users should check out.
