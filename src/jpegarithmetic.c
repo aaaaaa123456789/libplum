@@ -155,8 +155,11 @@ void decompress_JPEG_arithmetic_lossless_scan (struct context * context, struct 
                                                size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned char predictor,
                                                unsigned precision) {
   size_t p, restart_interval;
+  uint8_t scancomponents[4] = {0, 0, 0, 0};
+  for (p = 0; state -> MCU[p] != MCU_END_LIST; p ++) if (state -> MCU[p] < 4) scancomponents[state -> MCU[p]] = 1;
   uint16_t * rowdifferences[4] = {0};
-  for (p = 0; p < 4; p ++) rowdifferences[p] = ctxmalloc(context, sizeof **rowdifferences * rowunits * ((state -> component_count > 1) ? components[p].scaleH : 1));
+  for (p = 0; p < 4; p ++) if (scancomponents[p])
+    rowdifferences[p] = ctxmalloc(context, sizeof **rowdifferences * rowunits * ((state -> component_count > 1) ? components[p].scaleH : 1));
   for (restart_interval = 0; restart_interval <= state -> restart_count; restart_interval ++) {
     size_t units = (restart_interval == state -> restart_count) ? state -> last_size : state -> restart_size;
     if (!units) break;
@@ -170,8 +173,8 @@ void decompress_JPEG_arithmetic_lossless_scan (struct context * context, struct 
     unsigned char conditioning, bits = 0;
     initialize_JPEG_arithmetic_counters(context, &offset, &remaining, &current);
     signed char indexes[4][158] = {0};
-    for (p = 0; p < 4; p ++) for (x = 0; x < (rowunits * ((state -> component_count > 1) ? components[p].scaleH : 1)); x ++)
-      rowdifferences[p][x] = 0;
+    for (p = 0; p < 4; p ++) if (scancomponents[p])
+      for (x = 0; x < (rowunits * ((state -> component_count > 1) ? components[p].scaleH : 1)); x ++) rowdifferences[p][x] = 0;
     uint16_t coldifferences[4][4] = {0};
     while (units --) {
       for (decodepos = state -> MCU; *decodepos != MCU_END_LIST; decodepos ++) switch (*decodepos) {
