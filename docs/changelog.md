@@ -2,7 +2,7 @@
 
 Note: releases are listed from latest to oldest.
 
-## Version 0.3 (in development)
+## Version 0.3 (10 January 2022)
 
 - New functions: `plum_load_image_limited`, `plum_check_limited_image_size`, `plum_append_metadata`
 - Added a missing check for an extremely unlikely memory allocation failure
