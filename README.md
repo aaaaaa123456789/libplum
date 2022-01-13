@@ -11,6 +11,7 @@ The library has no dependencies besides the standard ISO C17 library functions, 
 in any application.
 
 Please make sure to check the [documentation](docs/README.md) for further information.
+A good starting point is the [tutorial](docs/tutorial.md).
 
 Everything in this repository is released to the public domain under [the Unlicense](LICENSE).
 
