@@ -37,7 +37,8 @@ unsigned get_JPEG_component_count (uint32_t components) {
     return 4;
 }
 
-JPEG_component_transfer_function * get_JPEG_component_transfer_function (struct context * context, const struct JPEG_marker_layout * layout, uint32_t components) {
+void (* get_JPEG_component_transfer_function (struct context * context, const struct JPEG_marker_layout * layout, uint32_t components))
+      (uint64_t * restrict, size_t, unsigned, const double **) {
   /* The JPEG standard has a very large deficiency: it specifies how to encode an arbitrary set of components of an
      image, but it doesn't specify what those components mean. Components have a single byte ID to identify them, but
      beyond that, the standard just hopes that applications can somehow figure it all out.
@@ -130,7 +131,7 @@ JPEG_component_transfer_function * get_JPEG_component_transfer_function (struct 
   }
 }
 
-void append_JPEG_color_depth_metadata (struct context * context, JPEG_component_transfer_function * transfer, unsigned bitdepth) {
+void append_JPEG_color_depth_metadata (struct context * context, void (* transfer) (uint64_t * restrict, size_t, unsigned, const double **), unsigned bitdepth) {
   if (transfer == &JPEG_transfer_grayscale)
     add_color_depth_metadata(context, 0, 0, 0, 0, bitdepth);
   else if (transfer == &JPEG_transfer_alpha_grayscale)

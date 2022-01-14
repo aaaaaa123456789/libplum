@@ -3,7 +3,7 @@
 void load_JPEG_data (struct context * context, unsigned flags, size_t limit) {
   struct JPEG_marker_layout * layout = load_JPEG_marker_layout(context);
   uint32_t components = determine_JPEG_components(context, layout -> hierarchical ? layout -> hierarchical : *layout -> frames);
-  JPEG_component_transfer_function * transfer = get_JPEG_component_transfer_function(context, layout, components);
+  void (* transfer) (uint64_t * restrict, size_t, unsigned, const double **) = get_JPEG_component_transfer_function(context, layout, components);
   context -> image -> type = PLUM_IMAGE_JPEG;
   context -> image -> frames = 1;
   size_t p;

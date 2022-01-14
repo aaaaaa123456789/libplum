@@ -126,8 +126,9 @@ internal unsigned next_JPEG_arithmetic_bit(struct context *, size_t * restrict, 
 // jpegcomponents.c
 internal uint32_t determine_JPEG_components(struct context *, size_t);
 internal unsigned get_JPEG_component_count(uint32_t);
-internal JPEG_component_transfer_function * get_JPEG_component_transfer_function(struct context *, const struct JPEG_marker_layout *, uint32_t);
-internal void append_JPEG_color_depth_metadata(struct context *, JPEG_component_transfer_function *, unsigned);
+internal void (* get_JPEG_component_transfer_function(struct context *, const struct JPEG_marker_layout *, uint32_t))
+               (uint64_t * restrict, size_t, unsigned, const double **);
+internal void append_JPEG_color_depth_metadata(struct context *, void (*) (uint64_t * restrict, size_t, unsigned, const double **), unsigned);
 internal void JPEG_transfer_RGB(uint64_t * restrict, size_t, unsigned, const double **);
 internal void JPEG_transfer_BGR(uint64_t * restrict, size_t, unsigned, const double **);
 internal void JPEG_transfer_ABGR(uint64_t * restrict, size_t, unsigned, const double **);

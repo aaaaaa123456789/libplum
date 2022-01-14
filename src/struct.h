@@ -4,8 +4,6 @@
 
 #include "../header/libplum.h"
 
-typedef void JPEG_component_transfer_function(uint64_t * restrict, size_t, unsigned, const double **);
-
 union allocator_node {
   max_align_t alignment;
   struct {
