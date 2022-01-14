@@ -52,7 +52,7 @@ void write_generated_image_data_to_file (struct context * context, const char * 
   const struct data_node * node;
   for (node = context -> output; node -> previous; node = node -> previous);
   while (node) {
-    const char * data = node -> data;
+    const unsigned char * data = node -> data;
     size_t size = node -> size;
     while (size) {
       unsigned count = fwrite(data, 1, (size > 0x4000) ? 0x4000 : size, fp);
@@ -73,7 +73,7 @@ void write_generated_image_data_to_callback (struct context * context, const str
   struct data_node * node;
   for (node = context -> output; node -> previous; node = node -> previous);
   while (node) {
-    char * data = node -> data;
+    unsigned char * data = node -> data;
     size_t size = node -> size;
     while (size) {
       int count = callback -> callback(callback -> userdata, data, (size > 0x4000) ? 0x4000 : size);

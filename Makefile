@@ -1,10 +1,15 @@
 CC ?= gcc
 OUTPUT ?= libplum.so
 OPTFLAGS = -march=native -mtune=native
-DEBUGFLAGS =
 
 CFLAGS = -Ofast -fomit-frame-pointer -fno-asynchronous-unwind-tables -fno-exceptions -Wl,-S -Wl,-x -Wl,--gc-sections \
-         $(OPTFLAGS)
+         -std=c17 $(OPTFLAGS)
+
+DEBUGFLAGS = -Wall -Wextra -pedantic -Wcast-align -Wduplicated-branches -Wduplicated-cond -Wlogical-op \
+             -Wnull-dereference -Wshadow -Wshift-overflow=2 -Wundef -Wunused -Wwrite-strings -Wno-sign-compare \
+             -Wno-implicit-fallthrough -Wno-parentheses -Wno-dangling-else
+
+.PHONY: all clean basefiles debug
 
 all: basefiles
 	$(CC) -shared -fPIC $(CFLAGS) build/libplum.c -o build/$(OUTPUT)

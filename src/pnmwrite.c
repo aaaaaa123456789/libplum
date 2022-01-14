@@ -119,7 +119,7 @@ void generate_PPM_data (struct context * context, const uint32_t * sizes, unsign
 
 void generate_PPM_header (struct context * context, uint32_t width, uint32_t height, unsigned bitdepth) {
   unsigned char * node = append_output_node(context, 32);
-  size_t offset = bytewrite(node, 0x50, 0x36, 0x0a); // P6<newline>
+  size_t offset = byteappend(node, 0x50, 0x36, 0x0a); // P6<newline>
   offset += write_PNM_number(node + offset, width);
   node[offset ++] = 0x20; // space
   offset += write_PNM_number(node + offset, height);
@@ -146,22 +146,22 @@ void generate_PAM_data (struct context * context, unsigned bitdepth, uint64_t * 
 
 void generate_PAM_header (struct context * context, unsigned bitdepth) {
   unsigned char * node = append_output_node(context, 96);
-  size_t offset = bytewrite(node,
-                            0x50, 0x37, 0x0a, // P7<newline>
-                            0x54, 0x55, 0x50, 0x4c, 0x54, 0x59, 0x50, 0x45, 0x20, // TUPLTYPE<space>
-                            0x52, 0x47, 0x42, 0x5f, 0x41, 0x4c, 0x50, 0x48, 0x41, 0x0a, // RGB_ALPHA<newline>
-                            0x57, 0x49, 0x44, 0x54, 0x48, 0x20 // WIDTH<space>
-                           );
+  size_t offset = byteappend(node,
+                             0x50, 0x37, 0x0a, // P7<newline>
+                             0x54, 0x55, 0x50, 0x4c, 0x54, 0x59, 0x50, 0x45, 0x20, // TUPLTYPE<space>
+                             0x52, 0x47, 0x42, 0x5f, 0x41, 0x4c, 0x50, 0x48, 0x41, 0x0a, // RGB_ALPHA<newline>
+                             0x57, 0x49, 0x44, 0x54, 0x48, 0x20 // WIDTH<space>
+                            );
   offset += write_PNM_number(node + offset, context -> source -> width);
-  offset += bytewrite(node + offset, 0x0a, 0x48, 0x45, 0x49, 0x47, 0x48, 0x54, 0x20); // <newline>HEIGHT<space>
+  offset += byteappend(node + offset, 0x0a, 0x48, 0x45, 0x49, 0x47, 0x48, 0x54, 0x20); // <newline>HEIGHT<space>
   offset += write_PNM_number(node + offset, context -> source -> height);
-  offset += bytewrite(node + offset, 0x0a, 0x4d, 0x41, 0x58, 0x56, 0x41, 0x4c, 0x20); // <newline>MAXVAL<space>
+  offset += byteappend(node + offset, 0x0a, 0x4d, 0x41, 0x58, 0x56, 0x41, 0x4c, 0x20); // <newline>MAXVAL<space>
   offset += write_PNM_number(node + offset, ((uint32_t) 1 << bitdepth) - 1);
-  offset += bytewrite(node + offset,
-                      0x0a, // <newline>
-                      0x44, 0x45, 0x50, 0x54, 0x48, 0x20, 0x34, 0x0a, // DEPTH 4<newline>
-                      0x45, 0x4e, 0x44, 0x48, 0x44, 0x52, 0x0a // ENDHDR<newline>
-                     );
+  offset += byteappend(node + offset,
+                       0x0a, // <newline>
+                       0x44, 0x45, 0x50, 0x54, 0x48, 0x20, 0x34, 0x0a, // DEPTH 4<newline>
+                       0x45, 0x4e, 0x44, 0x48, 0x44, 0x52, 0x0a // ENDHDR<newline>
+                      );
   context -> output -> size = offset;
 }
 
