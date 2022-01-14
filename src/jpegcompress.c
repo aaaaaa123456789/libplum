@@ -8,7 +8,7 @@ struct JPEG_encoded_value * generate_JPEG_luminance_data_stream (struct context 
   double predicted = 0.0;
   for (unit = 0; unit < units; unit ++) {
     if ((allocated - *count) < 64) result = ctxrealloc(context, result, sizeof *result * (allocated += 3 * (units - unit) + 64));
-    predicted = generate_JPEG_data_unit(context, result, count, data[unit], quantization, predicted);
+    predicted = generate_JPEG_data_unit(result, count, data[unit], quantization, predicted);
   }
   return ctxrealloc(context, result, sizeof *result * *count);
 }
@@ -21,13 +21,13 @@ struct JPEG_encoded_value * generate_JPEG_chrominance_data_stream (struct contex
   double predicted_blue = 0.0, predicted_red = 0.0;
   for (unit = 0; unit < units; unit ++) {
     if ((allocated - *count) < 128) result = ctxrealloc(context, result, sizeof *result * (allocated += 6 * (units - unit) + 128));
-    predicted_blue = generate_JPEG_data_unit(context, result, count, blue[unit], quantization, predicted_blue);
-    predicted_red = generate_JPEG_data_unit(context, result, count, red[unit], quantization, predicted_red);
+    predicted_blue = generate_JPEG_data_unit(result, count, blue[unit], quantization, predicted_blue);
+    predicted_red = generate_JPEG_data_unit(result, count, red[unit], quantization, predicted_red);
   }
   return ctxrealloc(context, result, sizeof *result * *count);
 }
 
-double generate_JPEG_data_unit (struct context * context, struct JPEG_encoded_value * data, size_t * restrict count, const double unit[restrict static 64],
+double generate_JPEG_data_unit (struct JPEG_encoded_value * data, size_t * restrict count, const double unit[restrict static 64],
                                 const uint8_t quantization[restrict static 64], double predicted) {
   int16_t output[64];
   predicted = apply_JPEG_DCT(output, unit, quantization, predicted);

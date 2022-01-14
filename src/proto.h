@@ -112,8 +112,8 @@ internal void generate_Huffman_codes(unsigned short * restrict, unsigned, const 
 // jpegarithmetic.c
 internal void decompress_JPEG_arithmetic_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
                                               const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char, int);
-internal void decompress_JPEG_arithmetic_bit_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
-                                                  const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char);
+internal void decompress_JPEG_arithmetic_bit_scan(struct context *, struct JPEG_decompressor_state * restrict, size_t, const struct JPEG_component_info *,
+                                                  const size_t *, unsigned, unsigned char, unsigned char);
 internal void decompress_JPEG_arithmetic_lossless_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
                                                        const struct JPEG_component_info *, const size_t *, unsigned char, unsigned);
 internal void initialize_JPEG_arithmetic_counters(struct context *, size_t * restrict, size_t * restrict, uint32_t * restrict);
@@ -147,8 +147,8 @@ internal struct JPEG_encoded_value * generate_JPEG_luminance_data_stream(struct 
                                                                          size_t * restrict);
 internal struct JPEG_encoded_value * generate_JPEG_chrominance_data_stream(struct context *, double (* restrict)[64], double (* restrict)[64], size_t,
                                                                            const uint8_t [restrict static 64], size_t * restrict);
-internal double generate_JPEG_data_unit(struct context *, struct JPEG_encoded_value *, size_t * restrict, const double [restrict static 64],
-                                        const uint8_t [restrict static 64], double);
+internal double generate_JPEG_data_unit(struct JPEG_encoded_value *, size_t * restrict, const double [restrict static 64], const uint8_t [restrict static 64],
+                                        double);
 internal void encode_JPEG_value(struct JPEG_encoded_value *, int16_t, unsigned, unsigned char);
 internal size_t generate_JPEG_Huffman_table(struct context *, const struct JPEG_encoded_value *, size_t, unsigned char * restrict,
                                             unsigned char [restrict static 0x100], unsigned char);

@@ -39,13 +39,19 @@ void load_JPEG_DCT_frame (struct context * context, const struct JPEG_marker_lay
     size_t scanunitrow = unitrow;
     initialize_JPEG_decompressor_state(context, &state, component_info, scancomponents, &scanunitrow, unitcol, width, height, maxH, maxV, tables, *offsets,
                                        component_data);
-    // call the decompression function -- each pair of functions shares the argument list, so select the function inline and write each argument list only once
+    // call the decompression function, depending on the frame type (Huffman or arithmetic) and whether it is progressive or not
     if (bitstart == 0xff)
-      ((layout -> frametype[frameindex] & 8) ? decompress_JPEG_arithmetic_scan : decompress_JPEG_Huffman_scan)
-        (context, &state, tables, scanunitrow, component_info, *offsets, bitend, *progdata, progdata[1], layout -> frametype[frameindex] & 4);
+      if (layout -> frametype[frameindex] & 8)
+        decompress_JPEG_arithmetic_scan(context, &state, tables, scanunitrow, component_info, *offsets, bitend, *progdata, progdata[1],
+                                        layout -> frametype[frameindex] & 4);
+      else
+        decompress_JPEG_Huffman_scan(context, &state, tables, scanunitrow, component_info, *offsets, bitend, *progdata, progdata[1],
+                                     layout -> frametype[frameindex] & 4);
     else
-      ((layout -> frametype[frameindex] & 8) ? decompress_JPEG_arithmetic_bit_scan : decompress_JPEG_Huffman_bit_scan)
-        (context, &state, tables, scanunitrow, component_info, *offsets, bitend, *progdata, progdata[1]);
+      if (layout -> frametype[frameindex] & 8)
+        decompress_JPEG_arithmetic_bit_scan(context, &state, scanunitrow, component_info, *offsets, bitend, *progdata, progdata[1]);
+      else
+        decompress_JPEG_Huffman_bit_scan(context, &state, tables, scanunitrow, component_info, *offsets, bitend, *progdata, progdata[1]);
   }
   for (p = 0; p < count; p ++) for (coefficient = 0; coefficient < 64; coefficient ++)
     if (currentbits[p][coefficient]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
@@ -105,9 +111,11 @@ void load_JPEG_lossless_frame (struct context * context, const struct JPEG_marke
     size_t scanunitrow = unitrow;
     initialize_JPEG_decompressor_state_lossless(context, &state, component_info, scancomponents, &scanunitrow, unitcol, width, height, maxH, maxV, tables,
                                                 *offsets, component_data);
-    // call the decompression function: same as above, but without needing to account for progressive scans
-    ((layout -> frametype[frameindex] & 8) ? decompress_JPEG_arithmetic_lossless_scan : decompress_JPEG_Huffman_lossless_scan)
-      (context, &state, tables, scanunitrow, component_info, *offsets, predictor, precision - shift);
+    // call the decompression function, depending on the frame type (Huffman or arithmetic) - lossless scans cannot be progressive
+    if (layout -> frametype[frameindex] & 8)
+      decompress_JPEG_arithmetic_lossless_scan(context, &state, tables, scanunitrow, component_info, *offsets, predictor, precision - shift);
+    else
+      decompress_JPEG_Huffman_lossless_scan(context, &state, tables, scanunitrow, component_info, *offsets, predictor, precision - shift);
   }
   for (p = 0; p < count; p ++) if (component_shift[p] < 0) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   // same as in the previous function: loop backwards
