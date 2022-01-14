@@ -116,12 +116,12 @@ void load_from_callback (struct context * context, const struct plum_callback * 
   size_t allocated;
   char * buffer = resize_read_buffer(context, NULL, &allocated);
   int iteration = callback -> callback(callback -> userdata, buffer, 0x4000 - sizeof(union allocator_node));
-  if (iteration < 0) throw(context, PLUM_ERR_FILE_ERROR);
+  if ((iteration < 0) || (iteration > (0x4000 - sizeof(union allocator_node)))) throw(context, PLUM_ERR_FILE_ERROR);
   context -> size = iteration;
   while (iteration) {
     if ((allocated - context -> size) < 0x4000) buffer = resize_read_buffer(context, buffer, &allocated);
     iteration = callback -> callback(callback -> userdata, buffer + context -> size, 0x4000);
-    if (iteration < 0) throw(context, PLUM_ERR_FILE_ERROR);
+    if ((iteration < 0) || (iteration > 0x4000)) throw(context, PLUM_ERR_FILE_ERROR);
     context -> size += iteration;
   }
   context -> data = buffer;
