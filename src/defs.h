@@ -2,6 +2,14 @@
 
 #define PLUM_DEFS
 
+#if defined(PLUM_NO_STDINT) || defined(PLUM_NO_ANON_MEMBERS) || defined(PLUM_NO_VLA)
+  #error libplum feature-test macros must not be defined when compiling the library.
+#elif defined(__cplusplus)
+  #error libplum cannot be compiled with a C++ compiler.
+#elif __STDC_VERSION__ < 201710L
+  #error libplum requires C17 or later.
+#endif
+
 #ifdef noreturn
   #undef noreturn
 #endif
