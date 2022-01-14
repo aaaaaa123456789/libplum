@@ -2,6 +2,12 @@
 
 Note: releases are listed from latest to oldest.
 
+## Version 1.0 (in development)
+
+- Ensured that the `PLUM_FILENAME`, `PLUM_BUFFER` and `PLUM_CALLBACK` constants are always `size_t` as documented
+- Enforced the size limitation on the value returned by a callback when using the `PLUM_CALLBACK` loading/storing mode
+- Some minor documentation updates
+
 ## Version 0.3 (10 January 2022)
 
 - New functions: `plum_load_image_limited`, `plum_check_limited_image_size`, `plum_append_metadata`

@@ -910,8 +910,8 @@ This function returns the highest palette index in use for an image.
 If the function succeeds, it returns the highest palette index used by any pixel in the image.
 (This will be a value between 0 and 255.)
 
-If the function fails, it returns a negated [error constant][errors] (for example, if a `PLUM_ERR_NO_DATA` error
-occurs, the function will return `-PLUM_ERR_NO_DATA`).
+If the function fails, it returns a negated [error constant][errors]. For example, if it fails due to a
+`PLUM_ERR_NO_DATA` error, it will return `-PLUM_ERR_NO_DATA`.
 Since all error constants are positive, the function will always return a negative value on error.
 
 **Error values:**

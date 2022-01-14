@@ -15,7 +15,7 @@ minor.
 The **major** version changes whenever there is a breaking change in the library.
 Major version 0 (i.e., version 0.x) is used to indicate that the library isn't stable yet, and interfaces may change
 between releases.
-Major version 1 will be the first stable release, and further major versions will indicate breaking changes in the
+Major version 1 is the first stable release, and further major versions will indicate breaking changes in the
 library's interface or functionality.
 
 The **minor** version changes with every release that isn't a major release; major releases reset it back to zero.

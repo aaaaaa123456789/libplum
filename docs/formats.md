@@ -97,7 +97,7 @@ The library will ignore the image's version number (i.e., it will parse `GIF87a`
 will always generate `GIF89a` files.
 
 The GIF format doesn't support the [`PLUM_DISPOSAL_REPLACE`][disposals] disposal method, or any of the combinations
-including it; that will be converted when generating an image file.
+including it; they will be converted to their non-replacing counterparts when generating an image file.
 
 Valid [frame durations][durations] are between 0 and 655.35 seconds, in intervals of 0.01 seconds; values will be
 rounded accordingly when generating a file.
@@ -194,7 +194,7 @@ data.
 
 Although the library supports loading all sorts of uncommon JPEG files, it will always generate baseline JPEG/JFIF
 files (8-bit precision, Huffman coding, YCbCr color space, 4:2:0 chroma subsampling).
-This aims to increase the compatibility of said files, since many decoders don't support uncommmon JPEG formats.
+This aims to increase the compatibility of said files, since many decoders don't support uncommon JPEG formats.
 
 The JPEG specification doesn't define the color formats an image can use.
 Instead, it expects applications to agree on the meaning of component IDs.

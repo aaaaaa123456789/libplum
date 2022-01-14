@@ -197,9 +197,10 @@ The following macros can be defined by the user (before including the library he
   If this macro is defined, the user **must** provide their own `typedef` definitions for the `uint8_t`, `uint16_t`,
   `uint32_t` and `uint64_t` types _before_ including the library header; otherwise, compilation will fail.
 - `PLUM_NO_VLA`: disables the use of [VLA-based macros](#pixel-array-macros) and sets `PLUM_VLA_SUPPORT` to zero.
-  This can be used to avoid compilation errors if the compiler doesn't support VLAs, but it also doesn't use the
-  standard macros that indicate that.
-- `PLUM_NO_ANON_MEMBERS`: disables anonymous unions in the [`plum_image`] struct and sets `PLUM_ANON_MEMBERS` to zero.
+  This can be used to avoid compilation errors if the compiler doesn't support VLAs, but also doesn't use the standard
+  macros that indicate that.
+- `PLUM_NO_ANON_MEMBERS`: disables anonymous unions in the [`plum_image`][image] struct and sets `PLUM_ANON_MEMBERS`
+  to zero.
   This can be used if the compiler doesn't support this feature, even in C11+ or C++ mode.
 
 Note that the library will internally use some additional feature-test macros to function properly; all of these
@@ -228,7 +229,7 @@ All of these macros are equivalent to one of the macros defined above.
 - `PIXEL8`, `PIXEL16`, `PIXEL32`, `PIXEL64`: equivalent to [`PLUM_PIXEL_8`](#pixel-index-macros) and the like.
 - `PIXARRAY`: equivalent to [`PLUM_PIXEL_ARRAY`](#array-declaration).
   Available only when [`PLUM_VLA_SUPPORT`](#feature-test-macros) is non-zero.
-- `PIXARRAY_T`: equivañent to [`PLUM_PIXEL_ARRAY_TYPE`](#array-type).
+- `PIXARRAY_T`: equivalent to [`PLUM_PIXEL_ARRAY_TYPE`](#array-type).
   Available only when [`PLUM_VLA_SUPPORT`](#feature-test-macros) is non-zero.
 - `PIXELS8`, `PIXELS16`, `PIXELS32`, `PIXELS64`: equivalent to [`PLUM_PIXELS_8`](#array-casts) and the like.
   Available only when [`PLUM_VLA_SUPPORT`](#feature-test-macros) is non-zero.

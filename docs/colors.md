@@ -9,17 +9,17 @@
 Regardless of the actual formats used for color and pixel data in image files, the library uses a number of standard
 color formats and converts to and from those formats respectively when loading and generating image files.
 The user chooses which color format to use via an argument when loading an image (or a struct member when creating one
-manually); therefore, while the library supports processing data in all supported color formats, users only need to
-choose one and use the one they prefer.
+manually); therefore, while the library can process data in all supported color formats, users only need to choose one
+and use the one they prefer.
 
 All color formats contain red, green, blue and alpha channels.
-There is no dedicated support for grayscale or no transparency formats; images using those formats will be converted
+There is no dedicated support for grayscale or no-transparency formats; images using those formats will be converted
 to RGBA when loaded.
 
 All color formats use fixed-width integers for color values.
 The channels are always in RGBA order from least significant to most significant bit; in other words, the red channel
 always takes up the least significant bits and the alpha channel always takes up the most significant bits.
-There are no unused bits, and the three color channels always have the same bit width.
+There are no unused bits, and the three color channels (red, green and blue) always have the same bit width.
 
 There are [helper macros][macros] available to generate color values out of their components and extract those
 components from a color value.
@@ -83,7 +83,7 @@ The palette itself stores colors in whichever color format is set for the image 
 member).
 
 An image uses indexed-color mode if its `palette` member (and therefore, the corresponding `palette16`, `palette32`
-and `palette64` members, which alias `palette`) is not null.
+and `palette64` members, which alias `palette`) is not `NULL`.
 In this case, the `max_palette_index` member determines the maximum valid index value (and thus implicitly the size of
 the palette); note that this maximum is _inclusive_, so that a `max_palette_index` of 3 indicates a palette with four
 colors (with indexes ranging between 0 and 3).

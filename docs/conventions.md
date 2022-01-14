@@ -8,7 +8,7 @@
 The library follows a number of conventions to make it easier to use.
 
 All public identifiers (functions, macros, etc.) begin with `plum_` or `PLUM_`.
-Macros and constants are all uppercase; functions and `struct` tags are all lowercase.
+Macros and constants are all uppercase; functions and `struct` and `enum` tags are all lowercase.
 In all cases, words are separated by underscores and capitalization is not mixed.
 There is a number of macros that [don't follow the prefix rules][unprefixed], but those macros aren't included by
 default, and the user has to explicitly enable them with a `#define` in order to use them.
@@ -28,6 +28,7 @@ type, use `32` for both 32-bit formats, since they both use `uint32_t` values.
 All functions that take `restrict` pointer arguments use the `restrict` keyword in the documentation.
 If the library header is included in a C89 source file, as determined by testing the `__STDC_VERSION__` standard
 definition, the `restrict` keyword will be taken out through a macro, since that keyword doesn't exist in C89.
+Likewise, if the library header is included in a C++ source file, the `restrict` keyword will also be removed.
 However, since the library does expect `restrict` semantics, the keyword is still included in the documentation.
 
 ## Limitations
@@ -52,11 +53,13 @@ here for completeness.
 - The stack is large enough to hold the library's temporary arrays.
   The compiler should be able to determine the maximum stack usage of the library, as it doesn't use any dynamic stack
   allocation (like VLAs or `alloca`) and there are no recursive functions that allocate large automatic arrays.
-  While it isn't particularly large for a common desktop machine, systems with very small stacks (like 32 KB) might
-  run into stack overflows.
+  While the requirement isn't particularly large for a common desktop machine, systems with very small stacks (like 32
+  KB) might run into stack overflows.
 
 In particular, the library doesn't make any assumptions about endianness, floating point format, system locale or
 character encoding.
+(However, some calculations are optimized for IEEE double-precision floating point and will be more accurate when that
+format is used.)
 
 * * *
 

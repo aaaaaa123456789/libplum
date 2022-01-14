@@ -123,7 +123,7 @@ Naturally, when flags are combined with a bitwise OR (`|`), the "zero" member (w
 default and can be left out.
 Groups also have a mask member, which can be used to mask out that group's bits (for checking, etc.)
 
-Note that, since members of this struct are meant to be combined via bitwise OR (`|`), their values are **not**
+Note that, since members of this enumeration are meant to be combined via bitwise OR (`|`), their values are **not**
 consecutive.
 
 **Color format flags:** these flags are used to determine the image's or the color buffer's color format.

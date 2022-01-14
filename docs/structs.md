@@ -1,6 +1,7 @@
 # Data structures
 
-The main data structure used by the library is the `plum_image` data structure, which represents an image.
+The main data structure used by the library is the [`plum_image`](#plum_image) data structure, which represents an
+image.
 All image data is contained by this structure, as well as some minimal associated metadata and linked memory
 allocations.
 Other structures are used to hold some ancillary data and/or to pass data to functions, and they are also described
@@ -47,7 +48,7 @@ struct plum_image {
 };
 ```
 
-(Note: in C89 mode, the `palette` and `data` members replace their respective anonymous unions, and the convenience
+(Note: in C89 mode, the `palette` and `data` members replace their respective anonymous unions, and the corresponding
 typed aliases are not available.)
 
 This structure contains an image. An image is fully defined by its size and its pixel data, in the format determined
