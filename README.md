@@ -20,8 +20,8 @@ Everything in this repository is released to the public domain under [the Unlice
 To build the source files for inclusion in other projects, use `make basefiles`; this simply requires common POSIX
 command-line tools (like a Bash shell).
 This will generate the `build/libplum.c` and `build/libplum.h` files.
-To build a binary for the library on top of the files mentioned above, use `make`; this requires a C17 compiler, and
-will generate the `build/libplum.so` file on top of the files mentioned above.
+To build a binary for the library (together with the files mentioned above), use `make`; this requires a C17 compiler,
+and will generate the `build/libplum.so` file in addition to the source files.
 
 To use the library, `#include "libplum.h"` from your code.
 You may compile `libplum.c` along the rest of your code (provided you're using a C17-conformant compiler in your
