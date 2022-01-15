@@ -1,6 +1,8 @@
 # libplum
 
 This is a C library designed to read and write common image file formats, and handle the resulting image data.
+The library currently supports the BMP, GIF, PNG/APNG, JPEG and PNM (netpbm) formats; for more details, check the
+[corresponding documentation page](docs/formats.md).
 
 The main goal of the library is simplicity of use.
 File formats are automatically detected, freeing the programmer from the burder of knowing in advance which formats to

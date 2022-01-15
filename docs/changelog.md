@@ -6,6 +6,7 @@ Note: releases are listed from latest to oldest.
 
 - Ensured that the `PLUM_FILENAME`, `PLUM_BUFFER` and `PLUM_CALLBACK` constants are always `size_t` as documented
 - Enforced the size limitation on the value returned by a callback when using the `PLUM_CALLBACK` loading/storing mode
+- Added some warning flags for debug builds, and cleared some warnings that would be raised by them
 - Some minor documentation updates
 
 ## Version 0.3 (10 January 2022)
