@@ -4,8 +4,12 @@ OPTFLAGS = -march=native -mtune=native
 
 CFLAGS = -std=c17 -Ofast -fomit-frame-pointer -fno-asynchronous-unwind-tables -fno-exceptions -Wl,-S -Wl,-x -Wl,--gc-sections $(OPTFLAGS)
 
-DEBUGFLAGS = -Wall -Wextra -pedantic -Wcast-align -Wduplicated-branches -Wduplicated-cond -Wlogical-op -Wnull-dereference -Wshadow -Wshift-overflow=2 -Wundef \
-             -Wunused -Wwrite-strings -Wno-sign-compare -Wno-implicit-fallthrough -Wno-parentheses -Wno-dangling-else -fanalyzer -fanalyzer-verbosity=0
+DEBUGFLAGS = -Wall -Wextra -pedantic -Wnull-dereference -Wshadow -Wundef -Wunused -Wwrite-strings -Wno-sign-compare -Wno-implicit-fallthrough \
+             -Wno-parentheses -Wno-dangling-else -Wno-keyword-macro
+
+ifneq (,$(findstring gcc,$(CC)))
+	DEBUGFLAGS += -Wduplicated-branches -Wduplicated-cond -Wlogical-op -Wshift-overflow=2 -fanalyzer -fanalyzer-verbosity=0
+endif
 
 .PHONY: all clean basefiles debug
 
