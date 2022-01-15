@@ -76,10 +76,7 @@ void calculate_JPEG_quantization_tables (struct context * context, uint8_t lumin
   score += current;
   for (current = context -> source -> height; current > 4; current >>= 1) score += 2;
   score += current;
-  if (score < 24)
-    score = 2;
-  else
-    score -= 22;
+  score = (score > 24) ? score - 22 : 2;
   // adjust the chrominance accuracy based on the color depth
   current = get_true_color_depth(context -> source);
   uint_fast32_t adjustment = 72 - (current & 0xff) - ((current >> 8) & 0xff) - ((current >> 16) & 0xff);
