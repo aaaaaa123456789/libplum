@@ -131,7 +131,7 @@ ROTATE_FRAME_FUNCTION(64)
 #undef ROTATE_FRAME_FUNCTION
 
 size_t rotate_left_coordinate (size_t row, size_t col, size_t width, size_t height) {
-  (void)width;
+  (void) width;
   return (col + 1) * height - (row + 1);
 }
 
@@ -148,7 +148,7 @@ size_t flip_coordinate (size_t row, size_t col, size_t width, size_t height) {
 }
 
 size_t rotate_left_flip_coordinate (size_t row, size_t col, size_t width, size_t height) {
-  (void)width;
+  (void) width;
   return col * height + row;
 }
 
@@ -157,6 +157,6 @@ size_t rotate_right_flip_coordinate (size_t row, size_t col, size_t width, size_
 }
 
 size_t rotate_both_flip_coordinate (size_t row, size_t col, size_t width, size_t height) {
-  (void)height;
+  (void) height;
   return (row + 1) * width - (col + 1);
 }
