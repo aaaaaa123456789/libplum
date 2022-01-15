@@ -5,7 +5,7 @@ void load_PNM_data (struct context * context, unsigned flags, size_t limit) {
   size_t offset = 0;
   context -> image -> type = PLUM_IMAGE_PNM;
   // all image fields are zero-initialized, so the sizes are set to 0
-  while (offset < context -> size) {
+  do {
     if (context -> image -> frames == 0xffffffffu) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
     headers = ctxrealloc(context, headers, (context -> image -> frames + 1) * sizeof *headers);
     struct PNM_image_header * header = headers + (context -> image -> frames ++);
@@ -16,7 +16,7 @@ void load_PNM_data (struct context * context, unsigned flags, size_t limit) {
     validate_image_size(context, limit);
     offset = header -> datastart + header -> datalength;
     skip_PNM_whitespace(context, &offset);
-  }
+  } while (offset < context -> size);
   allocate_framebuffers(context, flags, 0);
   add_PNM_bit_depth_metadata(context, headers);
   uint64_t * buffer = ctxmalloc(context, sizeof *buffer * context -> image -> width * context -> image -> height);
