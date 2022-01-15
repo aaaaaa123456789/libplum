@@ -335,7 +335,8 @@ uint64_t load_BMP_word_pixel (const unsigned char * data, const void * bitmasks)
   return load_BMP_bitmasked_pixel(read_le32_unaligned(data), bitmasks);
 }
 
-uint64_t load_BMP_RGB_pixel (const unsigned char * data, const void * unused) {
+uint64_t load_BMP_RGB_pixel (const unsigned char * data, const void * bitmasks) {
+  (void) bitmasks;
   return (((uint64_t) *data << 32) | ((uint64_t) data[1] << 16) | (uint64_t) data[2]) * 0x101;
 }
 

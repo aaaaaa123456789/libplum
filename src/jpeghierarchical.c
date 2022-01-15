@@ -36,17 +36,18 @@ unsigned load_hierarchical_JPEG (struct context * context, const struct JPEG_mar
         double * data = output[frameIDs[p]];
         for (index = 0; index < limit; index ++) data[index] = (uint16_t) ((long) (data[index] + 65536.5)); // avoid UB and round negative values correctly
       }
-      double * buffer = NULL;
-      if (expand) buffer = ctxmalloc(context, sizeof *buffer * framewidth * frameheight);
-      if (expand & 0x10) for (p = 0; p < framecount; p ++) {
-        expand_JPEG_component_horizontally(context, output[frameIDs[p]], component_size[frameIDs[p]], component_size[frameIDs[p] + 4], framewidth, buffer);
-        component_size[frameIDs[p]] = framewidth;
+      if (expand) {
+        double * buffer = ctxmalloc(context, sizeof *buffer * framewidth * frameheight);
+        if (expand & 0x10) for (p = 0; p < framecount; p ++) {
+          expand_JPEG_component_horizontally(context, output[frameIDs[p]], component_size[frameIDs[p]], component_size[frameIDs[p] + 4], framewidth, buffer);
+          component_size[frameIDs[p]] = framewidth;
+        }
+        if (expand & 1) for (p = 0; p < framecount; p ++) {
+          expand_JPEG_component_vertically(context, output[frameIDs[p]], component_size[frameIDs[p]], component_size[frameIDs[p] + 4], frameheight, buffer);
+          component_size[frameIDs[p] + 4] = frameheight;
+        }
+        ctxfree(context, buffer);
       }
-      if (expand & 1) for (p = 0; p < framecount; p ++) {
-        expand_JPEG_component_vertically(context, output[frameIDs[p]], component_size[frameIDs[p]], component_size[frameIDs[p] + 4], frameheight, buffer);
-        component_size[frameIDs[p] + 4] = frameheight;
-      }
-      ctxfree(context, buffer);
       for (p = 0; p < framecount; p ++) if ((component_size[frameIDs[p]] != framewidth) || (component_size[frameIDs[p] + 4] != frameheight))
         throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     } else {

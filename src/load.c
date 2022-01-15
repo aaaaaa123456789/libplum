@@ -114,7 +114,7 @@ void load_file (struct context * context, const char * filename) {
 
 void load_from_callback (struct context * context, const struct plum_callback * callback) {
   size_t allocated;
-  char * buffer = resize_read_buffer(context, NULL, &allocated);
+  unsigned char * buffer = resize_read_buffer(context, NULL, &allocated);
   int iteration = callback -> callback(callback -> userdata, buffer, 0x4000 - sizeof(union allocator_node));
   if ((iteration < 0) || (iteration > (0x4000 - sizeof(union allocator_node)))) throw(context, PLUM_ERR_FILE_ERROR);
   context -> size = iteration;

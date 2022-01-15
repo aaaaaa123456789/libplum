@@ -165,7 +165,7 @@ int image_has_transparency (const struct plum_image * image) {
         while (count --) if (*(color ++) >= 0x7fff) return 1;
       return 0;
     }
-    case PLUM_COLOR_32X: {
+    default: { // PLUM_COLOR_32X
       const uint32_t * color = colordata;
       if (image -> color_format & PLUM_ALPHA_INVERT) {
         while (count --) if (*(color ++) < 0xc0000000u) return 1;
