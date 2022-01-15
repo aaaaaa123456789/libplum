@@ -7,7 +7,7 @@ CFLAGS = -Ofast -fomit-frame-pointer -fno-asynchronous-unwind-tables -fno-except
 
 DEBUGFLAGS = -Wall -Wextra -pedantic -Wcast-align -Wduplicated-branches -Wduplicated-cond -Wlogical-op \
              -Wnull-dereference -Wshadow -Wshift-overflow=2 -Wundef -Wunused -Wwrite-strings -Wno-sign-compare \
-             -Wno-implicit-fallthrough -Wno-parentheses -Wno-dangling-else
+             -Wno-implicit-fallthrough -Wno-parentheses -Wno-dangling-else -fanalyzer -fanalyzer-verbosity=0
 
 .PHONY: all clean basefiles debug
 
