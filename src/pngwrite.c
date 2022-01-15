@@ -197,8 +197,8 @@ void append_APNG_frame_header (struct context * context, uint64_t duration, uint
 
 void output_PNG_chunk (struct context * context, uint32_t type, uint32_t size, const void * restrict data) {
   unsigned char * node = append_output_node(context, size + 12);
-  write_be32((uint32_t *) node, size);
-  write_be32((uint32_t *) (node + 4), type);
+  write_be32_unaligned(node, size);
+  write_be32_unaligned(node + 4, type);
   if (size) memcpy(node + 8, data, size);
   write_be32_unaligned(node + size + 8, compute_PNG_CRC(node + 4, size + 4));
 }

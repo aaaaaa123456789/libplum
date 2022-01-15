@@ -5,8 +5,8 @@ void generate_GIF_data (struct context * context) {
   // technically, some GIFs could be 87a; however, at the time of writing, 89a is over three decades old and supported by everything relevant
   byteoutput(context, 0x47, 0x49, 0x46, 0x38, 0x39, 0x61);
   unsigned char * header = append_output_node(context, 7);
-  write_le16((uint16_t *) header, context -> source -> width);
-  write_le16((uint16_t *) (header + 2), context -> source -> height);
+  write_le16_unaligned(header, context -> source -> width);
+  write_le16_unaligned(header + 2, context -> source -> height);
   uint_fast32_t depth = get_true_color_depth(context -> source);
   uint8_t overall = depth;
   if ((uint8_t) (depth >> 8) > overall) overall = depth >> 8;

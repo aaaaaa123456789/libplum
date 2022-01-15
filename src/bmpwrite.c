@@ -43,23 +43,23 @@ void generate_BMP_bitmasked_data (struct context * context, uint32_t depth, unsi
   memset(attributes, 0, 108);
   write_le32_unaligned(offset_pointer, 122);
   *attributes = 108;
-  write_le32((uint32_t *) (attributes + 4), context -> source -> width);
-  write_le32((uint32_t *) (attributes + 8), context -> source -> height);
+  write_le32_unaligned(attributes + 4, context -> source -> width);
+  write_le32_unaligned(attributes + 8, context -> source -> height);
   attributes[12] = 1;
   attributes[14] = ((reddepth + greendepth + bluedepth + alphadepth) <= 16) ? 16 : 32;
   attributes[16] = 3;
-  write_le32((uint32_t *) (attributes + 40), ((uint32_t) 1 << reddepth) - 1);
-  write_le32((uint32_t *) (attributes + 44), (((uint32_t) 1 << greendepth) - 1) << reddepth);
-  write_le32((uint32_t *) (attributes + 48), (((uint32_t) 1 << bluedepth) - 1) << blueshift);
+  write_le32_unaligned(attributes + 40, ((uint32_t) 1 << reddepth) - 1);
+  write_le32_unaligned(attributes + 44, (((uint32_t) 1 << greendepth) - 1) << reddepth);
+  write_le32_unaligned(attributes + 48, (((uint32_t) 1 << bluedepth) - 1) << blueshift);
   if (alphadepth)
-    write_le32((uint32_t *) (attributes + 52), (((uint32_t) 1 << alphadepth) - 1) << alphashift);
+    write_le32_unaligned(attributes + 52, (((uint32_t) 1 << alphadepth) - 1) << alphashift);
   else
-    write_le32((uint32_t *) (attributes + 52), 0);
-  write_le32((uint32_t *) (attributes + 56), 0x73524742u); // 'sRGB'
+    write_le32_unaligned(attributes + 52, 0);
+  write_le32_unaligned(attributes + 56, 0x73524742u); // 'sRGB'
   size_t rowsize = (size_t) context -> source -> width * (attributes[14] >> 3);
   if ((attributes[14] == 16) && (context -> source -> width & 1)) rowsize += 2;
   size_t imagesize = rowsize * context -> source -> height;
-  if (imagesize <= 0x7fffffffu) write_le32((uint32_t *) (attributes + 20), imagesize);
+  if (imagesize <= 0x7fffffffu) write_le32_unaligned(attributes + 20, imagesize);
   unsigned char * data = append_output_node(context, imagesize);
   uint_fast32_t row = context -> source -> height - 1;
   do {
@@ -82,15 +82,15 @@ void generate_BMP_bitmasked_data (struct context * context, uint32_t depth, unsi
                           ((color & 0xffff00000000u) >> (48 - bluedepth) << blueshift);
       if (alphadepth) out |= (color & 0xffff000000000000u) >> (64 - alphadepth) << alphashift;
       if (attributes[14] == 16) {
-        write_le16((uint16_t *) data, out);
+        write_le16_unaligned(data, out);
         data += 2;
       } else {
-        write_le32((uint32_t *) data, out);
+        write_le32_unaligned(data, out);
         data += 4;
       }
     }
     if ((attributes[14] == 16) && (context -> source -> width & 1)) {
-      write_le16((uint16_t *) data, 0);
+      write_le16_unaligned(data, 0);
       data += 2;
     }
   } while (row --);
@@ -101,11 +101,11 @@ void generate_BMP_palette_halfbyte_data (struct context * context, unsigned char
   write_le32_unaligned(offset_pointer, 58 + 4 * context -> source -> max_palette_index);
   memset(attributes, 0, 40);
   *attributes = 40;
-  write_le32((uint32_t *) (attributes + 4), context -> source -> width);
-  write_le32((uint32_t *) (attributes + 8), context -> source -> height);
+  write_le32_unaligned(attributes + 4, context -> source -> width);
+  write_le32_unaligned(attributes + 8, context -> source -> height);
   attributes[12] = 1;
   attributes[14] = 4;
-  write_le32((uint32_t *) (attributes + 32), context -> source -> max_palette_index + 1);
+  write_le32_unaligned(attributes + 32, context -> source -> max_palette_index + 1);
   append_BMP_palette(context);
   size_t rowsize = ((context -> source -> width + 7) & ~7u) >> 1;
   if (context -> source -> max_palette_index < 2) rowsize = ((rowsize >> 2) + 3) & ~3u;
@@ -114,7 +114,7 @@ void generate_BMP_palette_halfbyte_data (struct context * context, unsigned char
   size_t compressed = try_compress_BMP(context, imagesize, &compress_BMP_halfbyte_row);
   if (compressed) {
     attributes[16] = 2;
-    if (compressed <= 0x7fffffffu) write_le32((uint32_t *) (attributes + 20), compressed);
+    if (compressed <= 0x7fffffffu) write_le32_unaligned(attributes + 20, compressed);
     context -> output -> size = compressed;
     return;
   }
@@ -149,18 +149,18 @@ void generate_BMP_palette_byte_data (struct context * context, unsigned char * o
   write_le32_unaligned(offset_pointer, 58 + 4 * context -> source -> max_palette_index);
   memset(attributes, 0, 40);
   *attributes = 40;
-  write_le32((uint32_t *) (attributes + 4), context -> source -> width);
-  write_le32((uint32_t *) (attributes + 8), context -> source -> height);
+  write_le32_unaligned(attributes + 4, context -> source -> width);
+  write_le32_unaligned(attributes + 8, context -> source -> height);
   attributes[12] = 1;
   attributes[14] = 8;
-  write_le32((uint32_t *) (attributes + 32), context -> source -> max_palette_index + 1);
+  write_le32_unaligned(attributes + 32, context -> source -> max_palette_index + 1);
   append_BMP_palette(context);
   size_t rowsize = (context -> source -> width + 3) & ~3u, imagesize = rowsize * context -> source -> height;
   unsigned char * data = append_output_node(context, imagesize);
   size_t compressed = try_compress_BMP(context, imagesize, &compress_BMP_byte_row);
   if (compressed) {
     attributes[16] = 1;
-    if (compressed <= 0x7fffffffu) write_le32((uint32_t *) (attributes + 20), compressed);
+    if (compressed <= 0x7fffffffu) write_le32_unaligned(attributes + 20, compressed);
     context -> output -> size = compressed;
     return;
   }
@@ -360,8 +360,8 @@ void generate_BMP_RGB_data (struct context * context, unsigned char * offset_poi
   write_le32_unaligned(offset_pointer, 54);
   memset(attributes, 0, 40);
   *attributes = 40;
-  write_le32((uint32_t *) (attributes + 4), context -> source -> width);
-  write_le32((uint32_t *) (attributes + 8), context -> source -> height);
+  write_le32_unaligned(attributes + 4, context -> source -> width);
+  write_le32_unaligned(attributes + 8, context -> source -> height);
   attributes[12] = 1;
   attributes[14] = 24;
   uint32_t * data;

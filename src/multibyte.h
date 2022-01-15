@@ -17,44 +17,17 @@ static inline uint32_t read_be32_unaligned (const unsigned char * data) {
 }
 
 static inline void write_le16_unaligned (unsigned char * buffer, uint16_t value) {
-  *(buffer ++) = value;
-  *(buffer ++) = value >> 8;
-}
-
-static inline void write_le16 (uint16_t * buffer, uint16_t value) {
-  *((unsigned char *) buffer) = value;
-  1[(unsigned char *) buffer] = value >> 8;
+  bytewrite(buffer, value, value >> 8);
 }
 
 static inline void write_le32_unaligned (unsigned char * buffer, uint32_t value) {
-  *(buffer ++) = value;
-  *(buffer ++) = value >> 8;
-  *(buffer ++) = value >> 16;
-  *buffer = value >> 24;
-}
-
-static inline void write_le32 (uint32_t * buffer, uint32_t value) {
-  *((unsigned char *) buffer) = value;
-  1[(unsigned char *) buffer] = value >> 8;
-  2[(unsigned char *) buffer] = value >> 16;
-  3[(unsigned char *) buffer] = value >> 24;
+  bytewrite(buffer, value, value >> 8, value >> 16, value >> 24);
 }
 
 static inline void write_be16_unaligned (unsigned char * buffer, uint32_t value) {
-  *(buffer ++) = value >> 8;
-  *buffer = value;
+  bytewrite(buffer, value >> 8, value);
 }
 
 static inline void write_be32_unaligned (unsigned char * buffer, uint32_t value) {
-  *(buffer ++) = value >> 24;
-  *(buffer ++) = value >> 16;
-  *(buffer ++) = value >> 8;
-  *buffer = value;
-}
-
-static inline void write_be32 (uint32_t * buffer, uint32_t value) {
-  *((unsigned char *) buffer) = value >> 24;
-  1[(unsigned char *) buffer] = value >> 16;
-  2[(unsigned char *) buffer] = value >> 8;
-  3[(unsigned char *) buffer] = value;
+  bytewrite(buffer, value >> 24, value >> 16, value >> 8, value);
 }
