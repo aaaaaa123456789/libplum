@@ -4,9 +4,8 @@ void load_BMP_data (struct context * context, unsigned flags, size_t limit) {
   if (context -> size < 54) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   uint_fast32_t dataoffset = read_le32_unaligned(context -> data + 10);
   uint_fast32_t subheader = read_le32_unaligned(context -> data + 14);
-  if (dataoffset >= context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  if (dataoffset < (subheader + 14)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  if (subheader < 40) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  if ((subheader < 40) || (subheader >= 0xffffffe6u)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  if ((dataoffset < (subheader + 14)) || (dataoffset >= context -> size)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   context -> image -> type = PLUM_IMAGE_BMP;
   context -> image -> frames = 1;
   context -> image -> width = read_le32_unaligned(context -> data + 18);
@@ -93,7 +92,8 @@ void load_BMP_data (struct context * context, unsigned flags, size_t limit) {
 uint8_t load_BMP_palette (struct context * context, size_t offset, unsigned max_count, uint64_t * palette) {
   uint_fast32_t count = read_le32_unaligned(context -> data + 46);
   if (!count || (count > max_count)) count = max_count;
-  if ((offset + (count * 4)) > context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  size_t end = offset + count * 4;
+  if ((end < offset) || (end > context -> size)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   unsigned p;
   for (p = 0; p < count; p ++) {
     palette[p] = ((uint64_t) context -> data[offset] << 32) | ((uint64_t) context -> data[offset + 1] << 16) | (uint64_t) context -> data[offset + 2];
@@ -143,7 +143,7 @@ void load_BMP_bitmasks (struct context * context, size_t headersize, uint8_t * b
 uint8_t * load_monochrome_BMP (struct context * context, size_t offset, int inverted) {
   size_t rowsize = ((context -> image -> width + 31) >> 3) & ~3u;
   size_t imagesize = rowsize * context -> image -> height;
-  if ((offset + imagesize) > context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  if (imagesize > (context -> size - offset)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   uint8_t * frame = ctxmalloc(context, (size_t) context -> image -> width * context -> image -> height);
   const unsigned char * rowdata = context -> data + offset + (inverted ? rowsize * (context -> image -> height - 1) : 0);
   uint_fast32_t row, pos;
@@ -174,7 +174,7 @@ uint8_t * load_monochrome_BMP (struct context * context, size_t offset, int inve
 uint8_t * load_halfbyte_BMP (struct context * context, size_t offset, int inverted) {
   size_t rowsize = ((context -> image -> width + 7) >> 1) & ~3u;
   size_t imagesize = rowsize * context -> image -> height;
-  if ((offset + imagesize) > context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  if (imagesize > (context -> size - offset)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   uint8_t * frame = ctxmalloc(context, (size_t) context -> image -> width * context -> image -> height);
   const unsigned char * rowdata = context -> data + offset + (inverted ? rowsize * (context -> image -> height - 1) : 0);
   uint_fast32_t row, pos;
@@ -197,7 +197,7 @@ uint8_t * load_halfbyte_BMP (struct context * context, size_t offset, int invert
 uint8_t * load_byte_BMP (struct context * context, size_t offset, int inverted) {
   size_t rowsize = (context -> image -> width + 3) & ~3u;
   size_t imagesize = rowsize * context -> image -> height;
-  if ((offset + imagesize) > context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  if (imagesize > (context -> size - offset)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   uint8_t * frame = ctxmalloc(context, (size_t) context -> image -> width * context -> image -> height);
   uint_fast32_t row;
   if (inverted || (context -> image -> width & 3))
@@ -304,15 +304,15 @@ uint8_t * load_byte_compressed_BMP (struct context * context, size_t offset, int
   throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
 }
 
-uint64_t * load_BMP_pixels (struct context * context, size_t offset, int inverted, unsigned bytes,
+uint64_t * load_BMP_pixels (struct context * context, size_t offset, int inverted, size_t bytes,
                             uint64_t (* loader) (const unsigned char *, const void *), const void * loaderdata) {
   size_t rowsize = (context -> image -> width * bytes + 3) & ~3u;
   size_t imagesize = rowsize * context -> image -> height;
-  if ((offset + imagesize) > context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  if (imagesize > (context -> size - offset)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   const unsigned char * rowdata = context -> data + offset + (inverted ? rowsize * (context -> image -> height - 1) : 0);
   uint_fast32_t row, col;
   size_t cell = 0;
-  uint64_t * frame = ctxmalloc(context, (size_t) context -> image -> height * context -> image -> width * sizeof *frame);
+  uint64_t * frame = ctxmalloc(context, sizeof *frame * context -> image -> width * context -> image -> height);
   for (row = 0; row < context -> image -> height; row ++) {
     const unsigned char * pixeldata = rowdata;
     for (col = 0; col < context -> image -> width; col ++) {

@@ -28,7 +28,7 @@ internal uint8_t * load_halfbyte_BMP(struct context *, size_t, int);
 internal uint8_t * load_byte_BMP(struct context *, size_t, int);
 internal uint8_t * load_halfbyte_compressed_BMP(struct context *, size_t, int);
 internal uint8_t * load_byte_compressed_BMP(struct context *, size_t, int);
-internal uint64_t * load_BMP_pixels(struct context *, size_t, int, unsigned, uint64_t (*) (const unsigned char *, const void *), const void *);
+internal uint64_t * load_BMP_pixels(struct context *, size_t, int, size_t, uint64_t (*) (const unsigned char *, const void *), const void *);
 internal uint64_t load_BMP_halfword_pixel(const unsigned char *, const void *);
 internal uint64_t load_BMP_word_pixel(const unsigned char *, const void *);
 internal uint64_t load_BMP_RGB_pixel(const unsigned char *, const void *);
