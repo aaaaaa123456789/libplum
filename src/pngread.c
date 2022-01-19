@@ -83,7 +83,7 @@ void load_PNG_data (struct context * context, unsigned flags, size_t limit) {
     uint_fast32_t top = read_be32_unaligned(context -> data + *frameinfo + 16);
     if ((width | height | left | top) & 0x80000000u) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     if (((width + left) > context -> image -> width) || ((height + top) > context -> image -> height)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-    if ((width == context -> image -> width) && (height = context -> image -> height))
+    if ((width == context -> image -> width) && (height == context -> image -> height))
       load_PNG_frame(context, *framedata, frame, palette, max_palette_index, imagetype, bitdepth, interlaced, background, transparent);
     else {
       uint64_t * output = ctxmalloc(context, sizeof *output * context -> image -> width * context -> image -> height);
