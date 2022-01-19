@@ -7,6 +7,7 @@ void load_GIF_data (struct context * context, unsigned flags, size_t limit) {
   context -> image -> height = read_le16_unaligned(context -> data + 8);
   size_t offset = 13;
   uint64_t transparent = 0xffff000000000000u;
+  // note: load_GIF_palettes also initializes context -> image -> frames (and context -> image -> palette) and validates the image's structure
   uint64_t ** palettes = load_GIF_palettes(context, flags, &offset, &transparent); // will be leaked (collected at the end)
   validate_image_size(context, limit);
   load_GIF_loop_count(context, &offset);
@@ -59,8 +60,8 @@ uint64_t ** load_GIF_palettes (struct context * context, unsigned flags, size_t 
           skip_GIF_data_blocks(context, &scan_offset);
       } break;
       case 0x2c: {
+        if (scan_offset > (context -> size - 9)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         scan_offset += 9;
-        if (scan_offset > context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         context -> image -> frames ++;
         if (!(context -> image -> frames)) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
         int smaller_size = read_le16_unaligned(context -> data + scan_offset - 9) || read_le16_unaligned(context -> data + scan_offset - 7) ||
@@ -132,12 +133,12 @@ uint64_t ** load_GIF_palettes (struct context * context, unsigned flags, size_t 
     }
   throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   done:
-  if (!(context -> image -> frames)) throw(context, PLUM_ERR_NO_DATA);
+  if (!context -> image -> frames) throw(context, PLUM_ERR_NO_DATA);
   if (!result) {
     if (transparent_index < global_palette_size) global_palette[transparent_index] = *transparent_color;
     context -> image -> max_palette_index = global_palette_size - 1;
     context -> image -> palette = plum_malloc(context -> image, plum_color_buffer_size(global_palette_size, flags));
-    if (!(context -> image -> palette)) throw(context, PLUM_ERR_OUT_OF_MEMORY);
+    if (!context -> image -> palette) throw(context, PLUM_ERR_OUT_OF_MEMORY);
     plum_convert_colors(context -> image -> palette, global_palette, global_palette_size, flags, PLUM_COLOR_64);
   }
   ctxfree(context, global_palette);
@@ -145,7 +146,7 @@ uint64_t ** load_GIF_palettes (struct context * context, unsigned flags, size_t 
 }
 
 void load_GIF_palette (struct context * context, uint64_t * palette, size_t * offset, unsigned size) {
-  if ((*offset + 3 * size) > context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  if ((3 * size) > (context -> size - *offset)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   uint64_t color;
   while (size --) {
     color = context -> data[(*offset) ++];
@@ -175,21 +176,21 @@ void * load_GIF_data_blocks (struct context * context, size_t * restrict offset,
 }
 
 void skip_GIF_data_blocks (struct context * context, size_t * offset) {
-  while (*offset < context -> size) {
-    uint8_t skip = context -> data[(*offset) ++];
-    if (!skip) return;
+  uint_fast8_t skip;
+  do {
+    if (*offset >= context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    skip = context -> data[(*offset) ++];
+    if ((context -> size < skip) || (*offset > (context -> size - skip))) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     *offset += skip;
-  }
-  throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  } while (skip);
 }
 
 void load_GIF_loop_count (struct context * context, size_t * offset) {
-  if (((*offset + 2) >= context -> size) || (context -> data[*offset] != 0x21) || (context -> data[*offset + 1] != 0xff)) {
+  if ((*offset >= (context -> size - 2)) || (context -> data[*offset] != 0x21) || (context -> data[*offset + 1] != 0xff)) {
     add_loop_count_metadata(context, 1);
     return;
   }
-  size_t newoffset = *offset + 2;
-  size_t size;
+  size_t size, newoffset = *offset + 2;
   unsigned char * data = load_GIF_data_blocks(context, &newoffset, &size);
   if ((size == 14) && bytematch(data, 0x4e, 0x45, 0x54, 0x53, 0x43, 0x41, 0x50, 0x45, 0x32, 0x2e, 0x30, 0x01)) {
     add_loop_count_metadata(context, read_le16_unaligned(data + 12));

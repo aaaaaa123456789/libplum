@@ -209,5 +209,5 @@ uint32_t get_true_color_depth (const struct plum_image * image) {
   if (green > 16) green = 16;
   if (blue > 16) blue = 16;
   if (alpha > 16) alpha = 16;
-  return ((uint32_t) red) | ((uint32_t) green << 8) | ((uint32_t) blue << 16) | ((uint32_t) alpha << 24);
+  return (uint32_t) red | ((uint32_t) green << 8) | ((uint32_t) blue << 16) | ((uint32_t) alpha << 24);
 }

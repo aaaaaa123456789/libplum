@@ -193,8 +193,7 @@ size_t compress_BMP_halfbyte_row (uint8_t * result, const uint8_t * data, size_t
     if ((*data == data[2]) && (data[1] == data[3])) {
       uint_fast8_t length;
       for (length = 4; (length < 0xff) && (length < count) && (data[length] == data[length - 2]); length ++);
-      *(result ++) = length;
-      *(result ++) = (*data << 4) | data[1];
+      result += byteappend(result, length, (*data << 4) | data[1]);
       size += 2;
       data += length;
       count -= length;
@@ -213,32 +212,21 @@ size_t compress_BMP_halfbyte_row (uint8_t * result, const uint8_t * data, size_t
       }
       while (length > 2) {
         uint_fast8_t block = (length > 0xff) ? 0xfc : length;
-        *(result ++) = 0;
-        *(result ++) = block;
+        result += byteappend(result, 0, block);
         size += (block + 7) >> 2 << 1;
         length -= block;
         count -= block;
         while (block >= 4) {
-          *(result ++) = (*data << 4) | data[1];
-          *(result ++) = (data[2] << 4) | data[3];
+          result += byteappend(result, (*data << 4) | data[1], (data[2] << 4) | data[3]);
           data += 4;
           block -= 4;
         }
         switch (block) {
-          case 1:
-            *(result ++) = *(data ++) << 4;
-            *(result ++) = 0;
-            break;
-          case 2:
-            *(result ++) = (*data << 4) | data[1];
-            *(result ++) = 0;
-            data += 2;
-            break;
-          case 3:
-            *(result ++) = (*data << 4) | data[1];
-            data += 2;
-            *(result ++) = *(data ++) << 4;
+          case 1: result += byteappend(result, *data << 4, 0); break;
+          case 2: result += byteappend(result, (*data << 4) | data[1], 0); break;
+          case 3: result += byteappend(result, (*data << 4) | data[1], data[2] << 4);
         }
+        data += block;
       }
       matches = emit_BMP_compressed_halfbyte_remainder(result, data, length);
       result += matches;
@@ -254,22 +242,19 @@ size_t compress_BMP_halfbyte_row (uint8_t * result, const uint8_t * data, size_t
 unsigned emit_BMP_compressed_halfbyte_remainder (uint8_t * result, const uint8_t * data, unsigned count) {
   switch (count) {
     case 1:
-      *(result ++) = 1;
-      *result = *data << 4;
+      bytewrite(result, 1, *data << 4);
       return 2;
     case 2:
-      *(result ++) = 2;
-      *result = (*data << 4) | data[1];
+      bytewrite(result, 2, (*data << 4) | data[1]);
       return 2;
     case 3:
-      *(result ++) = 2 + (*data == data[2]);
-      *(result ++) = (*data << 4) | data[1];
+      result += byteappend(result, 2 + (*data == data[2]), (*data << 4) | data[1]);
       if (*data == data[2]) return 2;
-      *(result ++) = 1;
-      *result = data[2] << 4;
+      bytewrite(result, 1, data[2] << 4);
       return 4;
+    default:
+      return 0;
   }
-  return 0;
 }
 
 size_t compress_BMP_byte_row (uint8_t * result, const uint8_t * data, size_t count) {
@@ -278,8 +263,7 @@ size_t compress_BMP_byte_row (uint8_t * result, const uint8_t * data, size_t cou
     if (*data == data[1]) {
       uint_fast8_t length;
       for (length = 2; (length < 0xff) && (length < count) && (*data == data[length]); length ++);
-      *(result ++) = length;
-      *(result ++) = *data;
+      result += byteappend(result, length, *data);
       size += 2;
       data += length;
       count -= length;
@@ -298,8 +282,7 @@ size_t compress_BMP_byte_row (uint8_t * result, const uint8_t * data, size_t cou
       }
       while (length > 2) {
         uint_fast8_t block = (length > 0xff) ? 0xfe : length;
-        *(result ++) = 0;
-        *(result ++) = block;
+        result += byteappend(result, 0, block);
         memcpy(result, data, block);
         result += block;
         data += block;
@@ -312,27 +295,25 @@ size_t compress_BMP_byte_row (uint8_t * result, const uint8_t * data, size_t cou
         }
       }
       if (length == 2) {
-        count -= 1 + (*data == data[1]);
-        length -= 1 + (*data == data[1]);
-        *(result ++) = 1 + (*data == data[1]);
-        if (*data == data[1]) data ++;
-        *(result ++) = *(data ++);
+        matches = 1 + (*data == data[1]);
+        result += byteappend(result, matches, *data);
         size += 2;
+        data += matches;
+        count -= matches;
+        length -= matches;
       }
       if (length == 1) {
-        *(result ++) = 1;
-        *(result ++) = *(data ++);
+        result += byteappend(result, 1, *data);
+        data ++;
         size += 2;
-        count -= 1;
+        count --;
       }
     }
   if (count == 1) {
-    *(result ++) = 1;
-    *(result ++) = *data;
+    result += byteappend(result, 1, *data);
     size += 2;
   }
-  *(result ++) = 0;
-  *result = 0;
+  bytewrite(result, 0, 0);
   return size;
 }
 
@@ -341,12 +322,7 @@ void append_BMP_palette (struct context * context) {
   uint32_t * colors = ctxmalloc(context, sizeof *colors * (context -> source -> max_palette_index + 1));
   plum_convert_colors(colors, context -> source -> palette, context -> source -> max_palette_index + 1, PLUM_COLOR_32, context -> source -> color_format);
   unsigned pos;
-  for (pos = 0; pos <= context -> source -> max_palette_index; pos ++) {
-    *(data ++) = colors[pos] >> 16;
-    *(data ++) = colors[pos] >> 8;
-    *(data ++) = colors[pos];
-    *(data ++) = 0;
-  }
+  for (pos = 0; pos <= context -> source -> max_palette_index; pos ++) data += byteappend(data, colors[pos] >> 16, colors[pos] >> 8, colors[pos], 0);
   ctxfree(context, colors);
 }
 
@@ -375,11 +351,7 @@ void generate_BMP_RGB_data (struct context * context, unsigned char * offset_poi
   uint_fast32_t remaining, row = context -> source -> height - 1;
   do {
     size_t pos = (size_t) row * context -> source -> width;
-    for (remaining = context -> source -> width; remaining; pos ++, remaining --) {
-      *(out ++) = data[pos] >> 16;
-      *(out ++) = data[pos] >> 8;
-      *(out ++) = data[pos];
-    }
+    for (remaining = context -> source -> width; remaining; pos ++, remaining --) out += byteappend(out, data[pos] >> 16, data[pos] >> 8, data[pos]);
     for (remaining = padding; remaining; remaining --) *(out ++) = 0;
   } while (row --);
   if (data != context -> source -> data) ctxfree(context, data);

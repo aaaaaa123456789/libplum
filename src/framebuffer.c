@@ -52,8 +52,8 @@ void allocate_framebuffers (struct context * context, unsigned flags, int palett
 }
 
 void write_framebuffer_to_image (struct plum_image * image, const uint64_t * framebuffer, uint32_t frame, unsigned flags) {
-  size_t framesize = plum_color_buffer_size((size_t) image -> width * image -> height, flags);
-  plum_convert_colors(image -> data8 + framesize * frame, framebuffer, (size_t) image -> width * image -> height, flags, PLUM_COLOR_64);
+  size_t pixels = (size_t) image -> width * image -> height, framesize = plum_color_buffer_size(pixels, flags);
+  plum_convert_colors(image -> data8 + framesize * frame, framebuffer, pixels, flags, PLUM_COLOR_64);
 }
 
 void write_palette_framebuffer_to_image (struct context * context, const uint8_t * framebuffer, const uint64_t * palette, uint32_t frame, unsigned flags,
