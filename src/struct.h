@@ -85,12 +85,12 @@ struct JPEG_decoder_tables {
 };
 
 struct JPEG_component_info {
-  uint32_t index:   8;
-  uint32_t tableQ:  8;
-  uint32_t tableDC: 4;
-  uint32_t tableAC: 4;
-  uint32_t scaleH:  4;
-  uint32_t scaleV:  4;
+  unsigned index:   8;
+  unsigned tableQ:  8;
+  unsigned tableDC: 4;
+  unsigned tableAC: 4;
+  unsigned scaleH:  4;
+  unsigned scaleV:  4;
 };
 
 struct JPEG_decompressor_state {
