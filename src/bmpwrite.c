@@ -4,9 +4,7 @@ void generate_BMP_data (struct context * context) {
   if (context -> source -> frames > 1) throw(context, PLUM_ERR_NO_MULTI_FRAME);
   if ((context -> source -> width > 0x7fffffffu) || (context -> source -> height > 0x7fffffffu)) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
   unsigned char * header = append_output_node(context, 14);
-  *header = 0x42;
-  header[1] = 0x4d;
-  memset(header + 2, 0, 8);
+  bytewrite(header, 0x42, 0x4d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
   uint32_t depth = get_true_color_depth(context -> source);
   if (depth >= 0x1000000u)
     generate_BMP_bitmasked_data(context, depth, header + 10);
@@ -14,10 +12,10 @@ void generate_BMP_data (struct context * context) {
     generate_BMP_palette_halfbyte_data(context, header + 10);
   else if (context -> source -> palette)
     generate_BMP_palette_byte_data(context, header + 10);
-  else if (!bit_depth_less_than(depth, 0x80808u))
-    generate_BMP_bitmasked_data(context, depth, header + 10);
-  else
+  else if (bit_depth_less_than(depth, 0x80808u))
     generate_BMP_RGB_data(context, header + 10);
+  else
+    generate_BMP_bitmasked_data(context, depth, header + 10);
   size_t filesize = get_total_output_size(context);
   if (filesize <= 0x7fffffffu) write_le32_unaligned(header + 2, filesize);
 }
@@ -46,7 +44,7 @@ void generate_BMP_bitmasked_data (struct context * context, uint32_t depth, unsi
   write_le32_unaligned(attributes + 4, context -> source -> width);
   write_le32_unaligned(attributes + 8, context -> source -> height);
   attributes[12] = 1;
-  attributes[14] = ((reddepth + greendepth + bluedepth + alphadepth) <= 16) ? 16 : 32;
+  attributes[14] = (p <= 16) ? 16 : 32;
   attributes[16] = 3;
   write_le32_unaligned(attributes + 40, ((uint32_t) 1 << reddepth) - 1);
   write_le32_unaligned(attributes + 44, (((uint32_t) 1 << greendepth) - 1) << reddepth);
@@ -89,10 +87,7 @@ void generate_BMP_bitmasked_data (struct context * context, uint32_t depth, unsi
         data += 4;
       }
     }
-    if ((attributes[14] == 16) && (context -> source -> width & 1)) {
-      write_le16_unaligned(data, 0);
-      data += 2;
-    }
+    if ((attributes[14] == 16) && (context -> source -> width & 1)) data += byteappend(data, 0x00, 0x00);
   } while (row --);
 }
 
@@ -108,7 +103,7 @@ void generate_BMP_palette_halfbyte_data (struct context * context, unsigned char
   write_le32_unaligned(attributes + 32, context -> source -> max_palette_index + 1);
   append_BMP_palette(context);
   size_t rowsize = ((context -> source -> width + 7) & ~7u) >> 1;
-  if (context -> source -> max_palette_index < 2) rowsize = ((rowsize >> 2) + 3) & ~3u;
+  if (context -> source -> max_palette_index < 2) rowsize = ((rowsize >> 2) + 3) & bitnegate(3);
   size_t imagesize = rowsize * context -> source -> height;
   unsigned char * data = append_output_node(context, imagesize);
   size_t compressed = try_compress_BMP(context, imagesize, &compress_BMP_halfbyte_row);
@@ -155,7 +150,7 @@ void generate_BMP_palette_byte_data (struct context * context, unsigned char * o
   attributes[14] = 8;
   write_le32_unaligned(attributes + 32, context -> source -> max_palette_index + 1);
   append_BMP_palette(context);
-  size_t rowsize = (context -> source -> width + 3) & ~3u, imagesize = rowsize * context -> source -> height;
+  size_t rowsize = (context -> source -> width + 3) & bitnegate(3), imagesize = rowsize * context -> source -> height;
   unsigned char * data = append_output_node(context, imagesize);
   size_t compressed = try_compress_BMP(context, imagesize, &compress_BMP_byte_row);
   if (compressed) {

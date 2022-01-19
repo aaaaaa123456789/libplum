@@ -93,7 +93,7 @@ struct JPEG_marker_layout * load_JPEG_marker_layout (struct context * context) {
       if ((++ next_restart_marker) == 0xd8) next_restart_marker = 0xd0;
       restart_offset = offset;
       continue;
-    } else if ((marker & ~7) == 0xd0)
+    } else if ((marker & ~7u) == 0xd0)
       throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     // if we find a marker other than RST, we're definitely ending the current scan, and the marker definitely has a size
     if (next_restart_marker) {
@@ -247,7 +247,7 @@ unsigned char process_JPEG_metadata_until_offset (struct context * context, cons
     switch (layout -> markertype[*index]) {
       case 0xc4: // DHT
         while (markersize) {
-          if (*markerdata & ~0x13) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+          if (*markerdata & ~0x13u) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
           unsigned char target = (*markerdata & 3) | (*markerdata >> 2);
           markerdata ++;
           markersize --;
@@ -259,7 +259,7 @@ unsigned char process_JPEG_metadata_until_offset (struct context * context, cons
         if (markersize % 2) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         for (count = markersize / 2; count; count --) {
           unsigned char destination = *(markerdata ++);
-          if (destination & ~0x13) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+          if (destination & ~0x13u) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
           destination = (destination >> 2) | (destination & 3);
           if (destination & 4) {
             if (!*markerdata || (*markerdata > 63)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
@@ -270,7 +270,7 @@ unsigned char process_JPEG_metadata_until_offset (struct context * context, cons
         break;
       case 0xdb: // DQT
         while (markersize) {
-          if (*markerdata & ~0x13) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+          if (*markerdata & ~0x13u) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
           unsigned char target = *markerdata & 3, type = *markerdata >> 4, p = type ? 128 : 64;
           markerdata ++;
           if ((-- markersize) < p) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);

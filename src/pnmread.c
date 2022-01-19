@@ -66,7 +66,7 @@ void load_PNM_header (struct context * context, size_t offset, struct PNM_image_
 }
 
 void load_PAM_header (struct context * context, size_t offset, struct PNM_image_header * restrict header) {
-  int fields = 15; // bits 0-3: width, height, max, depth
+  unsigned fields = 15; // bits 0-3: width, height, max, depth
   uint32_t value, depth;
   while (1) {
     skip_PNM_line(context, &offset);
@@ -81,26 +81,26 @@ void load_PAM_header (struct context * context, size_t offset, struct PNM_image_
       read_PNM_numbers(context, &offset, &value, 1);
       if (!value) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
       header -> width = value;
-      fields &= ~1;
+      fields &= ~1u;
     } else if ((length == 6) && bytematch(context -> data + offset, 0x48, 0x45, 0x49, 0x47, 0x48, 0x54)) { // HEIGHT
       offset += 6;
       if (!(fields & 2)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
       read_PNM_numbers(context, &offset, &value, 1);
       if (!value) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
       header -> height = value;
-      fields &= ~2;
+      fields &= ~2u;
     } else if ((length == 6) && bytematch(context -> data + offset, 0x4d, 0x41, 0x58, 0x56, 0x41, 0x4c)) { // MAXVAL
       offset += 6;
       if (!(fields & 4)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
       read_PNM_numbers(context, &offset, &value, 1);
       if (!value || (value > 0xffffu)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
       header -> maxvalue = value;
-      fields &= ~4;
+      fields &= ~4u;
     } else if ((length == 5) && bytematch(context -> data + offset, 0x44, 0x45, 0x50, 0x54, 0x48)) { // DEPTH
       offset += 5;
       if (!(fields & 8)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
       read_PNM_numbers(context, &offset, &depth, 1);
-      fields &= ~8;
+      fields &= ~8u;
     } else if ((length == 8) && bytematch(context -> data + offset, 0x54, 0x55, 0x50, 0x4c, 0x54, 0x59, 0x50, 0x45)) { // TUPLTYPE
       if (header -> type != 7) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
       offset += 8;
@@ -214,7 +214,7 @@ void load_PNM_frame (struct context * context, const struct PNM_image_header * h
     switch (header -> type) {
       case 1:
         // sometimes the 0s and 1s are not delimited at all here, so it needs a special parser
-        while ((offset < (context -> size)) && ((context -> data[offset] & ~1) != 0x30)) offset ++;
+        while ((offset < (context -> size)) && ((context -> data[offset] & ~1u) != 0x30)) offset ++;
         if (offset >= context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         values[2] = values[1] = *values = ~context -> data[offset ++] & 1;
         break;
@@ -267,7 +267,7 @@ void load_PNM_bit_frame (struct context * context, size_t width, size_t height, 
   for (row = 0; row < height; row ++) {
     uint_fast8_t value, bit;
     size_t p = (size_t) context -> image -> width * row;
-    for (col = 0; col < (width & ~7); col += 8) {
+    for (col = 0; col < (width & bitnegate(7)); col += 8) {
       value = context -> data[offset ++];
       for (bit = 0; bit < 8; bit ++) {
         buffer[p ++] = (value & 0x80) ? 0xffff000000000000u : 0xffffffffffffffffu;

@@ -25,6 +25,11 @@ static inline void ctxfree (struct context * context, void * buffer) {
   deallocate(&(context -> allocator), buffer);
 }
 
+static inline uintmax_t bitnegate (uintmax_t value) {
+  // ensure that the value is negated correctly, without accidental unsigned-to-signed conversions getting in the way
+  return ~value;
+}
+
 static inline uint16_t bitextend (uint16_t value, unsigned width) {
   uint_fast32_t result = value;
   while (width < 16) {

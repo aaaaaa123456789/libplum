@@ -141,7 +141,7 @@ void load_BMP_bitmasks (struct context * context, size_t headersize, uint8_t * b
 }
 
 uint8_t * load_monochrome_BMP (struct context * context, size_t offset, int inverted) {
-  size_t rowsize = ((context -> image -> width + 31) >> 3) & ~3u;
+  size_t rowsize = ((context -> image -> width + 31) >> 3) & bitnegate(3);
   size_t imagesize = rowsize * context -> image -> height;
   if (imagesize > (context -> size - offset)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   uint8_t * frame = ctxmalloc(context, (size_t) context -> image -> width * context -> image -> height);
@@ -172,7 +172,7 @@ uint8_t * load_monochrome_BMP (struct context * context, size_t offset, int inve
 }
 
 uint8_t * load_halfbyte_BMP (struct context * context, size_t offset, int inverted) {
-  size_t rowsize = ((context -> image -> width + 7) >> 1) & ~3u;
+  size_t rowsize = ((context -> image -> width + 7) >> 1) & bitnegate(3);
   size_t imagesize = rowsize * context -> image -> height;
   if (imagesize > (context -> size - offset)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   uint8_t * frame = ctxmalloc(context, (size_t) context -> image -> width * context -> image -> height);
@@ -195,7 +195,7 @@ uint8_t * load_halfbyte_BMP (struct context * context, size_t offset, int invert
 }
 
 uint8_t * load_byte_BMP (struct context * context, size_t offset, int inverted) {
-  size_t rowsize = (context -> image -> width + 3) & ~3u;
+  size_t rowsize = (context -> image -> width + 3) & bitnegate(3);
   size_t imagesize = rowsize * context -> image -> height;
   if (imagesize > (context -> size - offset)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   uint8_t * frame = ctxmalloc(context, (size_t) context -> image -> width * context -> image -> height);
@@ -294,11 +294,11 @@ uint8_t * load_byte_compressed_BMP (struct context * context, size_t offset, int
         break;
       default:
         if ((col + databyte) > context -> image -> width) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-        if (remaining < ((1 + (size_t) databyte) & ~1)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+        if (remaining < ((databyte + 1) & ~1u)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         memcpy(frame + (size_t) row * context -> image -> width + col, data, databyte);
         col += databyte;
-        data += (databyte + 1) & ~1;
-        remaining -= (databyte + 1) & ~1;
+        data += (databyte + 1) & ~1u;
+        remaining -= (databyte + 1) & ~1u;
     }
   }
   throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
@@ -306,7 +306,7 @@ uint8_t * load_byte_compressed_BMP (struct context * context, size_t offset, int
 
 uint64_t * load_BMP_pixels (struct context * context, size_t offset, int inverted, size_t bytes,
                             uint64_t (* loader) (const unsigned char *, const void *), const void * loaderdata) {
-  size_t rowsize = (context -> image -> width * bytes + 3) & ~3u;
+  size_t rowsize = (context -> image -> width * bytes + 3) & bitnegate(3);
   size_t imagesize = rowsize * context -> image -> height;
   if (imagesize > (context -> size - offset)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   const unsigned char * rowdata = context -> data + offset + (inverted ? rowsize * (context -> image -> height - 1) : 0);
@@ -342,9 +342,9 @@ uint64_t load_BMP_RGB_pixel (const unsigned char * data, const void * bitmasks) 
 
 uint64_t load_BMP_bitmasked_pixel (uint_fast32_t pixel, const uint8_t * bitmasks) {
   uint64_t result = 0;
-  if (bitmasks[1]) result |= bitextend((pixel >> *bitmasks) & (((uint_fast32_t) 1 << bitmasks[1]) - 1), bitmasks[1]);
-  if (bitmasks[3]) result |= (uint64_t) bitextend((pixel >> bitmasks[2]) & (((uint_fast32_t) 1 << bitmasks[3]) - 1), bitmasks[3]) << 16;
-  if (bitmasks[5]) result |= (uint64_t) bitextend((pixel >> bitmasks[4]) & (((uint_fast32_t) 1 << bitmasks[5]) - 1), bitmasks[5]) << 32;
-  if (bitmasks[7]) result |= (~(uint64_t) bitextend((pixel >> bitmasks[6]) & (((uint_fast32_t) 1 << bitmasks[7]) - 1), bitmasks[7])) << 48;
+  if (bitmasks[1]) result |= bitextend((pixel >> *bitmasks) & (((uint64_t) 1 << bitmasks[1]) - 1), bitmasks[1]);
+  if (bitmasks[3]) result |= (uint64_t) bitextend((pixel >> bitmasks[2]) & (((uint64_t) 1 << bitmasks[3]) - 1), bitmasks[3]) << 16;
+  if (bitmasks[5]) result |= (uint64_t) bitextend((pixel >> bitmasks[4]) & (((uint64_t) 1 << bitmasks[5]) - 1), bitmasks[5]) << 32;
+  if (bitmasks[7]) result |= (~(uint64_t) bitextend((pixel >> bitmasks[6]) & (((uint64_t) 1 << bitmasks[7]) - 1), bitmasks[7])) << 48;
   return result;
 }
