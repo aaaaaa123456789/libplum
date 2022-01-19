@@ -29,7 +29,7 @@ void load_PNG_data (struct context * context, unsigned flags, size_t limit) {
   }
   add_PNG_bit_depth_metadata(context, chunks, imagetype, bitdepth);
   uint64_t background = add_PNG_background_metadata(context, chunks, palette, imagetype, bitdepth, max_palette_index, flags);
-  uint64_t transparent = -(uint64_t) 1;
+  uint64_t transparent = 0xffffffffffffffffu;
   if (chunks -> transparency)
     if (imagetype <= 2)
       transparent = load_PNG_transparent_color(context, chunks -> transparency, imagetype, bitdepth);
@@ -104,7 +104,7 @@ void load_PNG_data (struct context * context, unsigned flags, size_t limit) {
             *(current ++) = background | 0xffff000000000000u;
           else {
             *current = pixels[index ++];
-            if ((transparent != -(uint64_t) 1) && (*current == transparent)) *current = background | 0xffff000000000000u;
+            if ((transparent != 0xffffffffffffffffu) && (*current == transparent)) *current = background | 0xffff000000000000u;
             current ++;
           }
         ctxfree(context, pixels);

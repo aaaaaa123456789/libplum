@@ -7,7 +7,7 @@ void load_PNG_frame (struct context * context, const size_t * chunks, uint32_t f
   if (palette)
     write_palette_framebuffer_to_image(context, data, palette, frame, context -> image -> color_format, 0xff); // 0xff to avoid a redundant range check
   else {
-    if (transparent != -(uint64_t) 1) {
+    if (transparent != 0xffffffffffffffffu) {
       uint64_t * current = data;
       size_t count = (size_t) context -> image -> width * context -> image -> height;
       for (; count; count --, current ++) if (*current == transparent) *current = background | 0xffff000000000000u;

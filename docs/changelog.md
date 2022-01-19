@@ -4,6 +4,7 @@ Note: releases are listed from latest to oldest.
 
 ## Version 1.0 (in development)
 
+- Fixed a bug when loading APNG files with reduced frames
 - Ensured that the `PLUM_FILENAME`, `PLUM_BUFFER` and `PLUM_CALLBACK` constants are always `size_t` as documented
 - Enforced the size limitation on the value returned by a callback when using the `PLUM_CALLBACK` loading/storing mode
 - Added some warning flags for debug builds, and cleared some warnings that would be raised by them
