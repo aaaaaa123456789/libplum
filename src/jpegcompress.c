@@ -7,10 +7,14 @@ struct JPEG_encoded_value * generate_JPEG_luminance_data_stream (struct context 
   struct JPEG_encoded_value * result = ctxmalloc(context, sizeof *result * allocated);
   double predicted = 0.0;
   for (unit = 0; unit < units; unit ++) {
-    if ((allocated - *count) < 64) result = ctxrealloc(context, result, sizeof *result * (allocated += 3 * (units - unit) + 64));
+    if ((allocated - *count) < 64) {
+      size_t newsize = allocated + 3 * (units - unit) + 64;
+      if (newsize < allocated) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
+      result = ctxrealloc(context, result, sizeof *result * (allocated = newsize));
+    }
     predicted = generate_JPEG_data_unit(result, count, data[unit], quantization, predicted);
   }
-  return ctxrealloc(context, result, sizeof *result * *count);
+  return ctxrealloc(context, result, *count * sizeof *result);
 }
 
 struct JPEG_encoded_value * generate_JPEG_chrominance_data_stream (struct context * context, double (* restrict blue)[64], double (* restrict red)[64],
@@ -20,11 +24,15 @@ struct JPEG_encoded_value * generate_JPEG_chrominance_data_stream (struct contex
   struct JPEG_encoded_value * result = ctxmalloc(context, sizeof *result * allocated);
   double predicted_blue = 0.0, predicted_red = 0.0;
   for (unit = 0; unit < units; unit ++) {
-    if ((allocated - *count) < 128) result = ctxrealloc(context, result, sizeof *result * (allocated += 6 * (units - unit) + 128));
+    if ((allocated - *count) < 128) {
+      size_t newsize = allocated + 6 * (units - unit) + 128;
+      if (newsize < allocated) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
+      result = ctxrealloc(context, result, sizeof *result * (allocated = newsize));
+    }
     predicted_blue = generate_JPEG_data_unit(result, count, blue[unit], quantization, predicted_blue);
     predicted_red = generate_JPEG_data_unit(result, count, red[unit], quantization, predicted_red);
   }
-  return ctxrealloc(context, result, sizeof *result * *count);
+  return ctxrealloc(context, result, *count * sizeof *result);
 }
 
 double generate_JPEG_data_unit (struct JPEG_encoded_value * data, size_t * restrict count, const double unit[restrict static 64],

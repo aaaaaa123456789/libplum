@@ -151,11 +151,7 @@ void JPEG_transfer_RGB (uint64_t * restrict output, size_t count, unsigned limit
 }
 
 void JPEG_transfer_BGR (uint64_t * restrict output, size_t count, unsigned limit, const double ** input) {
-  double factor = 65535.0 / limit;
-  const double * red = input[2];
-  const double * green = input[1];
-  const double * blue = *input;
-  while (count --) *(output ++) = color_from_floats(*(red ++) * factor, *(green ++) * factor, *(blue ++) * factor, 0);
+  JPEG_transfer_RGB(output, count, limit, (const double * []) {input[2], input[1], *input});
 }
 
 void JPEG_transfer_ABGR (uint64_t * restrict output, size_t count, unsigned limit, const double ** input) {
@@ -262,7 +258,7 @@ void JPEG_transfer_CMYK (uint64_t * restrict output, size_t count, unsigned limi
   const double * yellow = input[2];
   const double * black = input[3];
   while (count --) {
-    double scale = factor * *(black ++);
+    double scale = *(black ++) * factor;
     *(output ++) = color_from_floats(*(cyan ++) * scale, *(magenta ++) * scale, *(yellow ++) * scale, 0);
   }
 }

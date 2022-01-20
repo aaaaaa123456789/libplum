@@ -24,7 +24,7 @@ void generate_GIF_data (struct context * context) {
 void generate_GIF_data_with_palette (struct context * context, unsigned char * header) {
   uint_fast16_t colors = context -> source -> max_palette_index + 1;
   uint32_t * palette = ctxcalloc(context, 256 * sizeof *palette);
-  plum_convert_colors(palette, context -> source -> palette, context -> source -> max_palette_index + 1, PLUM_COLOR_32, context -> source -> color_format);
+  plum_convert_colors(palette, context -> source -> palette, colors, PLUM_COLOR_32, context -> source -> color_format);
   int transparent = -1;
   uint8_t * mapping = NULL;
   uint_fast32_t p;
