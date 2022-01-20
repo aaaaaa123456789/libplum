@@ -101,8 +101,7 @@ void generate_GIF_data_from_raw (struct context * context, unsigned char * heade
   int_fast32_t background = get_GIF_background_color(context);
   if (background >= 0) {
     header[4] |= 0x80;
-    uint32_t palette[2] = {background, 0};
-    write_GIF_palette(context, palette, 2);
+    write_GIF_palette(context, (const uint32_t []) {background, 0}, 2);
   }
   write_GIF_loop_info(context);
   size_t framesize = (size_t) context -> source -> width * context -> source -> height;
@@ -183,12 +182,8 @@ int_fast32_t get_GIF_background_color (struct context * context) {
 }
 
 void write_GIF_palette (struct context * context, const uint32_t * palette, unsigned count) {
-  unsigned char * data = append_output_node(context, 3 * count);
-  while (count --) {
-    *(data ++) = *palette;
-    *(data ++) = *palette >> 8;
-    *(data ++) = *(palette ++) >> 16;
-  }
+  unsigned char * data;
+  for (data = append_output_node(context, 3 * count); count; count --, palette ++) data += byteappend(data, *palette, *palette >> 8, *palette >> 16);
 }
 
 void write_GIF_loop_info (struct context * context) {
@@ -197,9 +192,7 @@ void write_GIF_loop_info (struct context * context) {
   uint_fast32_t count = *(const uint32_t *) metadata -> data;
   if (count > 0xffffu) count = 0; // too many loops, so just make it loop forever
   if (count == 1) return;
-  unsigned char data[] = {0x21, 0xff, 0x0b, 0x4e, 0x45, 0x54, 0x53, 0x43, 0x41, 0x50, 0x45, 0x32, 0x2e, 0x30, 0x03, 0x01, count, count >> 8, 0x00};
-  char * output = append_output_node(context, sizeof data);
-  memcpy(output, data, sizeof data);
+  byteoutput(context, 0x21, 0xff, 0x0b, 0x4e, 0x45, 0x54, 0x53, 0x43, 0x41, 0x50, 0x45, 0x32, 0x2e, 0x30, 0x03, 0x01, count, count >> 8, 0x00);
 }
 
 void write_GIF_frame (struct context * context, const unsigned char * restrict data, const uint32_t * palette, unsigned colors, int transparent,
@@ -209,22 +202,19 @@ void write_GIF_frame (struct context * context, const unsigned char * restrict d
   uint8_t disposal = 0;
   if (durations && (durations -> size > (sizeof(uint64_t) * frame))) {
     duration = frame[(const uint64_t *) durations -> data];
-    duration = (duration + 5000000u) / 10000000u;
+    duration = (duration / 5000000u + 1) >> 1;
     if (duration > 0xffffu) duration = 0xffffu; // maxed out
   }
   if (disposals && (disposals -> size > frame)) {
     disposal = frame[(const uint8_t *) disposals -> data];
     if (disposal >= PLUM_DISPOSAL_REPLACE) disposal -= PLUM_DISPOSAL_REPLACE;
   }
-  unsigned char extraflags = (disposal + 1) << 2;
-  if (transparent >= 0) extraflags ++;
   unsigned char baseflags;
   for (baseflags = 0; colors > (2 << baseflags); baseflags ++);
   colors = 2 << baseflags;
   if (palette) baseflags |= 0x80;
-  unsigned char header[] = {0x21, 0xf9, 0x04, extraflags, duration, duration >> 8, (transparent >= 0) ? transparent : 0, 0x00,
-                            0x2c, left, left >> 8, top, top >> 8, width, width >> 8, height, height >> 8, baseflags};
-  memcpy(append_output_node(context, sizeof header), header, sizeof header);
+  byteoutput(context, 0x21, 0xf9, 0x04, (disposal + 1) * 4 + (transparent >= 0), duration, duration >> 8, (transparent >= 0) ? transparent : 0, 0x00,
+                      0x2c, left, left >> 8, top, top >> 8, width, width >> 8, height, height >> 8, baseflags);
   if (palette) write_GIF_palette(context, palette, colors);
   unsigned codesize = (baseflags & 7) + 1;
   if (codesize < 2) codesize = 2;
