@@ -43,11 +43,8 @@ void generate_GIF_data_with_palette (struct context * context, unsigned char * h
   int_fast32_t background = get_GIF_background_color(context);
   if (background >= 0) {
     for (p = 0; p < colors; p ++) if (palette[p] == background) break;
-    if (p >= colors) {
-      if (colors == 256) throw(context, PLUM_ERR_TOO_MANY_COLORS);
-      palette[colors ++] = background;
-    }
-    background = p;
+    if ((p == colors) && (colors < 256)) palette[colors ++] = background;
+    background = (p < colors) ? p : -1;
   }
   for (p = 0; colors > (2 << p); p ++);
   colors = 2 << p;
