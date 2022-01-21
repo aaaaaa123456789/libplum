@@ -5,10 +5,15 @@ Note: releases are listed from latest to oldest.
 ## Version 1.0 (in development)
 
 - Fixed a bug when loading APNG files with reduced frames
+- Fixed a bug in the GIF compressor that would generate invalid compressed frame data when a code size increase and
+  reduction occured at the same time
 - Ensured that the `PLUM_FILENAME`, `PLUM_BUFFER` and `PLUM_CALLBACK` constants are always `size_t` as documented
 - Enforced the size limitation on the value returned by a callback when using the `PLUM_CALLBACK` loading/storing mode
+- Handled out-of-palette background colors when generating a GIF file, ensuring that they would never cause the
+  process to fail (the background is ignored instead if there are no available palette slots)
 - Added some warning flags for debug builds, and cleared some warnings that would be raised by them
-- Some minor documentation updates
+- Added and improved some safety checks that detect maliciously-crafted and other pathological files
+- Some minor documentation updates and code cleanup
 
 ## Version 0.3 (10 January 2022)
 
