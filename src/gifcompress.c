@@ -28,15 +28,14 @@ unsigned char * compress_GIF_data (struct context * context, const unsigned char
         else if (shortchains)
           shortchains --;
       chain = 1;
-      if (shortchains > 8) {
+      if (max_code > 4095) max_code = 4095;
+      if (max_code == (1 << current_codesize)) current_codesize ++;
+      if (shortchains > (codesize + 8)) {
         codeword |= 1 << (bits + codesize);
         bits += current_codesize;
         max_code = (1 << codesize) + 1;
         current_codesize = codesize + 1;
         shortchains = 0;
-      } else {
-        if (max_code > 4095) max_code = 4095;
-        if (max_code == (1 << current_codesize)) current_codesize ++;
       }
     }
     while (bits >= 8) {
