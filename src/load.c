@@ -33,6 +33,7 @@ struct plum_image * plum_load_image_limited (const void * restrict buffer, size_
     else
       update_loaded_palette(context, flags);
   done:
+  if (context -> file) fclose(context -> file);
   if (error) *error = context -> status;
   struct plum_image * image = context -> image;
   if (context -> status) {
@@ -94,24 +95,19 @@ void prepare_image_buffer_data (struct context * context, const void * restrict 
 }
 
 void load_file (struct context * context, const char * filename) {
-  FILE * fp = fopen(filename, "rb");
-  if (!fp) throw(context, PLUM_ERR_FILE_INACCESSIBLE);
+  context -> file = fopen(filename, "rb");
+  if (!context -> file) throw(context, PLUM_ERR_FILE_INACCESSIBLE);
   size_t allocated;
   char * buffer = resize_read_buffer(context, NULL, &allocated);
-  size_t size = fread(buffer, 1, allocated, fp);
-  if (ferror(fp)) {
-    fclose(fp);
-    throw(context, PLUM_ERR_FILE_ERROR);
-  }
-  while (!feof(fp)) {
+  size_t size = fread(buffer, 1, allocated, context -> file);
+  if (ferror(context -> file)) throw(context, PLUM_ERR_FILE_ERROR);
+  while (!feof(context -> file)) {
     if ((allocated - size) < 0x4000) buffer = resize_read_buffer(context, buffer, &allocated);
-    size += fread(buffer + size, 1, 0x4000, fp);
-    if (ferror(fp)) {
-      fclose(fp);
-      throw(context, PLUM_ERR_FILE_ERROR);
-    }
+    size += fread(buffer + size, 1, 0x4000, context -> file);
+    if (ferror(context -> file)) throw(context, PLUM_ERR_FILE_ERROR);
   }
-  fclose(fp);
+  fclose(context -> file);
+  context -> file = NULL;
   context -> data = ctxrealloc(context, buffer, size);
   context -> size = size;
 }

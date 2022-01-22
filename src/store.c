@@ -41,32 +41,30 @@ size_t plum_store_image (const struct plum_image * image, void * restrict buffer
   }
   result = output_size;
   done:
+  if (context -> file) fclose(context -> file);
   if (error) *error = context -> status;
   destroy_allocator_list(context -> allocator);
   return result;
 }
 
 void write_generated_image_data_to_file (struct context * context, const char * filename) {
-  FILE * fp = fopen(filename, "wb");
-  if (!fp) throw(context, PLUM_ERR_FILE_INACCESSIBLE);
+  context -> file = fopen(filename, "wb");
+  if (!context -> file) throw(context, PLUM_ERR_FILE_INACCESSIBLE);
   const struct data_node * node;
   for (node = context -> output; node -> previous; node = node -> previous);
   while (node) {
     const unsigned char * data = node -> data;
     size_t size = node -> size;
     while (size) {
-      unsigned count = fwrite(data, 1, (size > 0x4000) ? 0x4000 : size, fp);
-      if (count) {
-        data += count;
-        size -= count;
-      } else {
-        fclose(fp);
-        throw(context, PLUM_ERR_FILE_ERROR);
-      }
+      unsigned count = fwrite(data, 1, (size > 0x4000) ? 0x4000 : size, context -> file);
+      if (ferror(context -> file) || !count) throw(context, PLUM_ERR_FILE_ERROR);
+      data += count;
+      size -= count;
     }
     node = node -> next;
   }
-  fclose(fp);
+  fclose(context -> file);
+  context -> file = NULL;
 }
 
 void write_generated_image_data_to_callback (struct context * context, const struct plum_callback * callback) {

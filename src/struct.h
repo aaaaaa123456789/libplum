@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <setjmp.h>
@@ -36,6 +37,7 @@ struct context {
     struct plum_image * image;
     const struct plum_image * source;
   };
+  FILE * file;
   jmp_buf target;
 };
 
