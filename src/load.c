@@ -44,6 +44,10 @@ struct plum_image * plum_load_image_limited (const void * restrict buffer, size_
 }
 
 void load_image_buffer_data (struct context * context, unsigned flags, size_t limit) {
+  if ((context -> size == 7) && (bytematch(context -> data, 0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x3b) ||
+                                 bytematch(context -> data, 0x47, 0x49, 0x46, 0x38, 0x37, 0x61, 0x3b)))
+    // empty GIF file
+    throw(context, PLUM_ERR_NO_DATA);
   if (context -> size < 8) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   if (bytematch(context -> data, 0x42, 0x4d))
     load_BMP_data(context, flags, limit);
