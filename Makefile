@@ -11,7 +11,7 @@ ifneq (,$(findstring gcc,$(CC)))
 	DEBUGFLAGS += -Wduplicated-branches -Wduplicated-cond -Wlogical-op -Wshift-overflow=2 -fanalyzer -fanalyzer-verbosity=0
 else
 ifneq (,$(findstring clang, $(CC)))
-	DEBUGFLAGS += -Wno-keyword-macro
+	DEBUGFLAGS += -Wno-keyword-macro -fsanitize=undefined
 endif
 endif
 
