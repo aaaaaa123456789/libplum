@@ -9,10 +9,9 @@ void generate_palette (struct context * context, unsigned flags) {
   if (result >= 0) {
     plum_free(context -> image, context -> image -> data);
     context -> image -> data = indexes;
-    context -> image -> palette = palette;
     context -> image -> max_palette_index = result;
-    palette = plum_realloc(context -> image, palette, plum_color_buffer_size(result + 1, context -> image -> color_format));
-    if (palette) context -> image -> palette = palette;
+    context -> image -> palette = plum_realloc(context -> image, palette, plum_color_buffer_size(result + 1, context -> image -> color_format));
+    if (!context -> image -> palette) throw(context, PLUM_ERR_OUT_OF_MEMORY);
   } else if (result == -PLUM_ERR_TOO_MANY_COLORS) {
     plum_free(context -> image, palette);
     plum_free(context -> image, indexes);
@@ -72,6 +71,7 @@ void reduce_palette (struct plum_image * image) {
   uint64_t colors[0x200];
   // converting up to 64-bit and later back to the original format is lossless
   plum_convert_colors(colors, image -> palette, image -> max_palette_index + 1, PLUM_COLOR_64, image -> color_format);
+  memcpy(colors + 0x100, colors, sizeof(uint64_t) * (image -> max_palette_index + 1));
   for (p = image -> max_palette_index; p != SIZE_MAX; p --) {
     colors[2 * p + 1] = colors[p];
     colors[2 * p] = p;
@@ -86,7 +86,6 @@ void reduce_palette (struct plum_image * image) {
       ref = map[colors[2 * p]] = colors[2 * p];
     else
       map[colors[2 * p]] = ref;
-  plum_convert_colors(colors + 0x100, image -> palette, image -> max_palette_index + 1, PLUM_COLOR_64, image -> color_format);
   for (p = 0, ref = 0; p <= image -> max_palette_index; p ++)
     if (used[p]) {
       map[p] = ref;

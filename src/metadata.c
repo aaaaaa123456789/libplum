@@ -5,7 +5,8 @@ struct plum_metadata * plum_allocate_metadata (struct plum_image * image, size_t
     struct plum_metadata result;
     max_align_t alignment;
   } * result = plum_malloc(image, sizeof *result + size);
-  if (result) result -> result = (struct plum_metadata) {
+  if (!result) return NULL;
+  result -> result = (struct plum_metadata) {
     .type = PLUM_METADATA_NONE,
     .size = size,
     .data = result + 1,

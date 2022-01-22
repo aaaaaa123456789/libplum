@@ -5,10 +5,8 @@
 unsigned char * compress_PNG_data (struct context * context, const unsigned char * restrict data, size_t size, size_t extra, size_t * restrict output_size) {
   // extra is the number of zero bytes inserted before the compressed data; they are not included in the size
   unsigned char * output = ctxmalloc(context, extra + 8); // two bytes extra to handle leftover bits in dataword
-  size_t p, inoffset = 0, outoffset = extra + 2;
   memset(output, 0, extra);
-  output[extra] = 0x78;
-  output[extra + 1] = 0x5e;
+  size_t p, inoffset = 0, outoffset = extra + byteappend(output + extra, 0x78, 0x5e);
   uint16_t * references = ctxmalloc(context, 0x8000u * PNG_MAX_LOOKBACK_COUNT * sizeof *references);
   for (p = 0; p < (0x8000u * PNG_MAX_LOOKBACK_COUNT); p ++) references[p] = 0xffffu;
   uint32_t dataword = 0;
@@ -70,7 +68,7 @@ struct compressed_PNG_code * generate_compressed_PNG_block (struct context * con
     if (length = find_PNG_reference(data, references, current_offset, size, &backref)) {
       // we found a matching back reference, so emit any pending literals and the reference
       for (; literals; literals --) emit_PNG_code(context, &codes, &allocated, count, data[current_offset - literals], 0);
-      emit_PNG_code(context, &codes, &allocated, count, -length, current_offset - backref);
+      emit_PNG_code(context, &codes, &allocated, count, -(int) length, current_offset - backref);
       score -= length - 1;
       if (score < 0) score = 0;
       for (; length; length --) append_PNG_reference(data, current_offset ++, references);
@@ -121,7 +119,7 @@ unsigned find_PNG_reference (const unsigned char * data, const uint16_t * refere
   size_t backref, found;
   unsigned p, length, best = 0;
   for (p = 0; (p < PNG_MAX_LOOKBACK_COUNT) && (references[search + p] != 0xffffu); p ++) {
-    backref = (current_offset & ~(size_t) 0x7fff) | references[search + p];
+    backref = (current_offset & bitnegate(0x7fff)) | references[search + p];
     if (backref >= current_offset)
       if (current_offset < 0x8000u)
         continue;

@@ -81,8 +81,8 @@ void prepare_image_buffer_data (struct context * context, const void * restrict 
       load_file(context, buffer);
       return;
     case PLUM_BUFFER:
-      context -> data = ((struct plum_buffer *) buffer) -> data;
-      context -> size = ((struct plum_buffer *) buffer) -> size;
+      context -> data = ((const struct plum_buffer *) buffer) -> data;
+      context -> size = ((const struct plum_buffer *) buffer) -> size;
       return;
     case PLUM_CALLBACK:
       load_from_callback(context, buffer);
@@ -134,10 +134,10 @@ void load_from_callback (struct context * context, const struct plum_callback * 
 void * resize_read_buffer (struct context * context, void * buffer, size_t * restrict allocated) {
   // will set the buffer to its initial size on first call (buffer = NULL, allocated = ignored), or extend it on further calls
   if (buffer)
-    if (*allocated <= 0x20000u)
+    if (*allocated < (0x20000u - sizeof(union allocator_node)))
       *allocated += 0x4000;
     else
-      *allocated += (size_t) 0x4000 << (bit_width(*allocated - 1) - 17);
+      *allocated += (size_t) 0x4000 << (bit_width(*allocated + sizeof(union allocator_node)) - 17);
   else
     *allocated = 0x4000 - sizeof(union allocator_node); // keep the buffer aligned to memory pages
   return ctxrealloc(context, buffer, *allocated);

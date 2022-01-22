@@ -3,7 +3,7 @@
 struct plum_image * plum_new_image (void) {
   union allocator_node * allocator = NULL;
   struct plum_image * image = allocate(&allocator, sizeof *image);
-  if (image) *image = (struct plum_image) {.allocator = allocator};
+  if (image) *image = (struct plum_image) {.allocator = allocator}; // zero-initialize all other members
   return image;
 }
 
@@ -25,8 +25,7 @@ struct plum_image * plum_copy_image (const struct plum_image * image) {
     allocated -> type = current -> type;
     memcpy(allocated -> data, current -> data, current -> size);
     struct plum_metadata * last = copy -> metadata = allocated;
-    while (current -> next) {
-      current = current -> next;
+    while (current = current -> next) {
       allocated = plum_allocate_metadata(copy, current -> size);
       if (!allocated) goto error;
       allocated -> type = current -> type;
@@ -35,15 +34,17 @@ struct plum_image * plum_copy_image (const struct plum_image * image) {
       last = allocated;
     }
   }
-  size_t size = plum_pixel_buffer_size(image);
-  if (!size) goto error;
-  void * buffer = plum_malloc(copy, size);
-  if (!buffer) goto error;
-  memcpy(buffer, image -> data, size);
-  copy -> data = buffer;
+  if (image -> width && image -> height && image -> frames) {
+    size_t size = plum_pixel_buffer_size(image);
+    if (!size) goto error;
+    void * buffer = plum_malloc(copy, size);
+    if (!buffer) goto error;
+    memcpy(buffer, image -> data, size);
+    copy -> data = buffer;
+  }
   if (image -> palette) {
-    size = plum_palette_buffer_size(image);
-    buffer = plum_malloc(copy, size);
+    size_t size = plum_palette_buffer_size(image);
+    void * buffer = plum_malloc(copy, size);
     if (!buffer) goto error;
     memcpy(buffer, image -> palette, size);
     copy -> palette = buffer;
