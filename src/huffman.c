@@ -1,11 +1,11 @@
 #include "proto.h"
 
 void generate_Huffman_tree (struct context * context, const size_t * restrict counts, unsigned char * restrict lengths, size_t entries, unsigned char max) {
-  size_t * sorted = ctxmalloc(context, 2 * entries * sizeof *sorted);
+  uint64_t * sorted = ctxmalloc(context, 2 * entries * sizeof *sorted);
   size_t p, truecount = 0;
   for (p = 0; p < entries; p ++) if (counts[p]) {
     sorted[2 * truecount] = p;
-    sorted[2 * truecount + 1] = ~counts[p];
+    sorted[2 * truecount + 1] = ~(uint64_t) counts[p];
     truecount ++;
   }
   memset(lengths, 0, entries);
@@ -17,7 +17,8 @@ void generate_Huffman_tree (struct context * context, const size_t * restrict co
   size_t * parents = ctxmalloc(context, (entries + truecount) * sizeof *parents);
   size_t * pendingnodes = ctxmalloc(context, truecount * sizeof *pendingnodes);
   size_t * pendingcounts = ctxmalloc(context, truecount * sizeof *pendingcounts);
-  size_t sum, next = entries, remaining = truecount;
+  size_t sum, next = entries;
+  uint64_t remaining = truecount;
   for (p = 0; p < truecount; p ++) {
     pendingnodes[p] = sorted[2 * p];
     pendingcounts[p] = counts[pendingnodes[p]];
@@ -59,22 +60,22 @@ void generate_Huffman_tree (struct context * context, const size_t * restrict co
   ctxfree(context, parents);
   if (sum <= max) goto done;
   // the maximum length has been exceeded, so increase some other lengths to make everything fit
-  remaining = (size_t) 1 << max;
+  remaining = (uint64_t) 1 << max;
   for (p = 0; p < truecount; p ++) {
     next = sorted[p * 2];
     if (lengths[next] > max) {
       lengths[next] = max;
       remaining --;
     } else {
-      while (((size_t) 1 << (max - lengths[next])) > remaining) lengths[next] ++;
-      while ((remaining - ((size_t) 1 << (max - lengths[next]))) < (truecount - p - 1)) lengths[next] ++;
-      remaining -= (size_t) 1 << (max - lengths[next]);
+      while (((uint64_t) 1 << (max - lengths[next])) > remaining) lengths[next] ++;
+      while ((remaining - ((uint64_t) 1 << (max - lengths[next]))) < (truecount - p - 1)) lengths[next] ++;
+      remaining -= (uint64_t) 1 << (max - lengths[next]);
     }
   }
   for (p = 0; remaining; p ++) {
     next = sorted[p * 2];
-    while ((lengths[next] > 1) && (remaining >= ((size_t) 1 << (max - lengths[next])))) {
-      remaining -= (size_t) 1 << (max - lengths[next]);
+    while ((lengths[next] > 1) && (remaining >= ((uint64_t) 1 << (max - lengths[next])))) {
+      remaining -= (uint64_t) 1 << (max - lengths[next]);
       lengths[next] --;
     }
   }
@@ -82,9 +83,9 @@ void generate_Huffman_tree (struct context * context, const size_t * restrict co
   ctxfree(context, sorted);
 }
 
-void generate_Huffman_codes (unsigned short * restrict codes, unsigned count, const unsigned char * restrict lengths, int invert) {
+void generate_Huffman_codes (unsigned short * restrict codes, size_t count, const unsigned char * restrict lengths, int invert) {
   // generates codes in ascending order: shorter codes before longer codes, and for the same length, smaller values before larger values
-  unsigned p, remaining = 0;
+  size_t p, remaining = 0;
   for (p = 0; p < count; p ++) if (lengths[p]) remaining ++;
   uint_fast8_t bits, length = 0;
   uint_fast16_t temp, code = 0;
@@ -96,8 +97,8 @@ void generate_Huffman_codes (unsigned short * restrict codes, unsigned count, co
       p = 0;
     }
     if (lengths[p] != length) continue;
-    // invert the code so it can be written out directly
     if (invert) {
+      // for some image formats, invert the code so it can be written out directly (first branch at the LSB)
       temp = code ++;
       codes[p] = 0;
       for (bits = 0; bits < length; bits ++) {

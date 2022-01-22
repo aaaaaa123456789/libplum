@@ -43,15 +43,12 @@ void generate_JPEG_data (struct context * context) {
   ctxfree(context, luminance);
   unsigned char Huffman_table_data[0x400]; // luminance DC, AC, chrominance DC, AC
   node = append_output_node(context, 1096);
-  *node = 0xff;
-  node[1] = 0xc4; // DHT
   size_t size = 4;
   size += generate_JPEG_Huffman_table(context, luminance_data, luminance_count, node + size, Huffman_table_data, 0x00);
   size += generate_JPEG_Huffman_table(context, luminance_data, luminance_count, node + size, Huffman_table_data + 0x100, 0x10);
   size += generate_JPEG_Huffman_table(context, chrominance_data, chrominance_count, node + size, Huffman_table_data + 0x200, 0x01);
   size += generate_JPEG_Huffman_table(context, chrominance_data, chrominance_count, node + size, Huffman_table_data + 0x300, 0x11);
-  node[2] = (size - 2) >> 8;
-  node[3] = size - 2;
+  bytewrite(node, 0xff, 0xc4, (size - 2) >> 8, size - 2); // DHT
   context -> output -> size = size;
   byteoutput(context, 0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f, 0x00); // SOS, component 1, table 0, not progressive
   encode_JPEG_scan(context, luminance_data, luminance_count, Huffman_table_data);
@@ -149,7 +146,7 @@ void convert_JPEG_components_to_YCbCr (struct context * context, double (* restr
   #undef nextunit
 }
 
-void convert_JPEG_colors_to_YCbCr (struct context * context, const void * colors, size_t count, unsigned char flags, double * restrict luminance,
+void convert_JPEG_colors_to_YCbCr (struct context * context, const void * restrict colors, size_t count, unsigned char flags, double * restrict luminance,
                                    double * restrict blue, double * restrict red) {
   uint64_t * buffer = ctxmalloc(context, sizeof *buffer * count);
   plum_convert_colors(buffer, colors, count, PLUM_COLOR_64, flags);

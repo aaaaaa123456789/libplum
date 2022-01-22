@@ -126,7 +126,7 @@ struct PNG_chunk_locations * load_PNG_chunk_locations (struct context * context)
   size_t offset = 8;
   uint32_t chunk_type = 0;
   struct PNG_chunk_locations * result = ctxmalloc(context, sizeof *result);
-  *result = (struct PNG_chunk_locations) {0}; // ensure that pointers are properly null-initialized
+  *result = (struct PNG_chunk_locations) {0}; // ensure that integers and pointers are properly zero-initialized
   size_t data_count = 0, frameinfo_count = 0, framedata_count = 0;
   size_t * framedata = NULL;
   int invalid_animation = 0;

@@ -9,7 +9,7 @@ unsigned load_hierarchical_JPEG (struct context * context, const struct JPEG_mar
   unsigned precision = context -> data[layout -> hierarchical + 2];
   if ((precision < 2) || (precision > 16)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   size_t p, frame, metadata_index = 0;
-  uint32_t component_size[8] = {0}; // four widths followed by four heights
+  uint16_t component_size[8] = {0}; // four widths followed by four heights
   for (frame = 0; layout -> frames[frame]; frame ++) {
     if (context -> data[layout -> frames[frame] + 2] != precision) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     uint32_t framecomponents = determine_JPEG_components(context, layout -> frames[frame]);
@@ -65,9 +65,9 @@ unsigned load_hierarchical_JPEG (struct context * context, const struct JPEG_mar
   }
   double normalization_offset;
   if (precision < 15)
-    normalization_offset = 0x0.8p+0;
+    normalization_offset = 0.5;
   else if (precision == 15)
-    normalization_offset = 0x0.4p+0;
+    normalization_offset = 0.25;
   else
     normalization_offset = 0.0;
   for (p = 0; p < component_count; p ++) {
@@ -114,10 +114,13 @@ void expand_JPEG_component_vertically (struct context * context, double * restri
 void normalize_JPEG_component (double * restrict component, size_t count, double offset) {
   while (count --) {
     double high = *component / 65536.0 + offset;
-    if (high >= 0)
-      high = -(int64_t) high;
-    else
-      high = 1 + (int64_t) -high;
-    *(component ++) += high * 65536.0;
+    // this merely calculates adjustment = -floor(high); not using floor() directly to avoid linking in the math library just for a single function
+    int64_t adjustment = 0;
+    if (high < 0) {
+      adjustment = 1 + (int64_t) -high;
+      high += adjustment;
+    }
+    adjustment -= (int64_t) high;
+    *(component ++) += adjustment * 65536.0;
   }
 }

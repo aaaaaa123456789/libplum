@@ -1,7 +1,7 @@
 #include "proto.h"
 
 void load_JPEG_data (struct context * context, unsigned flags, size_t limit) {
-  struct JPEG_marker_layout * layout = load_JPEG_marker_layout(context);
+  struct JPEG_marker_layout * layout = load_JPEG_marker_layout(context); // will be leaked (to be collected by context release)
   uint32_t components = determine_JPEG_components(context, layout -> hierarchical ? layout -> hierarchical : *layout -> frames);
   void (* transfer) (uint64_t * restrict, size_t, unsigned, const double **) = get_JPEG_component_transfer_function(context, layout, components);
   context -> image -> type = PLUM_IMAGE_JPEG;
@@ -53,7 +53,6 @@ void load_JPEG_data (struct context * context, unsigned flags, size_t limit) {
       if (error) throw(context, error);
     }
   }
-  // the marker layout is leaked, but it's small and it will be collected by the context release
 }
 
 struct JPEG_marker_layout * load_JPEG_marker_layout (struct context * context) {
@@ -62,7 +61,7 @@ struct JPEG_marker_layout * load_JPEG_marker_layout (struct context * context) {
   uint_fast8_t next_restart_marker = 0; // 0 if not in a scan
   size_t restart_offset, restart_interval, scan, frame = SIZE_MAX, markers = 0;
   struct JPEG_marker_layout * layout = ctxmalloc(context, sizeof *layout);
-  *layout = (struct JPEG_marker_layout) {0}; // ensure that pointers are properly null-initialized
+  *layout = (struct JPEG_marker_layout) {0}; // ensure that integers and pointers are properly zero-initialized
   while (offset < context -> size) {
     prev = offset;
     if (context -> data[offset ++] != 0xff)
@@ -101,19 +100,19 @@ struct JPEG_marker_layout * load_JPEG_marker_layout (struct context * context) {
       layout -> framedata[frame][scan][restart_interval] = 0;
       next_restart_marker = 0;
     }
-    if ((offset + 2) > context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    if (offset > (context -> size - 2)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     uint_fast16_t marker_size = read_be16_unaligned(context -> data + offset);
-    if ((marker_size < 2) || ((offset + marker_size) > context -> size)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    if ((marker_size < 2) || (marker_size > context -> size) || (offset > (context -> size - marker_size))) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     switch (marker) {
       case 0xc0: case 0xc1: case 0xc2: case 0xc3: case 0xc5: case 0xc6:
       case 0xc7: case 0xc9: case 0xca: case 0xcb: case 0xcd: case 0xce: case 0xcf:
         // start a new frame
         if (frame != SIZE_MAX) {
+          if (scan == SIZE_MAX) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
           layout -> framescans[frame] = ctxrealloc(context, layout -> framescans[frame], sizeof **layout -> framescans * ((++ scan) + 1));
           layout -> framescans[frame][scan] = 0;
-          if (!scan) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         }
-        layout -> frames = ctxrealloc(context, layout -> frames, sizeof *layout -> frames * ((++ frame) + 1));
+        layout -> frames = ctxrealloc(context, layout -> frames, sizeof *layout -> frames * ((size_t) (++ frame) + 1));
         layout -> frames[frame] = offset;
         layout -> framescans = ctxrealloc(context, layout -> framescans, sizeof *layout -> framescans * (frame + 1));
         layout -> framescans[frame] = NULL;
@@ -126,7 +125,7 @@ struct JPEG_marker_layout * load_JPEG_marker_layout (struct context * context) {
       case 0xda:
         // start a new scan
         if (frame == SIZE_MAX) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-        layout -> framescans[frame] = ctxrealloc(context, layout -> framescans[frame], sizeof **layout -> framescans * ((++ scan) + 1));
+        layout -> framescans[frame] = ctxrealloc(context, layout -> framescans[frame], sizeof **layout -> framescans * ((size_t) (++ scan) + 1));
         layout -> framescans[frame][scan] = offset;
         layout -> framedata[frame] = ctxrealloc(context, layout -> framedata[frame], sizeof **layout -> framedata * (scan + 1));
         layout -> framedata[frame][scan] = NULL;
@@ -146,7 +145,7 @@ struct JPEG_marker_layout * load_JPEG_marker_layout (struct context * context) {
         layout -> markertype = ctxrealloc(context, layout -> markertype, sizeof *layout -> markertype * (markers + 1));
         layout -> markertype[markers ++] = marker;
         break;
-      // For JFIF and Exif markers, both want to come "first", i.e., immediately after SOI. This is obviously impossible if both are present.
+      // For JFIF, Exif and Adobe markers, all want to come "first", i.e., immediately after SOI. This is obviously impossible if more than one is present.
       // Therefore, "first" is interpreted to mean "before any SOF/DHP marker" here.
       case 0xe0:
         if (layout -> JFIF || layout -> hierarchical || (frame != SIZE_MAX)) break;
@@ -154,7 +153,7 @@ struct JPEG_marker_layout * load_JPEG_marker_layout (struct context * context) {
         break;
       case 0xe1:
         if (layout -> Exif || layout -> hierarchical || (frame != SIZE_MAX)) break;
-        if ((marker_size >= 7) && bytematch(context -> data + offset + 2, 0x45, 0x78, 0x69, 0x66, 0x00)) layout -> Exif = offset;
+        if ((marker_size >= 16) && bytematch(context -> data + offset + 2, 0x45, 0x78, 0x69, 0x66, 0x00, 0x00)) layout -> Exif = offset;
         break;
       case 0xee:
         if (layout -> Adobe || layout -> hierarchical || (frame != SIZE_MAX)) break;
@@ -182,7 +181,6 @@ struct JPEG_marker_layout * load_JPEG_marker_layout (struct context * context) {
 unsigned get_JPEG_rotation (struct context * context, size_t offset) {
   // returns rotation count in bits 0-1 and vertical inversion in bit 2
   uint_fast16_t size = read_be16_unaligned(context -> data + offset);
-  if ((size < 16) || !bytematch(context -> data + offset + 2, 0x45, 0x78, 0x69, 0x66, 0x00, 0x00)) return 0;
   const unsigned char * data = context -> data + offset + 8;
   size -= 8;
   uint_fast16_t tag = read_le16_unaligned(data);
@@ -199,7 +197,7 @@ unsigned get_JPEG_rotation (struct context * context, size_t offset) {
   if (pos > (size - 2)) return 0;
   uint_fast16_t count = endianness ? read_be16_unaligned(data + pos) : read_le16_unaligned(data + pos);
   pos += 2;
-  if ((size - pos) < ((uint32_t) count * 12)) return 0;
+  if ((size - pos) < ((uint_fast32_t) count * 12)) return 0;
   for (; count; pos += 12, count --) {
     tag = endianness ? read_be16_unaligned(data + pos) : read_le16_unaligned(data + pos);
     if (tag == 0x112) break; // 0x112 = orientation data
@@ -258,14 +256,14 @@ unsigned char process_JPEG_metadata_until_offset (struct context * context, cons
       case 0xcc: // DAC
         if (markersize % 2) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         for (count = markersize / 2; count; count --) {
-          unsigned char destination = *(markerdata ++);
-          if (destination & ~0x13u) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-          destination = (destination >> 2) | (destination & 3);
-          if (destination & 4) {
+          unsigned char target = *(markerdata ++);
+          if (target & ~0x13u) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+          target = (target >> 2) | (target & 3);
+          if (target & 4) {
             if (!*markerdata || (*markerdata > 63)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
           } else
             if ((*markerdata >> 4) < (*markerdata & 15)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-          tables -> arithmetic[destination] = *(markerdata ++);
+          tables -> arithmetic[target] = *(markerdata ++);
         }
         break;
       case 0xdb: // DQT
@@ -275,8 +273,7 @@ unsigned char process_JPEG_metadata_until_offset (struct context * context, cons
           markerdata ++;
           if ((-- markersize) < p) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
           markersize -= p;
-          if (tables -> quantization[target]) ctxfree(context, tables -> quantization[target]);
-          tables -> quantization[target] = ctxmalloc(context, 64 * sizeof *(tables -> quantization[target]));
+          if (!tables -> quantization[target]) tables -> quantization[target] = ctxmalloc(context, 64 * sizeof *(tables -> quantization[target]));
           if (type)
             for (p = 0; p < 64; p ++, markerdata += 2) tables -> quantization[target][p] = read_be16_unaligned(markerdata);
           else

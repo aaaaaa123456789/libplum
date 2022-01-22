@@ -107,7 +107,7 @@ internal void write_GIF_data_blocks(struct context *, const unsigned char * rest
 
 // huffman.c
 internal void generate_Huffman_tree(struct context *, const size_t * restrict, unsigned char * restrict, size_t, unsigned char);
-internal void generate_Huffman_codes(unsigned short * restrict, unsigned, const unsigned char * restrict, int);
+internal void generate_Huffman_codes(unsigned short * restrict, size_t, const unsigned char * restrict, int);
 
 // jpegarithmetic.c
 internal void decompress_JPEG_arithmetic_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
@@ -208,7 +208,7 @@ internal void unpack_JPEG_component(double * restrict, double * restrict, size_t
 internal void generate_JPEG_data(struct context *);
 internal void calculate_JPEG_quantization_tables(struct context *, uint8_t [restrict static 64], uint8_t [restrict static 64]);
 internal void convert_JPEG_components_to_YCbCr(struct context *, double (* restrict)[64], double (* restrict)[64], double (* restrict)[64]);
-internal void convert_JPEG_colors_to_YCbCr(struct context *, const void *, size_t, unsigned char, double * restrict, double * restrict, double * restrict);
+internal void convert_JPEG_colors_to_YCbCr(struct context *, const void * restrict, size_t, unsigned char, double * restrict, double * restrict, double * restrict);
 internal void subsample_JPEG_component(double (* restrict)[64], double (* restrict)[64], size_t, size_t);
 
 // load.c

@@ -155,7 +155,7 @@ void decompress_JPEG_arithmetic_lossless_scan (struct context * context, struct 
                                                size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned char predictor,
                                                unsigned precision) {
   size_t p, restart_interval;
-  uint8_t scancomponents[4] = {0, 0, 0, 0};
+  uint8_t scancomponents[4] = {0};
   for (p = 0; state -> MCU[p] != MCU_END_LIST; p ++) if (state -> MCU[p] < 4) scancomponents[state -> MCU[p]] = 1;
   uint16_t * rowdifferences[4] = {0};
   for (p = 0; p < 4; p ++) if (scancomponents[p])
@@ -322,10 +322,9 @@ unsigned next_JPEG_arithmetic_bit (struct context * context, size_t * restrict o
     *accumulator = state -> probability;
   }
   if (index)
-    if (decoded) {
-      *index = predicted ? -state -> next_LPS : state -> next_LPS;
-      if (state -> switch_MPS) *index = -*index;
-    } else
+    if (decoded)
+      *index = (predicted ^ state -> switch_MPS) ? -state -> next_LPS : state -> next_LPS;
+    else
       *index = predicted ? -state -> next_MPS : state -> next_MPS;
   // normalize the counters, consuming new data if needed
   do {
