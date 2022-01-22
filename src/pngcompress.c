@@ -140,7 +140,7 @@ unsigned find_PNG_reference (const unsigned char * data, const uint16_t * refere
 
 void append_PNG_reference (const unsigned char * restrict data, size_t offset, uint16_t * restrict references) {
   uint_fast32_t key = compute_PNG_reference_key(data + offset) * (uint_fast32_t) PNG_MAX_LOOKBACK_COUNT;
-  memmove(references + key + 1, references + key, 7 * sizeof *references);
+  memmove(references + key + 1, references + key, (PNG_MAX_LOOKBACK_COUNT - 1) * sizeof *references);
   references[key] = offset & 0x7fff;
 }
 
