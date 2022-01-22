@@ -224,7 +224,7 @@ internal void update_loaded_palette(struct context *, unsigned);
 internal void add_color_depth_metadata(struct context *, unsigned, unsigned, unsigned, unsigned, unsigned);
 internal void add_background_color_metadata(struct context *, uint64_t, unsigned);
 internal void add_loop_count_metadata(struct context *, uint32_t);
-internal void add_animation_metadata(struct context *, uint64_t **, uint8_t **);
+internal void add_animation_metadata(struct context *, uint64_t ** restrict, uint8_t ** restrict);
 internal uint64_t get_background_color(const struct plum_image *, uint64_t);
 
 // misc.c

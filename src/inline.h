@@ -39,11 +39,6 @@ static inline uint16_t bitextend (uint16_t value, unsigned width) {
   return result >> (width - 16);
 }
 
-static inline void append_metadata (struct plum_image * image, struct plum_metadata * metadata) {
-  metadata -> next = image -> metadata;
-  image -> metadata = metadata;
-}
-
 static inline void * append_output_node (struct context * context, size_t size) {
   struct data_node * node = ctxmalloc(context, sizeof *node + size);
   *node = (struct data_node) {.size = size, .previous = context -> output, .next = NULL};
