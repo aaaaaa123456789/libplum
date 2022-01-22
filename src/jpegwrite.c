@@ -91,22 +91,23 @@ void convert_JPEG_components_to_YCbCr (struct context * context, double (* restr
   double palette_luminance[256];
   double palette_blue[256];
   double palette_red[256];
+  uint64_t * buffer = ctxmalloc(context, sizeof *buffer * ((context -> source -> palette && (context -> source -> max_palette_index > 7)) ?
+                                                           context -> source -> max_palette_index + 1 : 8));
   // define macros to reduce repetition within the function
   #define nextunit luminance ++, blue ++, red ++
-  #define convertblock(rows, cols) do                                                                                               \
-    if (context -> source -> palette)                                                                                               \
-      for (row = 0; row < (rows); row ++) for (col = 0; col < (cols); col ++) {                                                     \
-        unsigned char index = data[(unitrow * 8 + row) * context -> source -> width + unitcol * 8 + col], coord = row * 8 + col;    \
-        coord[*luminance] = palette_luminance[index];                                                                               \
-        coord[*blue] = palette_blue[index];                                                                                         \
-        coord[*red] = palette_red[index];                                                                                           \
-      }                                                                                                                             \
-    else {                                                                                                                          \
-      size_t index = unitrow * 8 * rowoffset + unitcol * 8 * offset;                                                                \
-      for (row = 0; row < (rows); row ++, index += rowoffset)                                                                       \
-        convert_JPEG_colors_to_YCbCr(context, data + index, (cols), context -> source -> color_format, *luminance + 8 * row,        \
-                                     *blue + 8 * row, *red + 8 * row);                                                              \
-    }                                                                                                                               \
+  #define convertblock(rows, cols) do                                                                                                                          \
+    if (context -> source -> palette)                                                                                                                          \
+      for (row = 0; row < (rows); row ++) for (col = 0; col < (cols); col ++) {                                                                                \
+        unsigned char index = data[(unitrow * 8 + row) * context -> source -> width + unitcol * 8 + col], coord = row * 8 + col;                               \
+        coord[*luminance] = palette_luminance[index];                                                                                                          \
+        coord[*blue] = palette_blue[index];                                                                                                                    \
+        coord[*red] = palette_red[index];                                                                                                                      \
+      }                                                                                                                                                        \
+    else {                                                                                                                                                     \
+      size_t index = unitrow * 8 * rowoffset + unitcol * 8 * offset;                                                                                           \
+      for (row = 0; row < (rows); row ++, index += rowoffset)                                                                                                  \
+        convert_JPEG_colors_to_YCbCr(data + index, cols, context -> source -> color_format, *luminance + 8 * row, *blue + 8 * row, *red + 8 * row, buffer);    \
+    }                                                                                                                                                          \
   while (0)
   #define copyvalues(index, offset) do {                     \
     unsigned char coord = (index);                           \
@@ -116,8 +117,8 @@ void convert_JPEG_components_to_YCbCr (struct context * context, double (* restr
   } while (0)
   // actually do the conversion
   if (context -> source -> palette)
-    convert_JPEG_colors_to_YCbCr(context, context -> source -> palette, context -> source -> max_palette_index + 1, context -> source -> color_format,
-                                 palette_luminance, palette_blue, palette_red);
+    convert_JPEG_colors_to_YCbCr(context -> source -> palette, context -> source -> max_palette_index + 1, context -> source -> color_format, palette_luminance,
+                                 palette_blue, palette_red, buffer);
   for (unitrow = 0; unitrow < (context -> source -> height >> 3); unitrow ++) {
     for (unitcol = 0; unitcol < (context -> source -> width >> 3); unitcol ++) {
       convertblock(8, 8);
@@ -144,11 +145,11 @@ void convert_JPEG_components_to_YCbCr (struct context * context, double (* restr
   #undef copyvalues
   #undef convertblock
   #undef nextunit
+  ctxfree(context, buffer);
 }
 
-void convert_JPEG_colors_to_YCbCr (struct context * context, const void * restrict colors, size_t count, unsigned char flags, double * restrict luminance,
-                                   double * restrict blue, double * restrict red) {
-  uint64_t * buffer = ctxmalloc(context, sizeof *buffer * count);
+void convert_JPEG_colors_to_YCbCr (const void * restrict colors, size_t count, unsigned char flags, double * restrict luminance, double * restrict blue,
+                                   double * restrict red, uint64_t * restrict buffer) {
   plum_convert_colors(buffer, colors, count, PLUM_COLOR_64, flags);
   size_t p;
   for (p = 0; p < count; p ++) {
@@ -157,7 +158,6 @@ void convert_JPEG_colors_to_YCbCr (struct context * context, const void * restri
     blue[p] = 0.5 * (B - 1.0) - 0x0.2b32468049f7e8p+0 * R - 0x0.54cdb97fb60818p+0 * G;
     red[p] = 0.5 * (R - 1.0) - 0x0.6b2f1c1ead19ecp+0 * G - 0x0.14d0e3e152e614p+0 * B;
   }
-  ctxfree(context, buffer);
 }
 
 void subsample_JPEG_component (double (* restrict component)[64], double (* restrict output)[64], size_t unitsH, size_t unitsV) {

@@ -208,7 +208,8 @@ internal void unpack_JPEG_component(double * restrict, double * restrict, size_t
 internal void generate_JPEG_data(struct context *);
 internal void calculate_JPEG_quantization_tables(struct context *, uint8_t [restrict static 64], uint8_t [restrict static 64]);
 internal void convert_JPEG_components_to_YCbCr(struct context *, double (* restrict)[64], double (* restrict)[64], double (* restrict)[64]);
-internal void convert_JPEG_colors_to_YCbCr(struct context *, const void * restrict, size_t, unsigned char, double * restrict, double * restrict, double * restrict);
+internal void convert_JPEG_colors_to_YCbCr(const void * restrict, size_t, unsigned char, double * restrict, double * restrict, double * restrict,
+                                           uint64_t * restrict);
 internal void subsample_JPEG_component(double (* restrict)[64], double (* restrict)[64], size_t, size_t);
 
 // load.c
