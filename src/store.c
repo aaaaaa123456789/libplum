@@ -6,7 +6,6 @@ size_t plum_store_image (const struct plum_image * image, void * restrict buffer
     if (error) *error = PLUM_ERR_OUT_OF_MEMORY;
     return 0;
   }
-  size_t result = 0;
   context -> source = image;
   if (setjmp(context -> target)) goto done;
   if (!(image && buffer && size)) throw(context, PLUM_ERR_INVALID_ARGUMENTS);
@@ -39,10 +38,11 @@ size_t plum_store_image (const struct plum_image * image, void * restrict buffer
       if (output_size > size) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
       write_generated_image_data(buffer, context -> output);
   }
-  result = output_size;
+  context -> size = output_size;
   done:
   if (context -> file) fclose(context -> file);
   if (error) *error = context -> status;
+  size_t result = context -> size;
   destroy_allocator_list(context -> allocator);
   return result;
 }

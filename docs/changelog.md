@@ -9,6 +9,7 @@ Note: releases are listed from latest to oldest.
   reduction occured at the same time
 - Fixed a file descriptor leak that would keep an open `FILE *` if a `PLUM_ERR_FILE_ERROR` error was raised while
   reading from a file
+- Added safeguards to prevent internal `longjmp` misuse when generating image files
 - Ensured that the `PLUM_FILENAME`, `PLUM_BUFFER` and `PLUM_CALLBACK` constants are always `size_t` as documented
 - Enforced the size limitation on the value returned by a callback when using the `PLUM_CALLBACK` loading/storing mode
 - Handled out-of-palette background colors when generating a GIF file, ensuring that they would never cause the
