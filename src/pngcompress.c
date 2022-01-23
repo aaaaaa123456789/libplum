@@ -7,8 +7,8 @@ unsigned char * compress_PNG_data (struct context * context, const unsigned char
   unsigned char * output = ctxmalloc(context, extra + 8); // two bytes extra to handle leftover bits in dataword
   memset(output, 0, extra);
   size_t p, inoffset = 0, outoffset = extra + byteappend(output + extra, 0x78, 0x5e);
-  uint16_t * references = ctxmalloc(context, 0x8000u * PNG_MAX_LOOKBACK_COUNT * sizeof *references);
-  for (p = 0; p < (0x8000u * PNG_MAX_LOOKBACK_COUNT); p ++) references[p] = 0xffffu;
+  uint16_t * references = ctxmalloc(context, sizeof *references * 0x8000u * PNG_MAX_LOOKBACK_COUNT);
+  for (p = 0; p < ((size_t) 0x8000u * PNG_MAX_LOOKBACK_COUNT); p ++) references[p] = 0xffffu;
   uint32_t dataword = 0;
   uint8_t bits = 0;
   int force = 0;
@@ -21,6 +21,7 @@ unsigned char * compress_PNG_data (struct context * context, const unsigned char
       if (inoffset == size) dataword |= 1 << bits;
       bits ++;
       unsigned char * compressed_data = emit_PNG_compressed_block(context, compressed, count, count >= 16, &blocksize, &dataword, &bits);
+      if ((SIZE_MAX - outoffset) < (blocksize + 6)) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
       output = ctxrealloc(context, output, outoffset + blocksize + 6);
       memcpy(output + outoffset, compressed_data, blocksize);
       ctxfree(context, compressed_data);
@@ -37,6 +38,7 @@ unsigned char * compress_PNG_data (struct context * context, const unsigned char
         dataword >>= 8;
         bits = (bits >= 8) ? bits - 8 : 0;
       }
+      if ((SIZE_MAX - outoffset) < (blocksize + 10)) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
       output = ctxrealloc(context, output, outoffset + blocksize + 10);
       write_le16_unaligned(output + outoffset, blocksize);
       write_le16_unaligned(output + outoffset + 2, 0xffffu - blocksize);
@@ -168,14 +170,12 @@ void emit_PNG_code (struct context * context, struct compressed_PNG_code ** code
     code = -code;
     // one extra entry to make looking codes up easier
     static const uint_fast16_t lengths[] = {3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258, 259};
-    static const uint_fast16_t distances[] = {1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097,
-                                              6145, 8193, 12289, 16385, 24577, 32769};
-    unsigned p;
-    for (p = 0; lengths[p] <= code; p ++);
-    result.datacode = 256 + p;
-    result.dataextra = code - lengths[p - 1];
-    for (p = 0; distances[p] <= ref; p ++);
-    result.distcode = p - 1;
+    static const uint_fast16_t distances[] = {1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145,
+                                              8193, 12289, 16385, 24577, 32769};
+    for (result.datacode = 0; lengths[result.datacode + 1] <= code; result.datacode ++);
+    result.dataextra = code - lengths[result.datacode];
+    result.datacode += 0x101;
+    for (result.distcode = 0; distances[result.distcode + 1] <= ref; result.distcode ++);
     result.distextra = ref - distances[result.distcode];
   }
   (*codes)[(*count) ++] = result;
@@ -221,11 +221,17 @@ unsigned char * emit_PNG_compressed_block (struct context * context, const struc
   for (p = 0; p < 0x11e; p ++) {
     uint_fast8_t valuesize = codelengths[p];
     if ((p >= 0x109) && (p < 0x11d)) valuesize += (p - 0x105) >> 2;
+    if (!valuesize) continue;
+    if (((codecounts[p] * valuesize / valuesize) != codecounts[p]) || ((SIZE_MAX - outsize) < (codecounts[p] * valuesize)))
+      throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
     outsize += codecounts[p] * valuesize;
   }
   for (p = 0; p < 30; p ++) {
     uint_fast8_t valuesize = distlengths[p];
     if (p >= 4) valuesize += (p - 2) >> 1;
+    if (!valuesize) continue;
+    if (((distcounts[p] * valuesize / valuesize) != distcounts[p]) || ((SIZE_MAX - outsize) < (distcounts[p] * valuesize)))
+      throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
     outsize += distcounts[p] * valuesize;
   }
   outsize >>= 3;

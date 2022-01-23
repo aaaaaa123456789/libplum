@@ -8,11 +8,11 @@ void * decompress_PNG_data (struct context * context, const unsigned char * comp
   size -= 6; // pretend the checksum is not part of the data
   unsigned char * decompressed = ctxmalloc(context, expected);
   size_t current = 0;
-  int more_blocks;
+  int last_block;
   uint32_t dataword = 0;
   uint8_t bits = 0;
   do {
-    more_blocks = !shift_in_left(context, 1, &dataword, &bits, &compressed, &size);
+    last_block = shift_in_left(context, 1, &dataword, &bits, &compressed, &size);
     switch (shift_in_left(context, 2, &dataword, &bits, &compressed, &size)) {
       case 0: {
         dataword >>= bits & 7;
@@ -50,7 +50,7 @@ void * decompress_PNG_data (struct context * context, const unsigned char * comp
       default:
         throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     }
-  } while (more_blocks);
+  } while (!last_block);
   if (size || (current != expected)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   if (compute_Adler32_checksum(decompressed, expected) != read_be32_unaligned(compressed)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   return decompressed;
@@ -79,13 +79,8 @@ void extract_PNG_code_table (struct context * context, const unsigned char ** co
         code = codesizes[p - 1];
         while (count --) codesizes[p ++] = code;
         break;
-      case 17:
-        count = 3 + shift_in_left(context, 3, dataword, bits, compressed, size);
-        if ((p + count) > (literals + distances)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-        while (count --) codesizes[p ++] = 0;
-        break;
-      case 18:
-        count = 11 + shift_in_left(context, 7, dataword, bits, compressed, size);
+      case 17: case 18:
+        count = ((code == 18) ? 11 : 3) + shift_in_left(context, (code == 18) ? 7 : 3, dataword, bits, compressed, size);
         if ((p + count) > (literals + distances)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         while (count --) codesizes[p ++] = 0;
         break;
@@ -117,14 +112,14 @@ void decompress_PNG_block (struct context * context, const unsigned char ** comp
     }
     if (!disttree) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     code -= 0x101;
-    uint_fast16_t length = code[(const uint_fast16_t []) {3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67,
-                                                          83, 99, 115, 131, 163, 195, 227, 258}];
+    uint_fast16_t length = code[(const uint_fast16_t []) {3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195,
+                                                          227, 258}];
     code = code[(const uint_fast16_t []) {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0}];
     if (code) length += shift_in_left(context, code, dataword, bits, compressed, size);
     code = next_PNG_Huffman_code(context, disttree, compressed, size, dataword, bits);
     if (code > 29) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-    uint_fast16_t distance = code[(const uint_fast16_t []) {1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537,
-                                                            2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577}];
+    uint_fast16_t distance = code[(const uint_fast16_t []) {1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073,
+                                                            4097, 6145, 8193, 12289, 16385, 24577}];
     code = code[(const uint_fast16_t []) {0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13}];
     if (code) distance += shift_in_left(context, code, dataword, bits, compressed, size);
     if (distance > *current) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);

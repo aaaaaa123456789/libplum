@@ -167,22 +167,25 @@ struct PNG_chunk_locations * load_PNG_chunk_locations (struct context * context)
         result -> transparency = offset;
         break;
       case 0x6163544cu: // acTL
-        if (result -> data || result -> animation || (length != 8))
-          invalid_animation = 1;
-        else
-          result -> animation = offset;
+        if (!invalid_animation)
+          if (result -> data || result -> animation || (length != 8))
+            invalid_animation = 1;
+          else
+            result -> animation = offset;
         break;
       case 0x6663544cu: // fcTL
-        if (length == 26)
-          append_PNG_chunk_location(context, &result -> frameinfo, offset, &frameinfo_count);
-        else
-          invalid_animation = 1;
+        if (!invalid_animation)
+          if (length == 26)
+            append_PNG_chunk_location(context, &result -> frameinfo, offset, &frameinfo_count);
+          else
+            invalid_animation = 1;
         break;
       case 0x66644154u: // fdAT
-        if (length >= 4)
-          append_PNG_chunk_location(context, &framedata, offset, &framedata_count);
-        else
-          invalid_animation = 1;
+        if (!invalid_animation)
+          if (length >= 4)
+            append_PNG_chunk_location(context, &framedata, offset, &framedata_count);
+          else
+            invalid_animation = 1;
         break;
       default:
         if ((chunk_type & 0xe0c0c0c0u) != 0x60404040u) throw(context, PLUM_ERR_INVALID_FILE_FORMAT); // invalid or critical
@@ -203,8 +206,7 @@ struct PNG_chunk_locations * load_PNG_chunk_locations (struct context * context)
     ctxfree(context, result -> frameinfo);
     result -> animation = 0;
     result -> frameinfo = NULL;
-  }
-  if (result -> animation) {
+  } else if (result -> animation) {
     // validate and initialize frame counts here to avoid having to count them up later
     if (frameinfo_count != read_be32_unaligned(context -> data + result -> animation)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     sort_PNG_animation_chunks(context, result, framedata, frameinfo_count, framedata_count);
@@ -259,13 +261,7 @@ uint8_t load_PNG_palette (struct context * context, const struct PNG_chunk_locat
   size_t p, count = read_be32_unaligned(context -> data + chunks -> palette - 8) / 3;
   if (count > (1 << bitdepth)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   const unsigned char * data = context -> data + chunks -> palette;
-  uint64_t color;
-  for (p = 0; p < count; p ++) {
-    color = *(data ++);
-    color |= (uint64_t) *(data ++) << 16;
-    color |= (uint64_t) *(data ++) << 32;
-    palette[p] = color * 0x101;
-  }
+  for (p = 0; p < count; p ++) palette[p] = (data[p * 3] | ((uint64_t) data[p * 3 + 1] << 16) | ((uint64_t) data[p * 3 + 2] << 32)) * 0x101;
   if (chunks -> transparency) {
     unsigned transparency_count = read_be32_unaligned(context -> data + chunks -> transparency - 8);
     if (transparency_count > count) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
@@ -367,11 +363,8 @@ uint64_t add_PNG_background_metadata (struct context * context, const struct PNG
       if (bitdepth == 8) {
         if (*data || data[2] || data[4]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         color = ((uint64_t) data[1] | ((uint64_t) data[3] << 16) | ((uint64_t) data[5] << 32)) * 0x101;
-      } else {
-        color = read_be16_unaligned(data);
-        color |= (uint64_t) read_be16_unaligned(data + 2) << 16;
-        color |= (uint64_t) read_be16_unaligned(data + 4) << 32;
-      }
+      } else
+        color = read_be16_unaligned(data) | ((uint64_t) read_be16_unaligned(data + 2) << 16) | ((uint64_t) read_be16_unaligned(data + 4) << 32);
   }
   add_background_color_metadata(context, color, flags);
   return color;
@@ -382,15 +375,14 @@ uint64_t load_PNG_transparent_color (struct context * context, size_t offset, ui
   const unsigned char * data = context -> data + offset;
   if (read_be32_unaligned(data - 8) != (imagetype ? 6 : 2)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   if (!imagetype) {
-    uint64_t color = read_be16_unaligned(data); // cannot be uint16_t because of the potential >> 16 in the next line
+    uint_fast32_t color = read_be16_unaligned(data); // cannot be 16-bit because of the potential >> 16 in the next line
     if (color >> bitdepth) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     return 0x100010001u * (uint64_t) bitextend(color, bitdepth);
-  }
-  if (bitdepth == 16)
+  } else if (bitdepth == 8) {
+    if (*data || data[2] || data[4]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    return ((uint64_t) data[1] | ((uint64_t) data[3] << 16) | ((uint64_t) data[5] << 32)) * 0x101;
+  } else
     return (uint64_t) read_be16_unaligned(data) | ((uint64_t) read_be16_unaligned(data + 2) << 16) | ((uint64_t) read_be16_unaligned(data + 4) << 32);
-  if (*data || data[2] || data[4]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  uint64_t color = (uint64_t) data[1] | ((uint64_t) data[3] << 16) | ((uint64_t) data[5] << 32);
-  return color * 0x101;
 }
 
 int check_PNG_reduced_frames (struct context * context, const struct PNG_chunk_locations * chunks) {
