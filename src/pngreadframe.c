@@ -196,7 +196,7 @@ void load_PNG_raw_frame_pass (struct context * context, unsigned char * restrict
       default: {
         unsigned char * buffer = ctxmalloc(context, width);
         expand_bitpacked_PNG_data(buffer, rowdata, width, bitdepth);
-        for (col = 0; col < width; col ++) rowoutput[col * offsetH + coordH] = (uint64_t) bitextend(buffer[col], bitdepth) * 0x100010001u;
+        for (col = 0; col < width; col ++) rowoutput[col * offsetH + coordH] = (uint64_t) bitextend16(buffer[col], bitdepth) * 0x100010001u;
         ctxfree(context, buffer);
       }
     }

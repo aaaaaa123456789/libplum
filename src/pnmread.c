@@ -254,7 +254,7 @@ void load_PNM_frame (struct context * context, const struct PNM_image_header * h
     for (color = 0; color < 4; color ++) {
       uint64_t converted;
       if (bits)
-        converted = bitextend(values[color], bits);
+        converted = bitextend16(values[color], bits);
       else
         converted = (values[color] * 0xffffu + (header -> maxvalue >> 1)) / header -> maxvalue;
       buffer[p] |= converted << (color * 16);

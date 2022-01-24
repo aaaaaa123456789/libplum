@@ -30,7 +30,7 @@ static inline uintmax_t bitnegate (uintmax_t value) {
   return ~value;
 }
 
-static inline uint16_t bitextend (uint16_t value, unsigned width) {
+static inline uint16_t bitextend16 (uint16_t value, unsigned width) {
   uint_fast32_t result = value;
   while (width < 16) {
     result |= result << width;

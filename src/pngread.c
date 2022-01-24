@@ -351,7 +351,7 @@ uint64_t add_PNG_background_metadata (struct context * context, const struct PNG
       if (read_be32_unaligned(data - 8) != 2) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
       color = read_le16_unaligned(data);
       if (color >> bitdepth) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-      color = 0x100010001u * (uint64_t) bitextend(color, bitdepth);
+      color = 0x100010001u * (uint64_t) bitextend16(color, bitdepth);
       break;
     case 3:
       if (read_be32_unaligned(data - 8) != 1) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
@@ -377,7 +377,7 @@ uint64_t load_PNG_transparent_color (struct context * context, size_t offset, ui
   if (!imagetype) {
     uint_fast32_t color = read_be16_unaligned(data); // cannot be 16-bit because of the potential >> 16 in the next line
     if (color >> bitdepth) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-    return 0x100010001u * (uint64_t) bitextend(color, bitdepth);
+    return 0x100010001u * (uint64_t) bitextend16(color, bitdepth);
   } else if (bitdepth == 8) {
     if (*data || data[2] || data[4]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     return ((uint64_t) data[1] | ((uint64_t) data[3] << 16) | ((uint64_t) data[5] << 32)) * 0x101;

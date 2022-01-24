@@ -342,9 +342,9 @@ uint64_t load_BMP_RGB_pixel (const unsigned char * data, const void * bitmasks) 
 
 uint64_t load_BMP_bitmasked_pixel (uint_fast32_t pixel, const uint8_t * bitmasks) {
   uint64_t result = 0;
-  if (bitmasks[1]) result |= bitextend((pixel >> *bitmasks) & (((uint64_t) 1 << bitmasks[1]) - 1), bitmasks[1]);
-  if (bitmasks[3]) result |= (uint64_t) bitextend((pixel >> bitmasks[2]) & (((uint64_t) 1 << bitmasks[3]) - 1), bitmasks[3]) << 16;
-  if (bitmasks[5]) result |= (uint64_t) bitextend((pixel >> bitmasks[4]) & (((uint64_t) 1 << bitmasks[5]) - 1), bitmasks[5]) << 32;
-  if (bitmasks[7]) result |= (~(uint64_t) bitextend((pixel >> bitmasks[6]) & (((uint64_t) 1 << bitmasks[7]) - 1), bitmasks[7])) << 48;
+  if (bitmasks[1]) result |= bitextend16((pixel >> *bitmasks) & (((uint64_t) 1 << bitmasks[1]) - 1), bitmasks[1]);
+  if (bitmasks[3]) result |= (uint64_t) bitextend16((pixel >> bitmasks[2]) & (((uint64_t) 1 << bitmasks[3]) - 1), bitmasks[3]) << 16;
+  if (bitmasks[5]) result |= (uint64_t) bitextend16((pixel >> bitmasks[4]) & (((uint64_t) 1 << bitmasks[5]) - 1), bitmasks[5]) << 32;
+  if (bitmasks[7]) result |= (~(uint64_t) bitextend16((pixel >> bitmasks[6]) & (((uint64_t) 1 << bitmasks[7]) - 1), bitmasks[7])) << 48;
   return result;
 }
