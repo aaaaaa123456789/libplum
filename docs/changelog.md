@@ -19,6 +19,8 @@ Note: releases are listed from latest to oldest.
 - Added detection for empty GIF files (erroring out with `PLUM_ERR_NO_DATA` instead of `PLUM_ERR_INVALID_FILE_FORMAT`)
 - Improved PNG compression by fixing a lookback bug in the compressor and adjusting the lookback length
 - Added and documented a restriction requiring `size_t` to be at least 32 bits wide
+- Updated documentation for `plum_load_image` to indicate that a `PLUM_ERR_IMAGE_TOO_LARGE` error may also occur if
+  the image's overall dimensions are too large
 - Some minor documentation updates and code cleanup
 
 ## Version 0.3 (10 January 2022)

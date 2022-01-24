@@ -219,7 +219,7 @@ The error constants signal the following reasons for failure:
   palette.
   (This library doesn't support loading images with implicit palettes.)
 - `PLUM_ERR_IMAGE_TOO_LARGE`: one of the image's dimensions (`width`, `height` or `frames`) doesn't fit in a 32-bit
-  unsigned integer.
+  unsigned integer, or the image is too large to be accessed through an array index.
 - `PLUM_ERR_NO_DATA`: one of the image's dimensions (`width`, `height` or `frames`) is zero.
   (This is possible for some image formats that allow image files to only contain ancillary data for further files to
   use, such as palettes or decoder tables; this library doesn't use data from other files when decoding an image file,
