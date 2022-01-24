@@ -42,6 +42,8 @@ here for completeness.
   This is enforced by the usage of the `uint8_t` type.
 - The system uses two's complement for signed numbers.
   This is enforced by the usage of the `int16_t` type.
+- The `size_t` type is at least 32 bits wide.
+  This is checked when compiling the library.
 - All data pointers ("object pointers" in the standard's parlance) have the same representation; in other words, you
   can copy one pointer into another and access it that way (assuming the pointer is properly aligned).
   This in turn implies that, if a union contains pointers as members, a value assigned to one of those members can be

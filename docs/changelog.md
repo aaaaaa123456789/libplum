@@ -18,6 +18,7 @@ Note: releases are listed from latest to oldest.
 - Added and improved some safety checks that detect maliciously-crafted and other pathological files
 - Added detection for empty GIF files (erroring out with `PLUM_ERR_NO_DATA` instead of `PLUM_ERR_INVALID_FILE_FORMAT`)
 - Improved PNG compression by fixing a lookback bug in the compressor
+- Added and documented a restriction requiring `size_t` to be at least 32 bits wide
 - Some minor documentation updates and code cleanup
 
 ## Version 0.3 (10 January 2022)
