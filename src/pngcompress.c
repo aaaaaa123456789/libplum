@@ -1,6 +1,6 @@
 #include "proto.h"
 
-#define PNG_MAX_LOOKBACK_COUNT 16
+#define PNG_MAX_LOOKBACK_COUNT 64
 
 unsigned char * compress_PNG_data (struct context * context, const unsigned char * restrict data, size_t size, size_t extra, size_t * restrict output_size) {
   // extra is the number of zero bytes inserted before the compressed data; they are not included in the size
