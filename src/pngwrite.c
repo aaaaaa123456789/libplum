@@ -243,28 +243,18 @@ void generate_PNG_row_data (struct context * context, const void * restrict data
     case 4: case 5: {
       uint32_t * pixels = ctxmalloc(context, sizeof *pixels * context -> source -> width);
       plum_convert_colors(pixels, data, context -> source -> width, PLUM_COLOR_32 | PLUM_ALPHA_INVERT, context -> source -> color_format);
-      for (p = 0; p < context -> source -> width; p ++) {
-        *(output ++) = pixels[p];
-        *(output ++) = pixels[p] >> 8;
-        *(output ++) = pixels[p] >> 16;
-        if (type == 5) *(output ++) = pixels[p] >> 24;
-      }
+      if (type == 5)
+        for (p = 0; p < context -> source -> width; p ++) write_le32_unaligned(output + 4 * p, pixels[p]);
+      else
+        for (p = 0; p < context -> source -> width; p ++) output += byteappend(output, pixels[p], pixels[p] >> 8, pixels[p] >> 16);
       ctxfree(context, pixels);
     } break;
     case 6: case 7: {
       uint64_t * pixels = ctxmalloc(context, sizeof *pixels * context -> source -> width);
       plum_convert_colors(pixels, data, context -> source -> width, PLUM_COLOR_64 | PLUM_ALPHA_INVERT, context -> source -> color_format);
       for (p = 0; p < context -> source -> width; p ++) {
-        *(output ++) = pixels[p] >> 8;
-        *(output ++) = pixels[p];
-        *(output ++) = pixels[p] >> 24;
-        *(output ++) = pixels[p] >> 16;
-        *(output ++) = pixels[p] >> 40;
-        *(output ++) = pixels[p] >> 32;
-        if (type == 7) {
-          *(output ++) = pixels[p] >> 56;
-          *(output ++) = pixels[p] >> 48;
-        }
+        output += byteappend(output, pixels[p] >> 8, pixels[p], pixels[p] >> 24, pixels[p] >> 16, pixels[p] >> 40, pixels[p] >> 32);
+        if (type == 7) output += byteappend(output, pixels[p] >> 56, pixels[p] >> 48);
       }
       ctxfree(context, pixels);
     }

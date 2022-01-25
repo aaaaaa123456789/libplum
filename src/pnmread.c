@@ -56,17 +56,17 @@ void load_PNM_header (struct context * context, size_t offset, struct PNM_image_
       if (header -> type == 6) header -> datalength *= 3;
       break;
     case 4:
-      header -> datalength = (size_t) (((header -> width - 1) >> 3) + 1) * header -> height;
+      header -> datalength = (size_t) ((header -> width - 1) / 8 + 1) * header -> height;
       break;
     default:
       header -> datalength = context -> size - offset;
-      if (header -> datalength < (header -> type[(const size_t []) {1, 1, 2, 6}] * header -> width * header -> height - 1))
+      if (((header -> datalength + 1) / header -> type[(const size_t []) {1, 1, 2, 6}]) < ((size_t) header -> width * header -> height))
         throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   }
 }
 
 void load_PAM_header (struct context * context, size_t offset, struct PNM_image_header * restrict header) {
-  unsigned fields = 15; // bits 0-3: width, height, max, depth
+  unsigned fields = 15; // bits 0-3: width, height, max, depth (bit set indicates the field hasn't been read yet)
   uint32_t value, depth;
   while (1) {
     skip_PNM_line(context, &offset);
@@ -150,11 +150,12 @@ void skip_PNM_whitespace (struct context * context, size_t * restrict offset) {
 
 void skip_PNM_line (struct context * context, size_t * restrict offset) {
   int comment;
-  for (comment = 0; (*offset < context -> size) && (context -> data[*offset] != 10); ++ *offset) if (!comment)
-    if (context -> data[*offset] == 0x23) // '#'
-      comment = 1;
-    else if (!is_whitespace(context -> data[*offset]))
-      throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  for (comment = 0; (*offset < context -> size) && (context -> data[*offset] != 10); ++ *offset)
+    if (!comment)
+      if (context -> data[*offset] == 0x23) // '#'
+        comment = 1;
+      else if (!is_whitespace(context -> data[*offset]))
+        throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   if (*offset < context -> size) ++ *offset;
 }
 
@@ -168,8 +169,8 @@ unsigned next_PNM_token_length (struct context * context, size_t offset) {
 void read_PNM_numbers (struct context * context, size_t * restrict offset, uint32_t * restrict result, size_t count) {
   while (count --) {
     skip_PNM_whitespace(context, offset);
-    uint64_t current = 0; // 64-bit so it can catch overflows
     if ((*offset >= context -> size) || (context -> data[*offset] < 0x30) || (context -> data[*offset] > 0x39)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    uint64_t current = context -> data[(*offset) ++] - 0x30; // 64-bit so it can catch overflows
     while ((*offset < context -> size) && (context -> data[*offset] >= 0x30) && (context -> data[*offset] <= 0x39)) {
       current = current * 10 + context -> data[(*offset) ++] - 0x30;
       if (current > 0xffffffffu) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
@@ -214,7 +215,7 @@ void load_PNM_frame (struct context * context, const struct PNM_image_header * h
     switch (header -> type) {
       case 1:
         // sometimes the 0s and 1s are not delimited at all here, so it needs a special parser
-        while ((offset < (context -> size)) && ((context -> data[offset] & ~1u) != 0x30)) offset ++;
+        while ((offset < context -> size) && ((context -> data[offset] & ~1u) != 0x30)) offset ++;
         if (offset >= context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         values[2] = values[1] = *values = ~context -> data[offset ++] & 1;
         break;
@@ -228,10 +229,15 @@ void load_PNM_frame (struct context * context, const struct PNM_image_header * h
       case 6: case 13: case 16:
         if (header -> maxvalue > 0xff) {
           *values = read_be16_unaligned(context -> data + offset);
-          values[1] = read_be16_unaligned(context -> data + (offset += 2));
-          values[2] = read_be16_unaligned(context -> data + (offset += 2));
-          if (header -> type >= 14) values[3] = read_be16_unaligned(context -> data + (offset += 2));
           offset += 2;
+          values[1] = read_be16_unaligned(context -> data + offset);
+          offset += 2;
+          values[2] = read_be16_unaligned(context -> data + offset);
+          offset += 2;
+          if (header -> type >= 14) {
+            values[3] = read_be16_unaligned(context -> data + offset);
+            offset += 2;
+          }
         } else {
           *values = context -> data[offset ++];
           values[1] = context -> data[offset ++];
@@ -242,8 +248,11 @@ void load_PNM_frame (struct context * context, const struct PNM_image_header * h
       default:
         if (header -> maxvalue > 0xff) {
           *values = read_be16_unaligned(context -> data + offset);
-          if (header -> type >= 14) values[3] = read_be16_unaligned(context -> data + (offset += 2));
           offset += 2;
+          if (header -> type >= 14) {
+            values[3] = read_be16_unaligned(context -> data + offset);
+            offset += 2;
+          }
         } else {
           *values = context -> data[offset ++];
           if (header -> type >= 14) values[3] = context -> data[offset ++];

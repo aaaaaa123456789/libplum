@@ -21,6 +21,7 @@ size_t plum_store_image (const struct plum_image * image, void * restrict buffer
     default: throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   }
   size_t output_size = get_total_output_size(context);
+  if (!output_size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   switch (size) {
     case PLUM_FILENAME:
       write_generated_image_data_to_file(context, buffer);
@@ -74,8 +75,9 @@ void write_generated_image_data_to_callback (struct context * context, const str
     unsigned char * data = node -> data;
     size_t size = node -> size;
     while (size) {
-      int count = callback -> callback(callback -> userdata, data, (size > 0x4000) ? 0x4000 : size);
-      if (count < 0) throw(context, PLUM_ERR_FILE_ERROR);
+      int block = (size > 0x4000) ? 0x4000 : size;
+      int count = callback -> callback(callback -> userdata, data, block);
+      if ((count < 0) || (count > block)) throw(context, PLUM_ERR_FILE_ERROR);
       data += count;
       size -= count;
     }
@@ -86,7 +88,7 @@ void write_generated_image_data_to_callback (struct context * context, const str
 void write_generated_image_data (void * restrict buffer, const struct data_node * data) {
   const struct data_node * node;
   for (node = data; node -> previous; node = node -> previous);
-  char * out = buffer;
+  unsigned char * out = buffer;
   while (node) {
     memcpy(out, node -> data, node -> size);
     out += node -> size;

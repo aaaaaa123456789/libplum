@@ -181,75 +181,41 @@ size_t write_PNM_number (unsigned char * buffer, uint32_t number) {
 }
 
 void generate_PNM_frame_data (struct context * context, const uint64_t * data, uint32_t width, uint32_t height, unsigned bitdepth, int alpha) {
-  unsigned shift = 16 - bitdepth;
+  uint_fast8_t shift = 16 - bitdepth, mask = (1 << ((bitdepth > 8) ? bitdepth - 8 : bitdepth)) - 1;
   size_t row, col;
-  if (shift >= 8) {
-    unsigned char * output = append_output_node(context, (size_t) (alpha ? 4 : 3) * width * height);
-    for (row = 0; row < height; row ++) {
-      const uint64_t * rowdata = data + row * context -> source -> width;
-      for (col = 0; col < width; col ++) {
-        uint64_t color = rowdata[col];
-        *(output ++) = (color & 0xffffu) >> shift;
-        *(output ++) = (color & 0xffff0000u) >> (shift + 16);
-        *(output ++) = (color & 0xffff00000000u) >> (shift + 32);
-        if (alpha) *(output ++) = color >> (shift + 48);
-      }
+  const uint64_t * rowdata = data;
+  unsigned char * output = append_output_node(context, (size_t) (3 + !!alpha) * ((bitdepth + 7) / 8) * width * height);
+  if (shift >= 8)
+    for (row = 0; row < height; row ++, rowdata += context -> source -> width) for (col = 0; col < width; col ++) {
+      output += byteappend(output, (rowdata[col] >> shift) & mask, (rowdata[col] >> (shift + 16)) & mask, (rowdata[col] >> (shift + 32)) & mask);
+      if (alpha) *(output ++) = rowdata[col] >> (shift + 48);
     }
-  } else {
-    unsigned char * output = append_output_node(context, (size_t) (alpha ? 8 : 6) * width * height);
-    for (row = 0; row < height; row ++) {
-      const uint64_t * rowdata = data + row * context -> source -> width;
-      for (col = 0; col < width; col ++) {
-        uint64_t color = rowdata[col];
-        *(output ++) = (color & 0xffffu) >> (shift + 8);
-        *(output ++) = (color & 0xffffu) >> shift;
-        *(output ++) = (color & 0xffff0000u) >> (shift + 24);
-        *(output ++) = (color & 0xffff0000u) >> (shift + 16);
-        *(output ++) = (color & 0xffff00000000u) >> (shift + 40);
-        *(output ++) = (color & 0xffff00000000u) >> (shift + 32);
-        if (alpha) {
-          *(output ++) = color >> (shift + 56);
-          *(output ++) = color >> (shift + 48);
-        }
-      }
+  else
+    for (row = 0; row < height; row ++, rowdata += context -> source -> width) for (col = 0; col < width; col ++) {
+      output += byteappend(output, (rowdata[col] >> (shift + 8)) & mask, rowdata[col] >> shift, (rowdata[col] >> (shift + 24)) & mask,
+                                   rowdata[col] >> (shift + 16), (rowdata[col] >> (shift + 40)) & mask, rowdata[col] >> (shift + 32));
+      if (alpha) output += byteappend(output, rowdata[col] >> (shift + 56), rowdata[col] >> (shift + 48));
     }
-  }
 }
 
 void generate_PNM_frame_data_from_palette (struct context * context, const uint8_t * data, const uint64_t * palette, uint32_t width, uint32_t height,
                                            unsigned bitdepth, int alpha) {
   // very similar to the previous function, but adjusted to use the color from the palette and to read 8-bit data
-  unsigned shift = 16 - bitdepth;
+  uint_fast8_t shift = 16 - bitdepth, mask = (1 << ((bitdepth > 8) ? bitdepth - 8 : bitdepth)) - 1;
   size_t row, col;
-  if (shift >= 8) {
-    unsigned char * output = append_output_node(context, (size_t) (alpha ? 4 : 3) * width * height);
-    for (row = 0; row < height; row ++) {
-      const uint8_t * rowdata = data + row * context -> source -> width;
-      for (col = 0; col < width; col ++) {
-        uint64_t color = palette[rowdata[col]];
-        *(output ++) = (color & 0xffffu) >> shift;
-        *(output ++) = (color & 0xffff0000u) >> (shift + 16);
-        *(output ++) = (color & 0xffff00000000u) >> (shift + 32);
-        if (alpha) *(output ++) = color >> (shift + 48);
-      }
+  const uint8_t * rowdata = data;
+  unsigned char * output = append_output_node(context, (size_t) (3 + !!alpha) * ((bitdepth + 7) / 8) * width * height);
+  if (shift >= 8)
+    for (row = 0; row < height; row ++, rowdata += context -> source -> width) for (col = 0; col < width; col ++) {
+      uint64_t color = palette[rowdata[col]];
+      output += byteappend(output, (color >> shift) & mask, (color >> (shift + 16)) & mask, (color >> (shift + 32)) & mask);
+      if (alpha) *(output ++) = color >> (shift + 48);
     }
-  } else {
-    unsigned char * output = append_output_node(context, (size_t) (alpha ? 8 : 6) * width * height);
-    for (row = 0; row < height; row ++) {
-      const uint8_t * rowdata = data + row * context -> source -> width;
-      for (col = 0; col < width; col ++) {
-        uint64_t color = palette[rowdata[col]];
-        *(output ++) = (color & 0xffffu) >> (shift + 8);
-        *(output ++) = (color & 0xffffu) >> shift;
-        *(output ++) = (color & 0xffff0000u) >> (shift + 24);
-        *(output ++) = (color & 0xffff0000u) >> (shift + 16);
-        *(output ++) = (color & 0xffff00000000u) >> (shift + 40);
-        *(output ++) = (color & 0xffff00000000u) >> (shift + 32);
-        if (alpha) {
-          *(output ++) = color >> (shift + 56);
-          *(output ++) = color >> (shift + 48);
-        }
-      }
+  else
+    for (row = 0; row < height; row ++, rowdata += context -> source -> width) for (col = 0; col < width; col ++) {
+      uint64_t color = palette[rowdata[col]];
+      output += byteappend(output, (color >> (shift + 8)) & mask, color >> shift, (color >> (shift + 24)) & mask, color >> (shift + 16),
+                                   (color >> (shift + 40)) & mask, color >> (shift + 32));
+      if (alpha) output += byteappend(output, color >> (shift + 56), color >> (shift + 48));
     }
-  }
 }
