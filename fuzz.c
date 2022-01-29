@@ -10,6 +10,7 @@
 #define byteappend(address, ...) (bytewrite(address, __VA_ARGS__), sizeof (unsigned char []) {__VA_ARGS__})
 
 static void process_loaded_image(struct plum_image *);
+static void generate_animation_metadata(struct plum_image *);
 static struct plum_buffer identity_transform(const unsigned char *, size_t);
 static struct plum_buffer GIF_image_data_transform(const unsigned char *, size_t);
 static struct plum_buffer sanitize_PNG_transform(const unsigned char *, size_t);
@@ -27,6 +28,7 @@ struct plum_buffer (* transforms[]) (const unsigned char *, size_t) = {
   generic_PNG_image_data_transform
 };
 
+// generators should include a plum_buffer with unused input data in the image's user member
 struct plum_image * (* generators[]) (const unsigned char *, size_t) = {
   regular_image_generator,
   palette_image_generator
@@ -80,6 +82,7 @@ int LLVMFuzzerTestOneInput (const unsigned char * data, size_t size) {
     if (!image) continue;
     process_loaded_image(image);
     struct plum_image * copy = plum_copy_image(image);
+    if (image -> user) copy -> user = memcpy(plum_calloc(copy, sizeof(struct plum_buffer)), image -> user, sizeof(struct plum_buffer));
     plum_remove_alpha(image);
     process_loaded_image(image);
     plum_destroy_image(image);
@@ -90,14 +93,14 @@ int LLVMFuzzerTestOneInput (const unsigned char * data, size_t size) {
       plum_sort_palette(image, 0);
       void * palette = image -> palette;
       image -> palette = NULL;
-      void * newdata = plum_malloc(image, plum_pixel_buffer_size(image));
+      void * newdata = plum_calloc(image, plum_pixel_buffer_size(image));
       plum_convert_indexes_to_colors(newdata, image -> data8, palette, count, image -> color_format);
       plum_free(image, palette);
       plum_free(image, image -> data8);
       image -> data = newdata;
     } else {
-      void * palette = plum_malloc(image, plum_color_buffer_size(256, image -> color_format));
-      uint8_t * newdata = plum_malloc(image, count);
+      void * palette = plum_calloc(image, plum_color_buffer_size(256, image -> color_format));
+      uint8_t * newdata = plum_calloc(image, count);
       int result = plum_convert_colors_to_indexes(newdata, image -> data, palette, count, image -> color_format);
       if (result < 0) {
         plum_free(image, palette);
@@ -115,6 +118,7 @@ int LLVMFuzzerTestOneInput (const unsigned char * data, size_t size) {
       image -> frames *= frames;
       break;
     }
+    generate_animation_metadata(image);
     process_loaded_image(image);
     plum_destroy_image(image);
   }
@@ -130,6 +134,32 @@ static void process_loaded_image (struct plum_image * image) {
   }
 }
 
+static void generate_animation_metadata (struct plum_image * image) {
+  struct plum_buffer * buffer = image -> user;
+  if (!buffer) return;
+  if (buffer -> size >= sizeof(uint32_t)) {
+    plum_append_metadata(image, PLUM_METADATA_LOOP_COUNT, buffer -> data, sizeof(uint32_t));
+    buffer -> data = (unsigned char *) buffer -> data + sizeof(uint32_t);
+    buffer -> size -= sizeof(uint32_t);
+  }
+  if (!buffer -> size) return;
+  size_t frame, frames = buffer -> size * 2;
+  if (frames > image -> frames) frames = image -> frames;
+  struct plum_metadata * metadata = plum_allocate_metadata(image, frames);
+  metadata -> next = image -> metadata;
+  metadata -> type = PLUM_METADATA_FRAME_DISPOSAL;
+  image -> metadata = metadata;
+  for (frame = 0; frame < frames; frame ++)
+    frame[(unsigned char *) metadata -> data] = (((const unsigned char *) buffer -> data)[frame >> 1] >> (4 * (frame & 1))) % PLUM_NUM_DISPOSAL_METHODS;
+  buffer -> data = (unsigned char *) buffer -> data + (frames + 1) / 2;
+  buffer -> size -= (frames + 1) / 2;
+  frames = buffer -> size / sizeof(uint64_t);
+  if (!frames) return;
+  if (frames > image -> frames) frames = image -> frames;
+  plum_append_metadata(image, PLUM_METADATA_FRAME_DURATION, buffer -> data, sizeof(uint64_t) * frames);
+  buffer -> data = (unsigned char *) buffer -> data + sizeof(uint64_t) * frames;
+  buffer -> size -= sizeof(uint64_t) * frames;
+}
 
 static struct plum_buffer identity_transform (const unsigned char * data, size_t size) {
   struct plum_buffer result = {.size = size, .data = malloc(size + !size)};
@@ -285,6 +315,17 @@ static struct plum_image * regular_image_generator (const unsigned char * data, 
     return NULL;
   }
   memcpy(image -> data, data, imagesize);
+  data += imagesize;
+  size -= imagesize;
+  if (size >= 2) {
+    uint16_t depth = read_le16_unaligned(data);
+    const unsigned char colordepth[] = {(depth & 15) + 1, ((depth >> 4) & 15) + 1, ((depth >> 8) & 15) + 1, ((depth >> 12) & 15) + 1};
+    plum_append_metadata(image, PLUM_METADATA_COLOR_DEPTH, colordepth, sizeof colordepth);
+    data += 2;
+    size -= 2;
+  }
+  image -> user = plum_calloc(image, sizeof(struct plum_buffer));
+  *(struct plum_buffer *) image -> user = (struct plum_buffer) {.data = (unsigned char *) data, .size = size};
   return image;
 }
 
@@ -309,13 +350,22 @@ static struct plum_image * palette_image_generator (const unsigned char * data, 
   data += palsize + 2;
   size -= palsize + 2;
   image -> width = size / height;
-  size = (size_t) height * image -> width;
-  image -> data = plum_malloc(image, size);
+  size_t imagesize = (size_t) height * image -> width;
+  image -> data = plum_calloc(image, imagesize);
   if (!image -> data) {
     plum_destroy_image(image);
     return NULL;
   }
-  for (index = 0; index < size; index ++) image -> data8[index] = data[index] % palcount;
+  for (index = 0; index < imagesize; index ++) image -> data8[index] = data[index] % palcount;
+  data += imagesize;
+  size -= imagesize;
+  if (size >= plum_color_buffer_size(1, color_format)) {
+    plum_append_metadata(image, PLUM_METADATA_BACKGROUND, data, plum_color_buffer_size(1, color_format));
+    data += plum_color_buffer_size(1, color_format);
+    size -= plum_color_buffer_size(1, color_format);
+  }
+  image -> user = plum_calloc(image, sizeof(struct plum_buffer));
+  *(struct plum_buffer *) image -> user = (struct plum_buffer) {.data = (unsigned char *) data, .size = size};
   return image;
 }
 
