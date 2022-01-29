@@ -6,8 +6,8 @@ The code in this branch includes `fuzz.c`, which is the fuzzing program (which m
 create valid inputs of multiple forms for the library while maximizing coverage) and `fuzztest.c`, a program that
 manually invokes the code in `fuzz.c` for debugging and validation.
 
-Thanks to @nyanpasu64 for their help setting up the initial libfuzzer setup, still available on their fork of the
-library, from which this setup has been derived.
+Thanks to [nyanpasu64](https://github.com/nyanpasu64) for their help setting up the initial libfuzzer setup, still
+available on their fork of the library, from which this setup has been derived.
 
 All code in this branch, like the main branch, is released to the public domain under [the Unlicense](LICENSE).
 
