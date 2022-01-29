@@ -7,6 +7,7 @@ fasttest
 fuzz
 fuzz32
 fuzztest
+covtest
 
 # library sources
 libplum.c

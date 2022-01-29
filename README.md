@@ -35,6 +35,10 @@ mentioned above.
 (`fuzz32` is built with the `-m32` switch, allowing testing of 32-bit binaries in a 64-bit platform.)
 Check the [libfuzzer documentation](https://llvm.org/docs/LibFuzzer.html) for further information.
 
+To build `covtest`, the binary used for coverage measurements, invoke `make covtest`.
+Check [LLVM's source-based code coverage documentation](https://clang.llvm.org/docs/SourceBasedCodeCoverage.html) for
+information on how to use this binary.
+
 To build the binaries for use with AFL++, invoke `make afl`; this will output a number of binaries in the `afl`
 subdirectory, built under different configurations, ready for invocation by `afl-fuzz`.
 Check the [AFL++ documentation](https://github.com/AFLplusplus/AFLplusplus/tree/stable/docs) for further information.

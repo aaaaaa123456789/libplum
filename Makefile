@@ -18,6 +18,11 @@ fuzztest: fuzz.c libplum.c libplum.h fuzztest.c
 fasttest: fuzz.c libplum.c libplum.h fuzztest.c
 	$(CLANG) $(OPTFLAGS) $(WARNFLAGS) -fsanitize=address,undefined fuzz.c libplum.c fuzztest.c -o $@
 
+covtest: fuzz.c libplum.c libplum.h fuzztest.c
+	$(CLANG) -c -O1 -g $(WARNFLAGS) fuzz.c fuzztest.c
+	$(CLANG) -O1 -g $(WARNFLAGS) -fprofile-instr-generate -fcoverage-mapping fuzz.o fuzztest.o libplum.c -o $@
+	rm -f fuzz.o fuzztest.o
+
 AFLCC ?= afl-clang-lto
 AFLCOMP = $(AFLCC) -g $(WARNFLAGS) -fsanitize=fuzzer fuzz.c libplum.c
 
@@ -30,4 +35,4 @@ afl: fuzz.c libplum.c libplum.h
 	AFL_LLVM_CMPLOG=1 $(AFLCOMP) -o $@/fuzz-cmplog
 
 clean:
-	rm -rf $(BINARIES) afl
+	rm -rf $(BINARIES) covtest afl
