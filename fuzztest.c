@@ -18,7 +18,7 @@ int main (int argc, char ** argv) {
     fclose(fp);
     if (argc > 2) {
       struct tm * timedata = localtime((const time_t []) {time(NULL)});
-      printf("[%02d:%02d:%02d] %s\n", timedata -> tm_hour, timedata -> tm_min, timedata -> tm_sec,  *argv);
+      printf("[%02d:%02d:%02d] %s\n", timedata -> tm_hour, timedata -> tm_min, timedata -> tm_sec, *argv);
     }
     LLVMFuzzerTestOneInput(data, size);
     free(data);
