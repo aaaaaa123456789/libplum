@@ -1,0 +1,8 @@
+afl/
+data/
+fasttest
+fuzz
+fuzz32
+fuzztest
+libplum.c
+libplum.h

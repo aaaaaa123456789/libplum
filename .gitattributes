@@ -1,0 +1,7 @@
+* eol=lf
+
+*.c text
+*.h text linguist-language=C
+*.md text
+LICENSE text
+Makefile text
