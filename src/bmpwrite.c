@@ -336,12 +336,13 @@ void generate_BMP_RGB_data (struct context * context, unsigned char * offset_poi
   attributes[12] = 1;
   attributes[14] = 24;
   uint32_t * data;
-  if ((context -> source -> color_format & PLUM_COLOR_MASK) != PLUM_COLOR_32) {
+  if ((context -> source -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_32)
+    data = context -> source -> data;
+  else {
     data = ctxmalloc(context, sizeof *data * context -> source -> width * context -> source -> height);
     plum_convert_colors(data, context -> source -> data, (size_t) context -> source -> width * context -> source -> height,
                         PLUM_COLOR_32, context -> source -> color_format);
-  } else
-    data = context -> source -> data;
+  }
   size_t rowsize = (size_t) context -> source -> width * 3, padding = 0;
   if (rowsize & 3) {
     padding = 4 - (rowsize & 3);
