@@ -1,8 +1,20 @@
-afl/
+# data directory
 data/
+
+# binaries, etc.
+afl/
 fasttest
 fuzz
 fuzz32
 fuzztest
+
+# library sources
 libplum.c
 libplum.h
+
+# any generated "interesting" outputs from libfuzzer
+/crash-*
+/leak-*
+/oom-*
+/slow-unit-*
+/timeout-*
