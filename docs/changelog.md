@@ -10,6 +10,7 @@ Note: releases are listed from latest to oldest.
 - Fixed a file descriptor leak that would keep an open `FILE *` if a `PLUM_ERR_FILE_ERROR` error was raised while
   reading from a file
 - Fixed a bug that prevented non-vertically-flipped BMP files from ever loading
+- Fixed read-past-the-end bug when loading monochrome BMP files with a width that is a multiple of 8
 - Added safeguards to prevent internal `longjmp` misuse when generating image files
 - Ensured that the `PLUM_FILENAME`, `PLUM_BUFFER` and `PLUM_CALLBACK` constants are always `size_t` as documented
 - Enforced the size limitation on the value returned by a callback when using the `PLUM_CALLBACK` loading/storing mode
@@ -17,8 +18,12 @@ Note: releases are listed from latest to oldest.
   process to fail (the background is ignored instead if there are no available palette slots)
 - Added some warning flags for debug builds, and cleared some warnings that would be raised by them
 - Added and improved some safety checks that detect maliciously-crafted and other pathological files
-- Added detection for empty GIF files (erroring out with `PLUM_ERR_NO_DATA` instead of `PLUM_ERR_INVALID_FILE_FORMAT`)
+- Added detection for empty BMP and GIF files (erroring out with `PLUM_ERR_NO_DATA` instead of
+  `PLUM_ERR_INVALID_FILE_FORMAT`)
+- Allowed decompressing BMP files that end their last line with a row end marker (and maybe no data end marker)
 - Improved PNG compression by fixing a lookback bug in the compressor and adjusting the lookback length
+- Prevented BMP images with a height of `0x80000000` from loading, since this is a negative 32-bit value that has no
+  positive counterpart (erroring out with `PLUM_ERR_INVALID_FILE_FORMAT`)
 - Added and documented a restriction requiring `size_t` to be at least 32 bits wide
 - Updated documentation for `plum_load_image` to indicate that a `PLUM_ERR_IMAGE_TOO_LARGE` error may also occur if
   the image's overall dimensions are too large
