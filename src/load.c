@@ -84,6 +84,7 @@ void prepare_image_buffer_data (struct context * context, const void * restrict 
     case PLUM_BUFFER:
       context -> data = ((const struct plum_buffer *) buffer) -> data;
       context -> size = ((const struct plum_buffer *) buffer) -> size;
+      if (!context -> data) throw(context, PLUM_ERR_INVALID_ARGUMENTS);
       return;
     case PLUM_CALLBACK:
       load_from_callback(context, buffer);

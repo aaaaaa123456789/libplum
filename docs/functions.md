@@ -207,7 +207,8 @@ The error constants signal the following reasons for failure:
 
 - `PLUM_OK` (zero): success.
   This value will be used only if the function succeeds, i.e., it returns a non-`NULL` value.
-- `PLUM_ERR_INVALID_ARGUMENTS`: `buffer` is `NULL`.
+- `PLUM_ERR_INVALID_ARGUMENTS`: `buffer` is `NULL`, or `size` is [`PLUM_BUFFER`][mode-constants] and `buffer` points
+  to a [`struct plum_buffer`][buffer] whose `data` member is `NULL`.
 - `PLUM_ERR_INVALID_FILE_FORMAT`: the image's file format wasn't recognized, or the image was damaged or couldn't be
   loaded for some reason.
   This indicates an error in the image data, such as an unexpected value.
