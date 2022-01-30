@@ -10,6 +10,8 @@
 #define byteappend(address, ...) (bytewrite(address, __VA_ARGS__), sizeof (unsigned char []) {__VA_ARGS__})
 
 static void process_loaded_image(struct plum_image *);
+static void test_image(struct plum_image *);
+static struct plum_image * load_image_transformed(const struct plum_buffer *, uint16_t);
 static void generate_animation_metadata(struct plum_image *);
 static struct plum_buffer identity_transform(const unsigned char *, size_t);
 static struct plum_buffer GIF_image_data_transform(const unsigned char *, size_t);
@@ -55,71 +57,25 @@ const char * __asan_default_options (void) {
 
 int LLVMFuzzerTestOneInput (const unsigned char * data, size_t size) {
   unsigned transform;
-  struct plum_buffer buffer;
   struct plum_image * image;
   for (transform = 0; transform < (sizeof transforms / sizeof *transforms); transform ++) {
-    buffer = transforms[transform](data, size);
-    image = plum_load_image_limited(&buffer, PLUM_BUFFER, PLUM_COLOR_64 | PLUM_PALETTE_LOAD, 0x1000000, NULL);
+    struct plum_buffer buffer = transforms[transform](data, size);
+    struct plum_image * image = plum_load_image_limited(&buffer, PLUM_BUFFER, PLUM_COLOR_64 | PLUM_PALETTE_LOAD, 0x1000000, NULL);
     free(buffer.data);
-    if (image) {
-      process_loaded_image(image);
-      plum_destroy_image(image);
-    }
+    if (image) process_loaded_image(image);
+    plum_destroy_image(image);
     if (size >= 2) {
-      unsigned flags = read_le16_unaligned(data + size - 2);
+      uint16_t flags = read_le16_unaligned(data + size - 2);
       buffer = transforms[transform](data, size - 2);
-      image = plum_load_image_limited(&buffer, PLUM_BUFFER, flags & 0x3f07, 0x1000000, NULL);
+      image = load_image_transformed(&buffer, flags);
       free(buffer.data);
-      if (image) {
-        plum_rotate_image(image, flags >> 14, flags & 8);
-        process_loaded_image(image);
-        plum_destroy_image(image);
-      }
+      if (image) process_loaded_image(image);
+      plum_destroy_image(image);
     }
   }
   for (transform = 0; transform < (sizeof generators / sizeof *generators); transform ++) {
     image = generators[transform](data, size);
-    if (!image) continue;
-    process_loaded_image(image);
-    struct plum_image * copy = plum_copy_image(image);
-    if (image -> user) copy -> user = memcpy(plum_calloc(copy, sizeof(struct plum_buffer)), image -> user, sizeof(struct plum_buffer));
-    plum_remove_alpha(image);
-    process_loaded_image(image);
-    plum_destroy_image(image);
-    image = copy;
-    size_t count = (size_t) image -> width * image -> height * image -> frames;
-    if (image -> palette) {
-      plum_reduce_palette(image);
-      plum_sort_palette(image, 0);
-      void * palette = image -> palette;
-      image -> palette = NULL;
-      void * newdata = plum_calloc(image, plum_pixel_buffer_size(image));
-      plum_convert_indexes_to_colors(newdata, image -> data8, palette, count, image -> color_format);
-      plum_free(image, palette);
-      plum_free(image, image -> data8);
-      image -> data = newdata;
-    } else {
-      void * palette = plum_calloc(image, plum_color_buffer_size(256, image -> color_format));
-      uint8_t * newdata = plum_calloc(image, count);
-      int result = plum_convert_colors_to_indexes(newdata, image -> data, palette, count, image -> color_format);
-      if (result < 0) {
-        plum_free(image, palette);
-        plum_free(image, newdata);
-      } else {
-        plum_free(image, image -> data);
-        image -> data8 = newdata;
-        image -> palette = palette;
-        image -> max_palette_index = result;
-      }
-    }
-    unsigned frames;
-    for (frames = 7; frames > 2; frames --) if (!(image -> height % frames)) {
-      image -> height /= frames;
-      image -> frames *= frames;
-      break;
-    }
-    generate_animation_metadata(image);
-    process_loaded_image(image);
+    if (image) test_image(image);
     plum_destroy_image(image);
   }
   return 0;
@@ -132,6 +88,81 @@ static void process_loaded_image (struct plum_image * image) {
     image -> type = format;
     if (plum_store_image(image, &buffer, PLUM_BUFFER, NULL)) plum_free(NULL, buffer.data); // free(buffer.data), but testing plum_free
   }
+}
+
+static struct plum_image * load_image_transformed (const struct plum_buffer * buffer, uint16_t flags) {
+  struct plum_image * image = plum_load_image_limited(buffer, PLUM_BUFFER, flags & 0x3f07, 0x1000000, NULL);
+  if (!image) return NULL;
+  plum_rotate_image(image, flags >> 14, flags & 8);
+  unsigned newformat = (flags >> 8) & 7;
+  if (newformat != image -> color_format) {
+    size_t count;
+    void ** original;
+    void * converted;
+    if (image -> palette) {
+      original = &image -> palette;
+      count = image -> max_palette_index + 1;
+    } else {
+      original = &image -> data;
+      count = (size_t) image -> width * image -> height * image -> frames;
+    }
+    converted = plum_malloc(image, plum_color_buffer_size(count, newformat));
+    if (converted) {
+      plum_convert_colors(converted, *original, count, newformat, image -> color_format);
+      plum_free(image, *original);
+      *original = converted;
+      struct plum_metadata * metadata = plum_find_metadata(image, PLUM_METADATA_BACKGROUND);
+      if (metadata) {
+        unsigned char colorbuffer[sizeof(uint64_t)];
+        plum_convert_colors(colorbuffer, metadata -> data, 1, newformat, image -> color_format);
+        metadata -> type = PLUM_METADATA_NONE;
+        plum_append_metadata(image, PLUM_METADATA_BACKGROUND, colorbuffer, plum_color_buffer_size(1, newformat));
+      }
+      image -> color_format = newformat;
+    }
+  }
+  return image;
+}
+
+static void test_image (struct plum_image * image) {
+  process_loaded_image(image);
+  struct plum_image * copy = plum_copy_image(image);
+  plum_remove_alpha(copy);
+  process_loaded_image(copy);
+  plum_destroy_image(copy);
+  size_t count = (size_t) image -> width * image -> height * image -> frames;
+  if (image -> palette) {
+    plum_reduce_palette(image);
+    plum_sort_palette(image, 0);
+    void * palette = image -> palette;
+    image -> palette = NULL;
+    void * newdata = plum_calloc(image, plum_pixel_buffer_size(image));
+    plum_convert_indexes_to_colors(newdata, image -> data8, palette, count, image -> color_format);
+    plum_free(image, palette);
+    plum_free(image, image -> data8);
+    image -> data = newdata;
+  } else {
+    void * palette = plum_calloc(image, plum_color_buffer_size(256, image -> color_format));
+    uint8_t * newdata = plum_calloc(image, count);
+    int result = plum_convert_colors_to_indexes(newdata, image -> data, palette, count, image -> color_format);
+    if (result < 0) {
+      plum_free(image, palette);
+      plum_free(image, newdata);
+    } else {
+      plum_free(image, image -> data);
+      image -> data8 = newdata;
+      image -> palette = palette;
+      image -> max_palette_index = result;
+    }
+  }
+  unsigned frames;
+  for (frames = 7; frames > 2; frames --) if (!(image -> height % frames)) {
+    image -> height /= frames;
+    image -> frames *= frames;
+    break;
+  }
+  generate_animation_metadata(image);
+  process_loaded_image(image);
 }
 
 static void generate_animation_metadata (struct plum_image * image) {

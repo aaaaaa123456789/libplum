@@ -8,6 +8,7 @@ fuzz
 fuzz32
 fuzztest
 covtest
+libtest
 
 # library sources
 libplum.c
@@ -20,3 +21,6 @@ libplum.h
 /oom-*
 /slow-unit-*
 /timeout-*
+
+# coverage measurement intermediate files
+coverage/driver.o

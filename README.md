@@ -5,6 +5,10 @@ This branch contains the setup used to fuzz the library.
 The code in this branch includes `fuzz.c`, which is the fuzzing program (which mutates the input in various ways to
 create valid inputs of multiple forms for the library while maximizing coverage) and `fuzztest.c`, a program that
 manually invokes the code in `fuzz.c` for debugging and validation.
+There is also a program that executes a battery of tests, including manual tests not suitable for fuzzing, for
+coverage measurement.
+
+Test images are not included, since most test images available have copyright restrictions on them.
 
 Thanks to [nyanpasu64](https://github.com/nyanpasu64) for their help setting up the initial libfuzzer setup, still
 available on their fork of the library, from which this setup has been derived.
@@ -35,12 +39,20 @@ mentioned above.
 (`fuzz32` is built with the `-m32` switch, allowing testing of 32-bit binaries in a 64-bit platform.)
 Check the [libfuzzer documentation](https://llvm.org/docs/LibFuzzer.html) for further information.
 
-To build `covtest`, the binary used for coverage measurements, invoke `make covtest`.
-Check [LLVM's source-based code coverage documentation](https://clang.llvm.org/docs/SourceBasedCodeCoverage.html) for
-information on how to use this binary.
-
 To build the binaries for use with AFL++, invoke `make afl`; this will output a number of binaries in the `afl`
 subdirectory, built under different configurations, ready for invocation by `afl-fuzz`.
 Check the [AFL++ documentation](https://github.com/AFLplusplus/AFLplusplus/tree/stable/docs) for further information.
 
 As usual, `make clean` will delete all built binaries (and the entirety of the `afl` subdirectory).
+
+## Coverage measurement
+
+Coverage measurement executes a multi-purpose binary that runs a number of tests, including the fuzzer tests
+themselves, as well as other test programs used to test the library under different conditions.
+
+To build `covtest`, the binary used for coverage measurements, invoke `make covtest`.
+Check [LLVM's source-based code coverage documentation](https://clang.llvm.org/docs/SourceBasedCodeCoverage.html) for
+information on how to use this binary.
+
+To build `libtest`, which is the same program, but without the coverage instrumentation, invoke `make libtest`.
+This is useful to ensure that the program works, and also for manual testing.
