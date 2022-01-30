@@ -130,7 +130,7 @@ static void process_loaded_image (struct plum_image * image) {
   unsigned format;
   for (format = 1; format < PLUM_NUM_IMAGE_TYPES; format ++) {
     image -> type = format;
-    if (plum_store_image(image, &buffer, PLUM_BUFFER, NULL)) free(buffer.data);
+    if (plum_store_image(image, &buffer, PLUM_BUFFER, NULL)) plum_free(NULL, buffer.data); // free(buffer.data), but testing plum_free
   }
 }
 
