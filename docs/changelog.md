@@ -5,6 +5,7 @@ Note: releases are listed from latest to oldest.
 ## Version 1.0 (in development)
 
 - Fixed a bug when loading APNG files with reduced frames
+- Fixed emitting GIF files with transparent pixels
 - Fixed a bug in the GIF compressor that would generate invalid compressed frame data when a code size increase and
   reduction occured at the same time
 - Fixed a file descriptor leak that would keep an open `FILE *` if a `PLUM_ERR_FILE_ERROR` error was raised while

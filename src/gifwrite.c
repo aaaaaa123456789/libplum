@@ -166,7 +166,7 @@ void generate_GIF_frame_data (struct context * context, uint32_t * restrict pixe
   int transparent_index = -1;
   if (transparent)
     for (index = 0; index <= colorcount; index ++) if (palette[index] == transparent) {
-      transparent_index = transparent;
+      transparent_index = index;
       break;
     }
   write_GIF_frame(context, framebuffer, palette, colorcount + 1, transparent_index, frame, left, top, width, height, durations, disposals);
