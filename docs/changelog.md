@@ -29,6 +29,8 @@ Note: releases are listed from latest to oldest.
 - Improved PNG compression by fixing a lookback bug in the compressor and adjusting the lookback length
 - Prevented BMP images with a height of `0x80000000` from loading, since this is a negative 32-bit value that has no
   positive counterpart (erroring out with `PLUM_ERR_INVALID_FILE_FORMAT`)
+- Ensured that GIF frames are always read with a non-zero duration (frames with an instant duration will contain a
+  duration of 1 nanosecond in the `PLUM_METADATA_FRAME_DURATION` metadata node, as documented)
 - Added and documented a restriction requiring `size_t` to be at least 32 bits wide
 - Updated documentation for `plum_load_image` to indicate that a `PLUM_ERR_IMAGE_TOO_LARGE` error may also occur if
   the image's overall dimensions are too large

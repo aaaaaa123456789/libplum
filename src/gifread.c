@@ -205,7 +205,6 @@ void load_GIF_frame (struct context * context, size_t * offset, unsigned flags, 
       }
     } else {
       *duration = (uint64_t) 10000000 * read_le16_unaligned(extdata + 1);
-      if (!*duration) *duration = 1;
       uint_fast8_t dispindex = (*extdata >> 2) & 7;
       if (dispindex > 3) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
       if (dispindex) *disposal = dispindex - 1;
@@ -213,6 +212,7 @@ void load_GIF_frame (struct context * context, size_t * offset, unsigned flags, 
     }
     ctxfree(context, extdata);
   }
+  if (!*duration) *duration = 1;
   uint_fast32_t left = read_le16_unaligned(context -> data + *offset);
   uint_fast32_t top = read_le16_unaligned(context -> data + *offset + 2);
   uint_fast32_t width = read_le16_unaligned(context -> data + *offset + 4);
