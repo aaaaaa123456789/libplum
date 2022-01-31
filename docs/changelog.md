@@ -19,6 +19,8 @@ Note: releases are listed from latest to oldest.
   a null pointer
 - Handled out-of-palette background colors when generating a GIF file, ensuring that they would never cause the
   process to fail (the background is ignored instead if there are no available palette slots)
+- Improved the GIF loader to account for looping extensions that don't appear at the beginning of the file (as long as
+  there is at most one per file)
 - Added some warning flags for debug builds, and cleared some warnings that would be raised by them
 - Added and improved some safety checks that detect maliciously-crafted and other pathological files
 - Added detection for empty BMP and GIF files (erroring out with `PLUM_ERR_NO_DATA` instead of

@@ -10,7 +10,6 @@ void load_GIF_data (struct context * context, unsigned flags, size_t limit) {
   // note: load_GIF_palettes also initializes context -> image -> frames (and context -> image -> palette) and validates the image's structure
   uint64_t ** palettes = load_GIF_palettes(context, flags, &offset, &transparent); // will be leaked (collected at the end)
   validate_image_size(context, limit);
-  load_GIF_loop_count(context, &offset);
   allocate_framebuffers(context, flags, !!(context -> image -> palette));
   uint64_t * durations;
   uint8_t * disposals;
@@ -18,6 +17,7 @@ void load_GIF_data (struct context * context, unsigned flags, size_t limit) {
   uint_fast32_t frame;
   for (frame = 0; frame < context -> image -> frames; frame ++)
     load_GIF_frame(context, &offset, flags, frame, palettes ? palettes[frame] : NULL, transparent, durations + frame, disposals + frame);
+  if (!plum_find_metadata(context -> image, PLUM_METADATA_LOOP_COUNT)) add_loop_count_metadata(context, 1);
 }
 
 uint64_t ** load_GIF_palettes (struct context * context, unsigned flags, size_t * offset, uint64_t * transparent_color) {
@@ -164,7 +164,7 @@ void * load_GIF_data_blocks (struct context * context, size_t * restrict offset,
     p += block;
     if (p >= context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   }
-  if (loaded_size) *loaded_size = current_size;
+  *loaded_size = current_size;
   unsigned char * result = ctxmalloc(context, current_size);
   current_size = 0;
   while (block = context -> data[(*offset) ++]) {
@@ -185,38 +185,32 @@ void skip_GIF_data_blocks (struct context * context, size_t * offset) {
   } while (skip);
 }
 
-void load_GIF_loop_count (struct context * context, size_t * offset) {
-  if ((*offset >= (context -> size - 2)) || (context -> data[*offset] != 0x21) || (context -> data[*offset + 1] != 0xff)) {
-    add_loop_count_metadata(context, 1);
-    return;
-  }
-  size_t size, newoffset = *offset + 2;
-  unsigned char * data = load_GIF_data_blocks(context, &newoffset, &size);
-  if ((size == 14) && bytematch(data, 0x4e, 0x45, 0x54, 0x53, 0x43, 0x41, 0x50, 0x45, 0x32, 0x2e, 0x30, 0x01)) {
-    add_loop_count_metadata(context, read_le16_unaligned(data + 12));
-    *offset = newoffset;
-  } else
-    add_loop_count_metadata(context, 1);
-  ctxfree(context, data);
-}
-
 void load_GIF_frame (struct context * context, size_t * offset, unsigned flags, uint32_t frame, const uint64_t * palette,
                      uint64_t transparent_color, uint64_t * restrict duration, uint8_t * restrict disposal) {
   *duration = *disposal = 0;
   int transparent_index = -1;
   // frames have already been validated, so at this point, we can only have extensions (0x21 ID block block block...) or image descriptors
   while (context -> data[(*offset) ++] == 0x21) {
-    if (context -> data[(*offset) ++] != 0xf9) {
+    unsigned char extkind = context -> data[(*offset) ++];
+    if ((extkind != 0xf9) && (extkind != 0xff)) {
       skip_GIF_data_blocks(context, offset);
       continue;
     }
-    unsigned char * extdata = load_GIF_data_blocks(context, offset, NULL);
-    *duration = (uint64_t) 10000000 * read_le16_unaligned(extdata + 1);
-    if (!*duration) *duration = 1;
-    uint_fast8_t dispindex = (*extdata >> 2) & 7;
-    if (dispindex > 3) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-    if (dispindex) *disposal = dispindex - 1;
-    if (*extdata & 1) transparent_index = extdata[3];
+    size_t extsize;
+    unsigned char * extdata = load_GIF_data_blocks(context, offset, &extsize);
+    if (extkind == 0xff) {
+      if ((extsize == 14) && bytematch(extdata, 0x4e, 0x45, 0x54, 0x53, 0x43, 0x41, 0x50, 0x45, 0x32, 0x2e, 0x30, 0x01)) {
+        if (plum_find_metadata(context -> image, PLUM_METADATA_LOOP_COUNT)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+        add_loop_count_metadata(context, read_le16_unaligned(extdata + 12));
+      }
+    } else {
+      *duration = (uint64_t) 10000000 * read_le16_unaligned(extdata + 1);
+      if (!*duration) *duration = 1;
+      uint_fast8_t dispindex = (*extdata >> 2) & 7;
+      if (dispindex > 3) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+      if (dispindex) *disposal = dispindex - 1;
+      if (*extdata & 1) transparent_index = extdata[3];
+    }
     ctxfree(context, extdata);
   }
   uint_fast32_t left = read_le16_unaligned(context -> data + *offset);
