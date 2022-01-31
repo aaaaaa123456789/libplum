@@ -112,7 +112,7 @@ static inline uint64_t color_from_floats (double red, double green, double blue,
 
 static inline int16_t make_signed_16 (uint16_t value) {
   // this is a no-op (since int16_t must use two's complement), but it's necessary to avoid undefined behavior
-  return (value >= 0x8000u) ? -(int16_t) (~value) - 1 : value;
+  return (value >= 0x8000u) ? -(int16_t) bitnegate(value) - 1 : value;
 }
 
 static inline unsigned bit_width (uintmax_t value) {
