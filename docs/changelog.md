@@ -2,7 +2,7 @@
 
 Note: releases are listed from latest to oldest.
 
-## Version 1.0 (in development)
+## Version 0.4 (1 February 2022)
 
 - Fixed a bug when loading APNG files with reduced frames
 - Fixed emitting GIF files with transparent pixels
