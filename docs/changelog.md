@@ -4,6 +4,10 @@ Note: releases are listed from latest to oldest.
 
 ## Version 1.0 (in development)
 
+(no changes yet)
+
+## Version 0.4 (1 February 2022)
+
 - Fixed a bug when loading APNG files with reduced frames
 - Fixed emitting GIF files with transparent pixels
 - Fixed a bug in the GIF compressor that would generate invalid compressed frame data when a code size increase and
