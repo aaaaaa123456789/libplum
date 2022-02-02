@@ -147,7 +147,9 @@ See the [Memory management][memory] page for more details.
   will instead be loaded from a file, from a [`plum_buffer`][buffer] struct, or through callbacks.
   (Note: these special constants take up the highest possible `size_t` values, and therefore the risk of colliding
   with true buffer sizes is minimal; it is possible to use the `PLUM_BUFFER` special mode to mitigate this risk
-  completely.)
+  completely.
+  The [`PLUM_MAX_MEMORY_SIZE`][mode-constants] constant indicates the maximum value that will be treated as a true
+  size and not a special constant.)
 - `flags`: [color format][colors] and options used to load the image.
   This value is a bitwise OR (`|`) of any number of [loading flags constants][loading-flags], as follows:
     - [Color format][colors] constants, which will determine the color format that the image data will use.
@@ -322,7 +324,9 @@ for that failure.
   This argument can also be one of the [special storing mode constants][mode-constants] indicating that the image will
   instead be written out to a file, an automatically-allocated [`plum_buffer`][buffer] struct, or through callbacks.
   (Note: these special constants take up the highest possible `size_t` values, and therefore the risk of colliding
-  with true buffer sizes is minimal.)
+  with true buffer sizes is minimal.
+  The [`PLUM_MAX_MEMORY_SIZE`][mode-constants] constant indicates the maximum value that will be treated as a true
+  size and not a special constant.)
 - `error`: pointer to an `unsigned` value that will be set to [an error constant][errors] if the function fails.
   If the function succeeds, that value will be set to zero.
   This argument can be `NULL` if the caller isn't interested in the reason why writing out the image failed, as the

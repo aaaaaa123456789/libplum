@@ -71,6 +71,7 @@ Ordering is pure ASCII (that is, all uppercase letters come before all lowercase
 - [`PLUM_IMAGE_NONE` constant](constants.md#image-types)
 - [`PLUM_IMAGE_PNG` constant](constants.md#image-types)
 - [`PLUM_IMAGE_PNM` constant](constants.md#image-types)
+- [`PLUM_MAX_MEMORY_SIZE` constant](constants.md#special-loading-and-storing-modes)
 - [`PLUM_METADATA_BACKGROUND` constant](constants.md#metadata-node-types)
 - [`PLUM_METADATA_COLOR_DEPTH` constant](constants.md#metadata-node-types)
 - [`PLUM_METADATA_FRAME_DISPOSAL` constant](constants.md#metadata-node-types)

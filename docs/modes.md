@@ -42,6 +42,8 @@ writing).
 The `size` argument is the size of that buffer, and the `buffer` argument is a pointer to that buffer.
 (Note that the special constants used for the `size` argument in other modes use the highest possible `size_t` values,
 so they are very unlikely to collide with an actual buffer size used by this mode.)
+The value of `size` for this mode must not be larger than [`PLUM_MAX_MEMORY_SIZE`][constants], which is the maximum
+`size_t` value that isn't one of the special constants mentioned further below in this page.
 
 Note that, when loading an image, the exact size of the image data must be specified; the library will validate that
 files don't contain excess invalid data.

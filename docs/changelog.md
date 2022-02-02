@@ -4,7 +4,7 @@ Note: releases are listed from latest to oldest.
 
 ## Version 1.0 (in development)
 
-(no changes yet)
+- Added and documented new `PLUM_MAX_MEMORY_SIZE` constant
 
 ## Version 0.4 (1 February 2022)
 

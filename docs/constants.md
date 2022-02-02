@@ -39,6 +39,9 @@ actual buffer sizes.
   will describe) a memory buffer and its size.
 - `PLUM_CALLBACK`: indicates that the `buffer` argument is a [`struct plum_callback *`][callback] value, containing a
   callback function that will be called to read or write data.
+- `PLUM_MAX_MEMORY_SIZE`: not a loading/storing mode by itself, but rather the maximum size that will be interpreted
+  as a true size instead of a special constant.
+  A value of `size` no larger than this constant will be treated as the size of the buffer pointed to by `buffer`.
 
 For more information, see the [Loading and storing modes][loading-modes] page.
 
