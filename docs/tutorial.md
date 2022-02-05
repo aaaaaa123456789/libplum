@@ -604,7 +604,7 @@ And this function will replace an image's background color with yellow before st
 
 ``` c
 size_t store_yellow_image (struct plum_image * image, void * buffer,
-                           size_t size, unsigned * restrict error) {
+                           size_t size_mode, unsigned * restrict error) {
   // note: the arguments replicate plum_store_image's arguments
   if (!image) {
     if (error) *error = PLUM_ERR_INVALID_ARGUMENTS;
@@ -624,7 +624,7 @@ size_t store_yellow_image (struct plum_image * image, void * buffer,
     plum_find_metadata(image, PLUM_METADATA_BACKGROUND);
   if (old_metadata) old_metadata -> type = PLUM_METADATA_NONE;
   image -> metadata = &new_metadata;
-  size_t result = plum_store_image(image, buffer, size, error);
+  size_t result = plum_store_image(image, buffer, size_mode, error);
   // restore the old metadata, and restore the old background if needed
   image -> metadata = new_metadata.next;
   if (old_metadata) old_metadata -> type = PLUM_METADATA_BACKGROUND;
@@ -962,7 +962,7 @@ For example, the following function stores an image, but without transparency, b
 
 ``` c
 size_t store_without_transparency (const struct plum_image * image,
-                                   void * buffer, size_t size,
+                                   void * buffer, size_t size_mode,
                                    unsigned * restrict error) {
   // note: same arguments as plum_store_image
   struct plum_image * copy = plum_copy_image(image);
@@ -971,7 +971,7 @@ size_t store_without_transparency (const struct plum_image * image,
     return 0;
   }
   plum_remove_alpha(copy);
-  size_t result = plum_store_image(copy, buffer, size, error);
+  size_t result = plum_store_image(copy, buffer, size_mode, error);
   plum_destroy_image(copy);
   return result;
 }
@@ -986,8 +986,8 @@ arbitrary locations using callbacks.
 buffer for performance reasons.)
 
 The [`plum_load_image`][load] and [`plum_store_image`][store] functions take two arguments that describe the location
-of the image data, called `buffer` and `size`.
-The `size` argument also indicates what type of location `buffer` will refer to; so far, all examples have used
+of the image data, called `buffer` and `size_mode`.
+The `size_mode` argument also indicates what type of location `buffer` will refer to; so far, all examples have used
 [`PLUM_FILENAME`][mode-constants] for that argument, indicating that `buffer` points to a filename.
 
 Other possibilities are described in the [Loading and storing modes][modes] page.
@@ -1006,7 +1006,7 @@ take up the highest possible `size_t` values, and therefore won't collide in pra
 The full semantics for each mode are explained in the page [mentioned above][modes].
 As a quick summary:
 
-- A fixed-size memory buffer (i.e., where `size` is the size) works as expected.
+- A fixed-size memory buffer (i.e., where `size_mode` is the size) works as expected.
 - [`PLUM_FILENAME`][mode-constants] accesses a file; `buffer` is a `const char *` containing a filename, as shown in
   the examples throughout this tutorial.
 - [`PLUM_BUFFER`][mode-constants] accesses a variable length buffer (through the [`plum_buffer`][buffer] struct); its

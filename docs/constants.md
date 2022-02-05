@@ -42,7 +42,8 @@ actual buffer sizes.
 
 Additionally, the `PLUM_MAX_MEMORY_SIZE` constant represents the maximum size that will be interpreted as a true size
 instead of a special loading/storing mode.
-(A value of `size` no larger than this constant will be treated as the size of the buffer pointed to by `buffer`.)
+(A value of `size_mode` no larger than this constant will be treated as the size of the buffer pointed to by
+`buffer`.)
 
 For more information, see the [Loading and storing modes][loading-modes] page.
 

@@ -1,10 +1,10 @@
 #include "proto.h"
 
-struct plum_image * plum_load_image (const void * restrict buffer, size_t size, unsigned flags, unsigned * restrict error) {
-  return plum_load_image_limited(buffer, size, flags, SIZE_MAX, error);
+struct plum_image * plum_load_image (const void * restrict buffer, size_t size_mode, unsigned flags, unsigned * restrict error) {
+  return plum_load_image_limited(buffer, size_mode, flags, SIZE_MAX, error);
 }
 
-struct plum_image * plum_load_image_limited (const void * restrict buffer, size_t size, unsigned flags, size_t limit, unsigned * restrict error) {
+struct plum_image * plum_load_image_limited (const void * restrict buffer, size_t size_mode, unsigned flags, size_t limit, unsigned * restrict error) {
   struct context * context = create_context();
   if (!context) {
     if (error) *error = PLUM_ERR_OUT_OF_MEMORY;
@@ -13,7 +13,7 @@ struct plum_image * plum_load_image_limited (const void * restrict buffer, size_
   if (setjmp(context -> target)) goto done;
   if (!buffer) throw(context, PLUM_ERR_INVALID_ARGUMENTS);
   if (!(context -> image = plum_new_image())) throw(context, PLUM_ERR_OUT_OF_MEMORY);
-  prepare_image_buffer_data(context, buffer, size);
+  prepare_image_buffer_data(context, buffer, size_mode);
   load_image_buffer_data(context, flags, limit);
   if (flags & PLUM_ALPHA_REMOVE) plum_remove_alpha(context -> image);
   if (flags & PLUM_PALETTE_GENERATE)
@@ -76,8 +76,8 @@ void load_image_buffer_data (struct context * context, unsigned flags, size_t li
   }
 }
 
-void prepare_image_buffer_data (struct context * context, const void * restrict buffer, size_t size) {
-  switch (size) {
+void prepare_image_buffer_data (struct context * context, const void * restrict buffer, size_t size_mode) {
+  switch (size_mode) {
     case PLUM_FILENAME:
       load_file(context, buffer);
       return;
@@ -91,7 +91,7 @@ void prepare_image_buffer_data (struct context * context, const void * restrict 
       return;
     default:
       context -> data = buffer;
-      context -> size = size;
+      context -> size = size_mode;
   }
 }
 

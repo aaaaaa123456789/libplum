@@ -114,8 +114,9 @@ Pointer to the copied image, or `NULL` on failure.
 ### `plum_load_image`
 
 ``` c
-struct plum_image * plum_load_image(const void * restrict buffer, size_t size,
-                                    unsigned flags, unsigned * restrict error);
+struct plum_image * plum_load_image(const void * restrict buffer,
+                                    size_t size_mode, unsigned flags,
+                                    unsigned * restrict error);
 ```
 
 **Description:**
@@ -140,16 +141,18 @@ See the [Memory management][memory] page for more details.
 **Arguments:**
 
 - `buffer`: pointer to the memory region from which the image file will be loaded.
-  If `size` is one of the constants indicating a [special loading mode][loading-modes], then this argument is the
+  If `size_mode` is one of the constants indicating a [special loading mode][loading-modes], then this argument is the
   corresponding special value.
-- `size`: size of the memory buffer pointed to by `buffer`.
-  This argument can also be one of the [special loading mode constants][mode-constants] indicating that the image data
+- `size_mode`: size of the memory buffer pointed to by `buffer` (up to [`PLUM_MAX_MEMORY_SIZE`][mode-constants]), or
+  constant indicating one of the [special loading modes][mode-constants].
+  If this value is a size, it indicates that `buffer` points to a memory buffer, from where image data will be loaded.
+  If this argument is one of the [special loading mode constants][mode-constants], it indicates that the image data
   will instead be loaded from a file, from a [`plum_buffer`][buffer] struct, or through callbacks.
   (Note: these special constants take up the highest possible `size_t` values, and therefore the risk of colliding
   with true buffer sizes is minimal; it is possible to use the `PLUM_BUFFER` special mode to mitigate this risk
   completely.
   The [`PLUM_MAX_MEMORY_SIZE`][mode-constants] constant indicates the maximum value that will be treated as a true
-  size and not a special constant.)
+  size and not a special constant, and is therefore equal to `SIZE_MAX` minus the number of mode constants.)
 - `flags`: [color format][colors] and options used to load the image.
   This value is a bitwise OR (`|`) of any number of [loading flags constants][loading-flags], as follows:
     - [Color format][colors] constants, which will determine the color format that the image data will use.
@@ -209,8 +212,8 @@ The error constants signal the following reasons for failure:
 
 - `PLUM_OK` (zero): success.
   This value will be used only if the function succeeds, i.e., it returns a non-`NULL` value.
-- `PLUM_ERR_INVALID_ARGUMENTS`: `buffer` is `NULL`, or `size` is [`PLUM_BUFFER`][mode-constants] and `buffer` points
-  to a [`struct plum_buffer`][buffer] whose `data` member is `NULL`.
+- `PLUM_ERR_INVALID_ARGUMENTS`: `buffer` is `NULL`, or `size_mode` is [`PLUM_BUFFER`][mode-constants] and `buffer`
+  points to a [`struct plum_buffer`][buffer] whose `data` member is `NULL`.
 - `PLUM_ERR_INVALID_FILE_FORMAT`: the image's file format wasn't recognized, or the image was damaged or couldn't be
   loaded for some reason.
   This indicates an error in the image data, such as an unexpected value.
@@ -228,9 +231,9 @@ The error constants signal the following reasons for failure:
   use, such as palettes or decoder tables; this library doesn't use data from other files when decoding an image file,
   and therefore those ancillary files cannot be loaded.)
 - `PLUM_ERR_FILE_INACCESSIBLE`: the specified file could not be opened.
-  This error can only occur when `size` is set to [`PLUM_FILENAME`][mode-constants].
+  This error can only occur when `size_mode` is set to [`PLUM_FILENAME`][mode-constants].
 - `PLUM_ERR_FILE_ERROR`: an error occurred while reading the image data.
-  This error can only occur when `size` is set to [`PLUM_FILENAME`][mode-constants] or
+  This error can only occur when `size_mode` is set to [`PLUM_FILENAME`][mode-constants] or
   [`PLUM_CALLBACK`][mode-constants].
 - `PLUM_ERR_OUT_OF_MEMORY`: there is not enough memory available to load the image.
 
@@ -238,7 +241,7 @@ The error constants signal the following reasons for failure:
 
 ``` c
 struct plum_image * plum_load_image_limited(const void * restrict buffer,
-                                            size_t size, unsigned flags,
+                                            size_t size_mode, unsigned flags,
                                             size_t limit,
                                             unsigned * restrict error);
 ```
@@ -256,7 +259,7 @@ Specifying a limit of `SIZE_MAX` will make this function behave like [`plum_load
 
 **Arguments:**
 
-The `buffer`, `size`, `flags` and `error` arguments have the same meanings as for the
+The `buffer`, `size_mode`, `flags` and `error` arguments have the same meanings as for the
 [`plum_load_image`](#plum_load_image) function.
 
 - `limit`: maximum number of pixels the loaded image is allowed to have; attempting to load an image with more pixels
@@ -281,7 +284,7 @@ In addition, the following error may occur:
 
 ``` c
 size_t plum_store_image(const struct plum_image * image, void * restrict buffer,
-                        size_t size, unsigned * restrict error);
+                        size_t size_mode, unsigned * restrict error);
 ```
 
 **Description:**
@@ -295,7 +298,7 @@ The image data can be written out to a memory buffer, a file, an automatically-a
 [`plum_buffer`][buffer] struct, or through a user-defined callback; see the [Loading and storing modes][loading-modes]
 page for more information.
 
-If the `size` argument is set to [`PLUM_BUFFER`][mode-constants], the `buffer` argument will point to a
+If the `size_mode` argument is set to [`PLUM_BUFFER`][mode-constants], the `buffer` argument will point to a
 [`plum_buffer`][buffer] struct whose `data` member will be automatically allocated by the function if it succeeds,
 using the `malloc` standard function.
 In this case, the user is responsible for calling `free` on it after using it; this memory is **not** managed by the
@@ -318,15 +321,18 @@ for that failure.
 
 - `image`: image that will be written out.
 - `buffer`: pointer to the memory region where the image data will be written.
-  If `size` is one of the constants indicating a [special storing mode][loading-modes], then this argument is the
+  If `size_mode` is one of the constants indicating a [special storing mode][loading-modes], then this argument is the
   corresponding special value.
-- `size`: size of the memory buffer pointed to by `buffer`.
-  This argument can also be one of the [special storing mode constants][mode-constants] indicating that the image will
-  instead be written out to a file, an automatically-allocated [`plum_buffer`][buffer] struct, or through callbacks.
+- `size_mode`: size of the memory buffer pointed to by `buffer` (up to [`PLUM_MAX_MEMORY_SIZE`][mode-constants]), or
+  constant indicating one of the [special loading modes][mode-constants].
+  If this value is a size, it indicates that `buffer` points to a memory buffer, where image data will be written.
+  If this argument is one of the [special loading mode constants][mode-constants], it indicates that the image data
+  will instead be written out to a file, an automatically-allocated [`plum_buffer`][buffer] struct, or through
+  callbacks.
   (Note: these special constants take up the highest possible `size_t` values, and therefore the risk of colliding
   with true buffer sizes is minimal.
   The [`PLUM_MAX_MEMORY_SIZE`][mode-constants] constant indicates the maximum value that will be treated as a true
-  size and not a special constant.)
+  size and not a special constant, and is therefore equal to `SIZE_MAX` minus the number of mode constants.)
 - `error`: pointer to an `unsigned` value that will be set to [an error constant][errors] if the function fails.
   If the function succeeds, that value will be set to zero.
   This argument can be `NULL` if the caller isn't interested in the reason why writing out the image failed, as the
@@ -335,7 +341,8 @@ for that failure.
 **Return value:**
 
 If the function succeeds, it will return the number of bytes written.
-(If `size` equals [`PLUM_BUFFER`][mode-constants], then the return value will equal the size of the allocated buffer.)
+(If `size_mode` equals [`PLUM_BUFFER`][mode-constants], then the return value will be equal to the size of the
+allocated buffer.)
 If the function fails, it will return zero (which is never a valid return value on success).
 In this case, if `error` is not `NULL`, `*error` will indicate the reason.
 
@@ -349,7 +356,7 @@ In addition to those results, the following error codes may be set:
 
 - `PLUM_OK` (zero): success.
   This value will be used only if the function succeeds, i.e., it returns a non-`NULL` value.
-- `PLUM_ERR_INVALID_ARGUMENTS`: `image` or `buffer` are `NULL`, or `size` is zero.
+- `PLUM_ERR_INVALID_ARGUMENTS`: `image` or `buffer` are `NULL`, or `size_mode` is zero.
 - `PLUM_ERR_INVALID_FILE_FORMAT`: the image's `type` member is [`PLUM_IMAGE_NONE`][types].
 - `PLUM_ERR_INVALID_COLOR_INDEX`: the image uses [indexed-color mode][indexed], but some of the pixels in the image
   have an invalid color index (i.e., a value greater than the image's `max_palette_index`).
@@ -357,15 +364,15 @@ In addition to those results, the following error codes may be set:
   a certain number of colors, and the image uses more than that.
 - `PLUM_ERR_IMAGE_TOO_LARGE`: the image's dimensions are larger than what the chosen image format (given by the
   image's `type` member) supports, or the image is too large to fit in the specified buffer size (which can only occur
-  if `size` isn't set to any of the [special storing mode constants][mode-constants]).
+  if `size_mode` isn't set to any of the [special storing mode constants][mode-constants]).
   (Note: this does **not** apply when the chosen format only supports single-frame images and the image's `frames`
   member is larger than one; the `PLUM_ERR_NO_MULTI_FRAME` error code is used instead in that case.)
 - `PLUM_ERR_NO_MULTI_FRAME`: the chosen image format (given by the image's `type` member) only supports single-frame
   images, but the image has more than one frame (i.e., the image's `frames` member is greater than 1).
 - `PLUM_ERR_FILE_INACCESSIBLE`: the specified file could not be opened for writing.
-  This error can only occur when `size` is set to [`PLUM_FILENAME`][mode-constants].
+  This error can only occur when `size_mode` is set to [`PLUM_FILENAME`][mode-constants].
 - `PLUM_ERR_FILE_ERROR`: an error occurred while writing out the image data.
-  This error can only occur when `size` is set to [`PLUM_FILENAME`][mode-constants] or
+  This error can only occur when `size_mode` is set to [`PLUM_FILENAME`][mode-constants] or
   [`PLUM_CALLBACK`][mode-constants].
 - `PLUM_ERR_OUT_OF_MEMORY`: there is not enough memory available to complete the operation.
 
@@ -1249,8 +1256,8 @@ If `buffer` is `NULL`, this function is a harmless no-op, just like `free`.
 If `image` is `NULL`, this function is equivalent to `free(buffer)`.
 (In other words, it calls the standard library function `free` directly.)
 This can be used to free the memory allocated with `malloc` when [`plum_store_image`](#plum_store_image) is called
-with a `size` argument of [`PLUM_BUFFER`][mode-constants]; it is only intended for users that may not have access to
-the C standard library, or to the exact allocator used by this library.
+with a `size_mode` argument of [`PLUM_BUFFER`][mode-constants]; it is only intended for users that may not have access
+to the C standard library, or to the exact allocator used by this library.
 (For example, bindings for other languages may need to use this special mode.)
 
 **Arguments:**

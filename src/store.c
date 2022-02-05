@@ -1,6 +1,6 @@
 #include "proto.h"
 
-size_t plum_store_image (const struct plum_image * image, void * restrict buffer, size_t size, unsigned * restrict error) {
+size_t plum_store_image (const struct plum_image * image, void * restrict buffer, size_t size_mode, unsigned * restrict error) {
   struct context * context = create_context();
   if (!context) {
     if (error) *error = PLUM_ERR_OUT_OF_MEMORY;
@@ -8,7 +8,7 @@ size_t plum_store_image (const struct plum_image * image, void * restrict buffer
   }
   context -> source = image;
   if (setjmp(context -> target)) goto done;
-  if (!(image && buffer && size)) throw(context, PLUM_ERR_INVALID_ARGUMENTS);
+  if (!(image && buffer && size_mode)) throw(context, PLUM_ERR_INVALID_ARGUMENTS);
   if (context -> status = plum_validate_image(image)) goto done;
   if (plum_validate_palette_indexes(image)) throw(context, PLUM_ERR_INVALID_COLOR_INDEX);
   switch (image -> type) {
@@ -22,7 +22,7 @@ size_t plum_store_image (const struct plum_image * image, void * restrict buffer
   }
   size_t output_size = get_total_output_size(context);
   if (!output_size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  switch (size) {
+  switch (size_mode) {
     case PLUM_FILENAME:
       write_generated_image_data_to_file(context, buffer);
       break;
@@ -36,7 +36,7 @@ size_t plum_store_image (const struct plum_image * image, void * restrict buffer
       write_generated_image_data_to_callback(context, buffer);
       break;
     default:
-      if (output_size > size) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
+      if (output_size > size_mode) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
       write_generated_image_data(buffer, context -> output);
   }
   context -> size = output_size;

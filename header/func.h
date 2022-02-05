@@ -1,9 +1,9 @@
 struct plum_image * plum_new_image(void);
 struct plum_image * plum_copy_image(const struct plum_image * image);
 void plum_destroy_image(struct plum_image * image);
-struct plum_image * plum_load_image(const void * restrict buffer, size_t size, unsigned flags, unsigned * restrict error);
-struct plum_image * plum_load_image_limited(const void * restrict buffer, size_t size, unsigned flags, size_t limit, unsigned * restrict error);
-size_t plum_store_image(const struct plum_image * image, void * restrict buffer, size_t size, unsigned * restrict error);
+struct plum_image * plum_load_image(const void * restrict buffer, size_t size_mode, unsigned flags, unsigned * restrict error);
+struct plum_image * plum_load_image_limited(const void * restrict buffer, size_t size_mode, unsigned flags, size_t limit, unsigned * restrict error);
+size_t plum_store_image(const struct plum_image * image, void * restrict buffer, size_t size_mode, unsigned * restrict error);
 unsigned plum_validate_image(const struct plum_image * image);
 const char * plum_get_error_text(unsigned error);
 const char * plum_get_file_format_name(unsigned format);

@@ -3,7 +3,7 @@
 The [`plum_load_image`][load] and [`plum_store_image`][store] functions can reference data in a fixed-size memory
 buffer, a variable-size memory buffer, a file, or anywhere the program can reach through a callback.
 These possibilities are referred to as loading/storing modes in the documentation, and the one in use is determined by
-the `size` argument to those functions.
+the `size_mode` argument to those functions.
 
 - [Introduction](#introduction)
 - [Fixed-size memory buffers](#fixed-size-memory-buffers)
@@ -16,18 +16,17 @@ the `size` argument to those functions.
 The [`plum_load_image`][load] and [`plum_store_image`][store] functions look like this:
 
 ``` c
-struct plum_image * plum_load_image(const void * restrict buffer, size_t size,
-                                    unsigned flags, unsigned * restrict error);
+struct plum_image * plum_load_image(const void * restrict buffer,
+                                    size_t size_mode, unsigned flags,
+                                    unsigned * restrict error);
 size_t plum_store_image(const struct plum_image * image, void * restrict buffer,
-                        size_t size, unsigned * restrict error);
+                        size_t size_mode, unsigned * restrict error);
 ```
 
 In both cases, the data that will be accessed (for reading or for writing, respectively) is determined by a pair of
-arguments, `buffer` and `size`.
-The `size` argument serves double duty: it determines which loading/storing mode will be used, and for fixed-size
+arguments, `buffer` and `size_mode`.
+The `size_mode` argument serves double duty: it determines which loading/storing mode will be used, and for fixed-size
 buffers, it specifies the size of the buffer.
-(The name `size` is just shorthand here; `loading_mode_and_size` would be too verbose to be comfortable.
-Numeric arguments typically do signify actual sizes, after all; other loading/storing modes use special constants.)
 
 Note that the chosen mode won't change how the functions behave (other than when loading or storing data).
 In particular, since writing out data is the last step in [`plum_store_image`][store], if data generation fails, no
@@ -39,19 +38,20 @@ Fixed-size memory buffers are the simplest loading/storing mode of them all.
 
 In this mode, the data is located in a memory buffer (when reading) or written to a buffer with a fixed capacity (when
 writing).
-The `size` argument is the size of that buffer, and the `buffer` argument is a pointer to that buffer.
-(Note that the special constants used for the `size` argument in other modes use the highest possible `size_t` values,
-so they are very unlikely to collide with an actual buffer size used by this mode.)
-The value of `size` for this mode must not be larger than [`PLUM_MAX_MEMORY_SIZE`][constants], which is the maximum
-`size_t` value that isn't one of the special constants mentioned further below in this page.
+The `size_mode` argument is the size of that buffer, and the `buffer` argument is a pointer to that buffer.
+(Note that the special constants used for the `size_mode` argument in other modes use the highest possible `size_t`
+values, so they are very unlikely to collide with an actual buffer size used by this mode.)
+The value of `size_mode` for this mode must not be larger than [`PLUM_MAX_MEMORY_SIZE`][constants], which is the
+maximum `size_t` value that isn't one of the special constants mentioned further below in this page.
+([`PLUM_MAX_MEMORY_SIZE`][constants] is therefore equal to `SIZE_MAX` minus the number of special constants.)
 
 Note that, when loading an image, the exact size of the image data must be specified; the library will validate that
 files don't contain excess invalid data.
-(In other words, the `size` argument must be the actual size of the image data, not the size of the (possibly larger)
-underlying buffer.)
+(In other words, the `size_mode` argument must be the actual size of the image data, not the size of the (possibly
+larger) underlying buffer.)
 
-When writing out image data, the `size` argument indicates the size of the buffer, and therefore the maximum amount of
-data that can be written to the buffer.
+When writing out image data, the `size_mode` argument indicates the size of the buffer, and therefore the maximum
+amount of data that can be written to the buffer.
 If the generated image data doesn't fit in this size, then the function won't write any data at all and will fail with
 [`PLUM_ERR_IMAGE_TOO_LARGE`][errors].
 Otherwise, the data will be written at the beginning of the buffer, and [`plum_store_image`][store] will return the
@@ -70,8 +70,8 @@ struct plum_buffer {
 };
 ```
 
-When using this mode, the `size` argument to the function must be set to [`PLUM_BUFFER`][constants], and the `buffer`
-argument is a [`struct plum_buffer *`][buffer] pointing to the buffer data as shown above.
+When using this mode, the `size_mode` argument to the function must be set to [`PLUM_BUFFER`][constants], and the
+`buffer` argument is a [`struct plum_buffer *`][buffer] pointing to the buffer data as shown above.
 
 Loading data in this mode behaves exactly the same as with a [fixed-size memory buffer](#fixed-size-memory-buffers),
 except that the `size` member of the struct is always interpreted literally and never as a
@@ -86,9 +86,9 @@ This buffer will be owned by the caller and must be released with `free`.
 
 If [`plum_store_image`][store] fails to allocate the buffer, it will fail with [`PLUM_ERR_OUT_OF_MEMORY`][errors].
 If the function succeeds, it will return the number of bytes written, as usual; this will be the same as the value
-written to the `size` member of the [`plum_buffer` struct][buffer].
+written to the `size` member of the [`plum_buffer`][buffer] struct.
 
-**Warning:** [`plum_store_image`][store] will **not** write anything to the [`plum_buffer` struct][buffer] at
+**Warning:** [`plum_store_image`][store] will **not** write anything to the [`plum_buffer`][buffer] struct at
 `*buffer` if it fails (i.e., if it returns 0).
 The members of that struct will **not** be set to zero/`NULL`: they won't be modified at all.
 If zeroing out the members on error is desired, initialize them to zero before calling [`plum_store_image`][store].
@@ -96,8 +96,8 @@ If zeroing out the members on error is desired, initialize them to zero before c
 ## Accessing files
 
 The library can read image data directly from files, as well as write to them.
-In order to do this, the `size` argument must be set to [`PLUM_FILENAME`][constants]; the `buffer` argument will be
-a `const char *` containing a filename.
+In order to do this, the `size_mode` argument must be set to [`PLUM_FILENAME`][constants]; the `buffer` argument will
+be a `const char *` containing a filename.
 (While the `buffer` argument to [`plum_store_image`][store] isn't `const`-qualified, it is still treated as such in
 this mode.)
 
@@ -133,7 +133,7 @@ struct plum_callback {
 };
 ```
 
-When using this mode, the `size` argument to the function must be set to [`PLUM_CALLBACK`][constants], and the
+When using this mode, the `size_mode` argument to the function must be set to [`PLUM_CALLBACK`][constants], and the
 `buffer` argument is a [`const struct plum_callback *`][callback] pointing to the callback data as shown above.
 (While the `buffer` argument to [`plum_store_image`][store] isn't `const`-qualified, it is still treated as such in
 this mode.)
