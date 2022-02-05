@@ -140,7 +140,7 @@ struct plum_buffer {
 
 This structure is used as the source for [`plum_load_image`][load] or the destination for [`plum_store_image`][store]
 when the `size` argument (which is also used to signal special sources/destinations) is set to
-[the `PLUM_BUFFER` constant][size-constants].
+the [`PLUM_MODE_BUFFER`][size-constants] constant.
 
 The structure describes a data buffer in a self-explanatory way.
 
@@ -154,8 +154,8 @@ struct plum_callback {
 ```
 
 This structure is used as the source for [`plum_load_image`][load] or the destination for [`plum_store_image`][store]
-when the `size` argument is set to [the `PLUM_CALLBACK` constant][size-constants], indicating that data should be read
-from or written to a user-defined callback function.
+when the `size` argument is set to the [`PLUM_MODE_CALLBACK`][size-constants] constant, indicating that data should be
+read from or written to a user-defined callback function.
 This allows implementing data readers and writers for any user-defined resource without having to add special code for
 that resource type in the library, thus enabling those functions to interact with image data from anywhere.
 

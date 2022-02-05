@@ -34,11 +34,11 @@ These constants are of `size_t` type, and they don't belong to an `enum`.
 Their values are the highest possible values of that type, and therefore they are extremely unlikely to collide with
 actual buffer sizes.
 
-- `PLUM_FILENAME`: indicates that the `buffer` argument is a `char *` value containing a filename.
-- `PLUM_BUFFER`: indicates that the `buffer` argument is a [`struct plum_buffer *`][buffer] value that describes (or
-  will describe) a memory buffer and its size.
-- `PLUM_CALLBACK`: indicates that the `buffer` argument is a [`struct plum_callback *`][callback] value, containing a
-  callback function that will be called to read or write data.
+- `PLUM_MODE_FILENAME`: indicates that the `buffer` argument is a `char *` value containing a filename.
+- `PLUM_MODE_BUFFER`: indicates that the `buffer` argument is a [`struct plum_buffer *`][buffer] value that describes
+  (or will describe) a memory buffer and its size.
+- `PLUM_MODE_CALLBACK`: indicates that the `buffer` argument is a [`struct plum_callback *`][callback] value,
+  containing a callback function that will be called to read or write data.
 
 Additionally, the `PLUM_MAX_MEMORY_SIZE` constant represents the maximum size that will be interpreted as a true size
 instead of a special loading/storing mode.

@@ -23,16 +23,16 @@ size_t plum_store_image (const struct plum_image * image, void * restrict buffer
   size_t output_size = get_total_output_size(context);
   if (!output_size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   switch (size_mode) {
-    case PLUM_FILENAME:
+    case PLUM_MODE_FILENAME:
       write_generated_image_data_to_file(context, buffer);
       break;
-    case PLUM_BUFFER: {
+    case PLUM_MODE_BUFFER: {
       void * out = malloc(output_size);
       if (!out) throw(context, PLUM_ERR_OUT_OF_MEMORY);
       *(struct plum_buffer *) buffer = (struct plum_buffer) {.size = output_size, .data = out};
       write_generated_image_data(out, context -> output);
     } break;
-    case PLUM_CALLBACK:
+    case PLUM_MODE_CALLBACK:
       write_generated_image_data_to_callback(context, buffer);
       break;
     default:

@@ -14,7 +14,7 @@ int main (int argc, char ** argv) {
   }
   unsigned error;
   // load the first image, to determine the size of the output canvas
-  struct plum_image * input = plum_load_image(argv[2], PLUM_FILENAME, PLUM_COLOR_32 | PLUM_ALPHA_INVERT, &error);
+  struct plum_image * input = plum_load_image(argv[2], PLUM_MODE_FILENAME, PLUM_COLOR_32 | PLUM_ALPHA_INVERT, &error);
   if (error) {
     fprintf(stderr, "error: loading %s: %s\n", argv[2], plum_get_error_text(error));
     return 1;
@@ -86,7 +86,7 @@ int main (int argc, char ** argv) {
     plum_destroy_image(input);
     if (argv[frame + 3]) {
       // load the next frame, if there is one
-      input = plum_load_image(argv[frame + 3], PLUM_FILENAME, PLUM_COLOR_32 | PLUM_ALPHA_INVERT, &error);
+      input = plum_load_image(argv[frame + 3], PLUM_MODE_FILENAME, PLUM_COLOR_32 | PLUM_ALPHA_INVERT, &error);
       if (error) {
         fprintf(stderr, "error: loading %s: %s\n", argv[frame + 3], plum_get_error_text(error));
         goto done;
@@ -94,7 +94,7 @@ int main (int argc, char ** argv) {
     }
   }
   // all frames are loaded: write out the output file
-  plum_store_image(&output, argv[1], PLUM_FILENAME, &error);
+  plum_store_image(&output, argv[1], PLUM_MODE_FILENAME, &error);
   if (error) fprintf(stderr, "error: generating %s: %s\n", argv[1], plum_get_error_text(error));
   done:
   // release all allocated arrays and exit

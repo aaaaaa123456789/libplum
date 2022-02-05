@@ -29,10 +29,12 @@ int main (int argc, char ** argv) {
     return 2;
   }
   unsigned error;
-  struct plum_image * image = plum_load_image(argv[1], PLUM_FILENAME, PLUM_COLOR_64 | PLUM_PALETTE_LOAD, &error);
+  struct plum_image * image = plum_load_image(argv[1], PLUM_MODE_FILENAME,
+                                              PLUM_COLOR_64 | PLUM_PALETTE_LOAD,
+                                              &error);
   if (image) {
     image -> type = PLUM_IMAGE_PNG;
-    plum_store_image(image, argv[2], PLUM_FILENAME, &error);
+    plum_store_image(image, argv[2], PLUM_MODE_FILENAME, &error);
     plum_destroy_image(image);
   }
   if (error) fprintf(stderr, "error: %s\n", plum_get_error_text(error));

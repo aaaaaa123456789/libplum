@@ -78,15 +78,15 @@ void load_image_buffer_data (struct context * context, unsigned flags, size_t li
 
 void prepare_image_buffer_data (struct context * context, const void * restrict buffer, size_t size_mode) {
   switch (size_mode) {
-    case PLUM_FILENAME:
+    case PLUM_MODE_FILENAME:
       load_file(context, buffer);
       return;
-    case PLUM_BUFFER:
+    case PLUM_MODE_BUFFER:
       context -> data = ((const struct plum_buffer *) buffer) -> data;
       context -> size = ((const struct plum_buffer *) buffer) -> size;
       if (!context -> data) throw(context, PLUM_ERR_INVALID_ARGUMENTS);
       return;
-    case PLUM_CALLBACK:
+    case PLUM_MODE_CALLBACK:
       load_from_callback(context, buffer);
       return;
     default:

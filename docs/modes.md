@@ -70,7 +70,7 @@ struct plum_buffer {
 };
 ```
 
-When using this mode, the `size_mode` argument to the function must be set to [`PLUM_BUFFER`][constants], and the
+When using this mode, the `size_mode` argument to the function must be set to [`PLUM_MODE_BUFFER`][constants], and the
 `buffer` argument is a [`struct plum_buffer *`][buffer] pointing to the buffer data as shown above.
 
 Loading data in this mode behaves exactly the same as with a [fixed-size memory buffer](#fixed-size-memory-buffers),
@@ -96,8 +96,8 @@ If zeroing out the members on error is desired, initialize them to zero before c
 ## Accessing files
 
 The library can read image data directly from files, as well as write to them.
-In order to do this, the `size_mode` argument must be set to [`PLUM_FILENAME`][constants]; the `buffer` argument will
-be a `const char *` containing a filename.
+In order to do this, the `size_mode` argument must be set to [`PLUM_MODE_FILENAME`][constants]; the `buffer` argument
+will be a `const char *` containing a filename.
 (While the `buffer` argument to [`plum_store_image`][store] isn't `const`-qualified, it is still treated as such in
 this mode.)
 
@@ -133,8 +133,8 @@ struct plum_callback {
 };
 ```
 
-When using this mode, the `size_mode` argument to the function must be set to [`PLUM_CALLBACK`][constants], and the
-`buffer` argument is a [`const struct plum_callback *`][callback] pointing to the callback data as shown above.
+When using this mode, the `size_mode` argument to the function must be set to [`PLUM_MODE_CALLBACK`][constants], and
+the `buffer` argument is a [`const struct plum_callback *`][callback] pointing to the callback data as shown above.
 (While the `buffer` argument to [`plum_store_image`][store] isn't `const`-qualified, it is still treated as such in
 this mode.)
 

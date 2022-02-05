@@ -51,7 +51,7 @@ int main (int argc, char ** argv) {
     return 2;
   }
   unsigned error;
-  struct plum_image * image = plum_load_image(argv[1], PLUM_FILENAME,
+  struct plum_image * image = plum_load_image(argv[1], PLUM_MODE_FILENAME,
                                               PLUM_COLOR_32, &error);
   if (image) {
     const char * format = plum_get_file_format_name(image -> type);
@@ -139,14 +139,14 @@ int main (int argc, char ** argv) {
     return 2;
   }
   unsigned error;
-  struct plum_image * image = plum_load_image(argv[1], PLUM_FILENAME,
+  struct plum_image * image = plum_load_image(argv[1], PLUM_MODE_FILENAME,
                                               PLUM_COLOR_32, &error);
   if (!image) {
     fprintf(stderr, "load error: %s\n", plum_get_error_text(error));
     return 1;
   }
   image -> type = PLUM_IMAGE_PNG;
-  plum_store_image(image, argv[2], PLUM_FILENAME, &error);
+  plum_store_image(image, argv[2], PLUM_MODE_FILENAME, &error);
   plum_destroy_image(image);
   if (error) {
     fprintf(stderr, "store error: %s\n", plum_get_error_text(error));
@@ -248,7 +248,7 @@ int main (int argc, char ** argv) {
     return 2;
   }
   unsigned error;
-  struct plum_image * image = plum_load_image(argv[1], PLUM_FILENAME,
+  struct plum_image * image = plum_load_image(argv[1], PLUM_MODE_FILENAME,
                                               PLUM_COLOR_64, &error);
   if (!image) {
     fprintf(stderr, "load error: %s\n", plum_get_error_text(error));
@@ -263,7 +263,7 @@ int main (int argc, char ** argv) {
       (BLUE64(image -> data64[index]) * COEF + 50) / 100,
       ALPHA64(image -> data64[index])
     );
-  plum_store_image(image, argv[1], PLUM_FILENAME, &error);
+  plum_store_image(image, argv[1], PLUM_MODE_FILENAME, &error);
   plum_destroy_image(image);
   if (!error) return 0;
   fprintf(stderr, "store error: %s\n", plum_get_error_text(error));
@@ -503,7 +503,7 @@ int main (int argc, char ** argv) {
   /* use PLUM_PALETTE_FORCE to ensure that the image will always have a    *
    * palette, and PLUM_PALETTE_REDUCE to remove duplicates from it so that *
    * they won't mess up the counts                                         */
-  struct plum_image * image = plum_load_image(argv[1], PLUM_FILENAME,
+  struct plum_image * image = plum_load_image(argv[1], PLUM_MODE_FILENAME,
     PLUM_COLOR_64 | PLUM_PALETTE_FORCE | PLUM_PALETTE_REDUCE, &error);
   if (!image) {
     fprintf(stderr, "error: %s\n", plum_get_error_text(error));
@@ -826,7 +826,7 @@ int main (int argc, char ** argv) {
     pixeldata[row][col] = COLOR32(red, row, blue, 0);
   }
   unsigned error;
-  plum_store_image(&image, argv[1], PLUM_FILENAME, &error);
+  plum_store_image(&image, argv[1], PLUM_MODE_FILENAME, &error);
   if (error) fprintf(stderr, "error: %s\n", plum_get_error_text(error));
   return !!error;
 }
@@ -988,33 +988,34 @@ buffer for performance reasons.)
 The [`plum_load_image`][load] and [`plum_store_image`][store] functions take two arguments that describe the location
 of the image data, called `buffer` and `size_mode`.
 The `size_mode` argument also indicates what type of location `buffer` will refer to; so far, all examples have used
-[`PLUM_FILENAME`][mode-constants] for that argument, indicating that `buffer` points to a filename.
+[`PLUM_MODE_FILENAME`][mode-constants] for that argument, indicating that `buffer` points to a filename.
 
 Other possibilities are described in the [Loading and storing modes][modes] page.
 These are:
 
-- [`PLUM_BUFFER`][mode-constants]: indicates that `buffer` points to a [`plum_buffer`][buffer] struct; this struct
-  can be used to dynamically allocate memory when generating an image.
-- [`PLUM_CALLBACK`][mode-constants]: indicates that `buffer` points to a [`plum_callback`][callback] struct that
+- [`PLUM_MODE_BUFFER`][mode-constants]: indicates that `buffer` points to a [`plum_buffer`][buffer] struct; this
+  struct can be used to dynamically allocate memory when generating an image.
+- [`PLUM_MODE_CALLBACK`][mode-constants]: indicates that `buffer` points to a [`plum_callback`][callback] struct that
   describes how to read or write data in terms of a callback function.
 - An actual size: indicates that `buffer` points to a memory buffer of that size; this possibility is what gives the
   argument its name.
 
-(Note that [`PLUM_CALLBACK`][mode-constants], [`PLUM_BUFFER`][mode-constants] and [`PLUM_FILENAME`][mode-constants]
-take up the highest possible `size_t` values, and therefore won't collide in practice with actual size values.)
+(Note that [`PLUM_MODE_CALLBACK`][mode-constants], [`PLUM_MODE_BUFFER`][mode-constants] and
+[`PLUM_MODE_FILENAME`][mode-constants] take up the highest possible `size_t` values, and therefore won't collide in
+practice with actual size values.)
 
 The full semantics for each mode are explained in the page [mentioned above][modes].
 As a quick summary:
 
 - A fixed-size memory buffer (i.e., where `size_mode` is the size) works as expected.
-- [`PLUM_FILENAME`][mode-constants] accesses a file; `buffer` is a `const char *` containing a filename, as shown in
-  the examples throughout this tutorial.
-- [`PLUM_BUFFER`][mode-constants] accesses a variable length buffer (through the [`plum_buffer`][buffer] struct); its
-  `size` and `data` members describe it.
+- [`PLUM_MODE_FILENAME`][mode-constants] accesses a file; `buffer` is a `const char *` containing a filename, as shown
+  in the examples throughout this tutorial.
+- [`PLUM_MODE_BUFFER`][mode-constants] accesses a variable length buffer (through the [`plum_buffer`][buffer] struct);
+  its `size` and `data` members describe it.
   When generating an image, the `data` member will be set to an allocated memory buffer (through `malloc`) containing
   the generated data, and the `size` member will be set to the size of the generated data; this data must be freed
   (using `free`) by the user after using it.
-- [`PLUM_CALLBACK`][mode-constants] reads or writes data through a callback (from a [`plum_callback`][callback]
+- [`PLUM_MODE_CALLBACK`][mode-constants] reads or writes data through a callback (from a [`plum_callback`][callback]
   struct), which receives a buffer (to write from or read into) and its size and returns the number of bytes written
   (or 0 for EOF or a negative value for an error) repeatedly until it finishes or fails.
 
@@ -1032,7 +1033,7 @@ int writecb(void *, void *, int);
 int main (void) {
   struct plum_callback callback = {.callback = &readcb, .userdata = stdin};
   unsigned error;
-  struct plum_image * image = plum_load_image(&callback, PLUM_CALLBACK,
+  struct plum_image * image = plum_load_image(&callback, PLUM_MODE_CALLBACK,
                                               PLUM_COLOR_32, &error);
   if (error) {
     fprintf(stderr, "load error: %s\n", plum_get_error_text(error));
@@ -1040,7 +1041,7 @@ int main (void) {
   }
   image -> type = PLUM_IMAGE_PNG;
   callback = (struct plum_callback) {.callback = &writecb, .userdata = stdout};
-  plum_store_image(image, &callback, PLUM_CALLBACK, &error);
+  plum_store_image(image, &callback, PLUM_MODE_CALLBACK, &error);
   plum_destroy_image(image);
   if (error) fprintf(stderr, "store error: %s\n", plum_get_error_text(error));
   return !!error;
@@ -1092,7 +1093,7 @@ int main (void) {
   }
   unsigned error;
   struct plum_buffer buffer;
-  plum_store_image(&image, &buffer, PLUM_BUFFER, &error);
+  plum_store_image(&image, &buffer, PLUM_MODE_BUFFER, &error);
   if (error) {
     fprintf(stderr, "error: %s\n", plum_get_error_text(error));
     return 1;

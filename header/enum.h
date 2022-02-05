@@ -1,7 +1,12 @@
-#define PLUM_FILENAME        ((size_t) -1)
-#define PLUM_BUFFER          ((size_t) -2)
-#define PLUM_CALLBACK        ((size_t) -3)
+#define PLUM_MODE_FILENAME   ((size_t) -1)
+#define PLUM_MODE_BUFFER     ((size_t) -2)
+#define PLUM_MODE_CALLBACK   ((size_t) -3)
 #define PLUM_MAX_MEMORY_SIZE ((size_t) -4)
+
+/* legacy constants, for compatibility with the v0.4 API */
+#define PLUM_FILENAME PLUM_MODE_FILENAME
+#define PLUM_BUFFER   PLUM_MODE_BUFFER
+#define PLUM_CALLBACK PLUM_MODE_CALLBACK
 
 enum plum_flags {
   /* color formats */
