@@ -492,7 +492,7 @@ Putting all of this together, the following program will load an image with a pa
 #include <stddef.h>
 #include "libplum.h"
 
-#define TIE (-(size_t) 1)
+#define TIE ((size_t) -1)
 
 int main (int argc, char ** argv) {
   if (argc != 2) {
