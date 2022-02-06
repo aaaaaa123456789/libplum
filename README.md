@@ -40,6 +40,15 @@ For further information, please check the [documentation](docs/README.md).
 source archive will contain documentation suitable for that version of the library.
 If you're using an older version of the library, please refer to that documentation if needed.)
 
+## Acknowledgements
+
+Thanks to [Rangi42](https://github.com/Rangi42) for her help reviewing much of the code and making a number of style
+improvements and API suggestions.
+
+Thanks to [nyanpasu64](https://github.com/nyanpasu64) for their help setting up the initial fuzzer setup, from which
+the current setup (available in the [`fuzz`](https://github.com/aaaaaa123456789/libplum/tree/fuzz) branch) was
+implemented.
+
 ## FAQ
 
 **Q:** Does this library support the &lt;insert format here&gt; image format?
