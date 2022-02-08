@@ -46,7 +46,7 @@ struct plum_image {
     uint64_t * data64;
   };
 #endif
-  void * user;
+  void * userdata;
 #ifdef __cplusplus
 #include "accessors.hpp"
 #endif

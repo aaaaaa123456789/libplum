@@ -952,9 +952,9 @@ so on.
 This requires allocating multiple buffers, determining their sizes, copying their contents, etc.
 The [`plum_copy_image`][copy] function will handle this, creating a full (deep) copy of an image and copying all its
 data, palette (if any) and metadata (in the same order as the original).
-(Note that the [`plum_image`][image] struct contains a member, `user`, whose only purpose is to hold a pointer to any
-data the user wants; it is initialized to `NULL` by [`plum_new_image`][new] and [`plum_load_image`][load] and ignored
-by all other functions in the library.
+(Note that the [`plum_image`][image] struct contains a member, `userdata`, whose only purpose is to hold a pointer to
+any data the user wants; it is initialized to `NULL` by [`plum_new_image`][new] and [`plum_load_image`][load] and
+ignored by all other functions in the library.
 This member will simply be copied directly by [`plum_copy_image`][copy], since the library has no way of knowing the
 internal structure or size of any data placed there by the user.)
 

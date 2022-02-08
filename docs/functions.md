@@ -94,8 +94,8 @@ struct plum_image * plum_copy_image(const struct plum_image * image);
 This function creates a copy of an image.
 The copy will contain its own copies of the pixel data, the palette data if any, and all the metadata nodes; metadata
 nodes will be inserted in the same order as the original.
-(However, the `user` member of the [`plum_image`][image] struct will be copied directly, since the library has no way
-to know the layout of the user data stored in this member, if any.)
+(However, the `userdata` member of the [`plum_image`][image] struct will be copied directly, since the library has no
+way to know the layout of the user data stored in this member, if any.)
 
 The function can fail if `image` is `NULL`, its `data` member is `NULL`, or there's not enough memory to allocate all
 the necessary buffers.

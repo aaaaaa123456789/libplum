@@ -17,7 +17,7 @@ struct plum_image * plum_copy_image (const struct plum_image * image) {
   copy -> frames = image -> frames;
   copy -> height = image -> height;
   copy -> width = image -> width;
-  copy -> user = image -> user;
+  copy -> userdata = image -> userdata;
   if (image -> metadata) {
     const struct plum_metadata * current = image -> metadata;
     struct plum_metadata * allocated = plum_allocate_metadata(copy, current -> size);

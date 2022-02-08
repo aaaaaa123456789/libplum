@@ -4,10 +4,12 @@ Note: releases are listed from latest to oldest.
 
 ## Version 1.0 (in development)
 
+- Renamed the `user` member of the `plum_image` struct to `userdata`
 - Added and documented new `PLUM_MAX_MEMORY_SIZE` constant
 - Renamed `size` argument of `plum_load_image` and `plum_store_image` to `size_mode`
 - Renamed `PLUM_FILENAME`, `PLUM_BUFFER` and `PLUM_CALLBACK` constants to `PLUM_MODE_FILENAME`, `PLUM_MODE_BUFFER` and
   `PLUM_MODE_CALLBACK` (the older constants are currently still available, but undocumented, for compatibility)
+- Added new documentation page on handling untrusted images
 
 ## Version 0.4 (1 February 2022)
 

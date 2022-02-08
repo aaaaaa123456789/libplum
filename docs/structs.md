@@ -44,7 +44,7 @@ struct plum_image {
     uint32_t * data32;
     uint64_t * data64;
   };
-  void * user;
+  void * userdata;
 };
 ```
 
@@ -94,7 +94,7 @@ in the metadata).
   pixel at X = 1, Y = 0 in the first frame; index 10 will access the pixel at X = 0, Y = 1; and index 200 will access
   the top left corner of the second frame.)
   For more information about how this data is stored, see [the section on accessing pixel data][accessing].
-- `user`: free pointer member intended for the user to store any data they want to associate to the image.
+- `userdata`: free pointer member intended for the user to store any data they want to associate to the image.
   This member is not used in any way by the library.
   The [`plum_new_image`][new] and [`plum_load_image`][load] functions initialize this member to `NULL`.
   The [`plum_copy_image`][copy] function will copy the value from the image it's copying; note that this will
