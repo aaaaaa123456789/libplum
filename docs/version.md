@@ -53,7 +53,7 @@ Versions 0.x of the library lack the upper digits: for instance, a value of `19`
 
 * * *
 
-Prev: [Supported file formats](formats.md)
+Prev: [Handling untrusted input](untrusted.md)
 
 Next: [Changelog](changelog.md)
 

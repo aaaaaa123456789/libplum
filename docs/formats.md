@@ -299,7 +299,7 @@ PNM files don't support palettes; [indexed-color mode images][indexed] will be c
 
 Prev: [C++ helper methods](methods.md)
 
-Next: [Library versioning](version.md)
+Next: [Handling untrusted input](untrusted.md)
 
 Up: [README](README.md)
 

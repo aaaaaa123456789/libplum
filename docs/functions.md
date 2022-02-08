@@ -252,6 +252,7 @@ This function is identical to [`plum_load_image`](#plum_load_image), but it enfo
 that the loaded image can have.
 This function is intended to deal with untrusted image data, where a specially-crafted malicious image file can create
 a massive image out of a seemingly small amount of input data.
+For further information, check the [Untrusted image files][untrusted] section.
 
 The limit applies to the image as a whole, not to each dimension: the library will enforce that the number of pixels
 in the entire image (i.e., `width * height * frames`) is not greater than the specified limit.
@@ -1363,4 +1364,5 @@ Up: [README](README.md)
 [mode-constants]: constants.md#special-loading-and-storing-modes
 [rotation]: rotation.md
 [types]: constants.md#image-types
+[untrusted]: untrusted.md#untrusted-image-files
 [version]: version.md#version-constants
