@@ -34,9 +34,8 @@ uint64_t ** load_GIF_palettes_and_frame_count (struct context * context, unsigne
       *transparent_color |= global_palette[context -> data[11]];
     }
   }
-  unsigned real_global_palette_size = global_palette_size;
   size_t scan_offset = *offset;
-  int transparent_index = -1, next_transparent_index = 256, seen_extension = 0;
+  unsigned real_global_palette_size = global_palette_size, transparent_index = 256, next_transparent_index = 256, seen_extension = 0;
   uint64_t ** result = NULL;
   while (scan_offset < context -> size)
     switch (context -> data[scan_offset ++]) {
@@ -78,7 +77,7 @@ uint64_t ** load_GIF_palettes_and_frame_count (struct context * context, unsigne
           local_palette[next_transparent_index] = *transparent_color;
         else
           next_transparent_index = 256;
-        if (transparent_index < 0) transparent_index = next_transparent_index;
+        if (transparent_index == 256) transparent_index = next_transparent_index;
         if (global_palette_size && !result) {
           // check if the current palette is compatible with the global one; if so, don't add any per-frame palettes
           if (!(smaller_size && (next_transparent_index == 256)) && (transparent_index == next_transparent_index)) {
