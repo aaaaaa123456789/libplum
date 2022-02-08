@@ -84,7 +84,7 @@ internal void emit_GIF_data(struct context *, const struct compressed_GIF_code *
 
 // gifread.c
 internal void load_GIF_data(struct context *, unsigned, size_t);
-internal uint64_t ** load_GIF_palettes(struct context *, unsigned, size_t *, uint64_t *);
+internal uint64_t ** load_GIF_palettes_and_frame_count(struct context *, unsigned, size_t *, uint64_t *);
 internal void load_GIF_palette(struct context *, uint64_t *, size_t *, unsigned);
 internal void * load_GIF_data_blocks(struct context *, size_t * restrict, size_t * restrict);
 internal void skip_GIF_data_blocks(struct context *, size_t *);

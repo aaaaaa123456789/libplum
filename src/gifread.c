@@ -8,7 +8,7 @@ void load_GIF_data (struct context * context, unsigned flags, size_t limit) {
   size_t offset = 13;
   uint64_t transparent = 0xffff000000000000u;
   // note: load_GIF_palettes also initializes context -> image -> frames (and context -> image -> palette) and validates the image's structure
-  uint64_t ** palettes = load_GIF_palettes(context, flags, &offset, &transparent); // will be leaked (collected at the end)
+  uint64_t ** palettes = load_GIF_palettes_and_frame_count(context, flags, &offset, &transparent); // will be leaked (collected at the end)
   validate_image_size(context, limit);
   allocate_framebuffers(context, flags, !!(context -> image -> palette));
   uint64_t * durations;
@@ -20,8 +20,8 @@ void load_GIF_data (struct context * context, unsigned flags, size_t limit) {
   if (!plum_find_metadata(context -> image, PLUM_METADATA_LOOP_COUNT)) add_loop_count_metadata(context, 1);
 }
 
-uint64_t ** load_GIF_palettes (struct context * context, unsigned flags, size_t * offset, uint64_t * transparent_color) {
-  // will also validate block order and load frame count
+uint64_t ** load_GIF_palettes_and_frame_count (struct context * context, unsigned flags, size_t * offset, uint64_t * transparent_color) {
+  // will also validate block order
   unsigned char depth = 1 + ((context -> data[10] >> 4) & 7);
   add_color_depth_metadata(context, depth, depth, depth, 1, 0);
   uint64_t * global_palette = ctxcalloc(context, 256 * sizeof *global_palette);
