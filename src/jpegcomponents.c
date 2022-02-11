@@ -74,7 +74,7 @@ void (* get_JPEG_component_transfer_function (struct context * context, const st
       case 1:
         // YCbCr: verify three components and detect the order
         if ((components < 0x10000u) || (components >= 0x1000000u)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-        if (components == 0x634b43u) // 'Y', 'C', 'c'
+        if (components == 0x635943u) // 'Y', 'C', 'c'
           return &JPEG_transfer_CbYCr;
         else if (!((components + 0x102) % 0x10101u)) // any sequential IDs
           return &JPEG_transfer_YCbCr;
@@ -109,7 +109,7 @@ void (* get_JPEG_component_transfer_function (struct context * context, const st
     case 0x30201u: // 1, 2, 3: JFIF's standard IDs
     case 0x232201u: // 1, 0x22, 0x23: used by some library for 'big gamut' colors
       return &JPEG_transfer_YCbCr;
-    case 0x634b43u: // 'Y', 'C', 'c'
+    case 0x635943u: // 'Y', 'C', 'c'
       return &JPEG_transfer_CbYCr;
     case 0x524742u: // 'R', 'G', 'B'
     case 0x726762u: // 'r', 'g', 'b'
@@ -220,7 +220,7 @@ void JPEG_transfer_YCbCrK (uint64_t * restrict output, size_t count, unsigned li
     double red = *luma - RED_COEF * red_offset, blue = *luma - BLUE_COEF * blue_offset;
     double green = *luma + GREEN_CB_COEF * blue_offset + GREEN_CR_COEF * red_offset;
     luma ++;
-    double scale = factor * (limit - *(black ++));
+    double scale = *(black ++) * factor;
     *(output ++) = color_from_floats(red * scale, green * scale, blue * scale, 0);
   }
 }

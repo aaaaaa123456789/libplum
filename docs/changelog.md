@@ -6,6 +6,7 @@ Note: releases are listed from latest to oldest.
 
 - Fixed handling of simultaneous local and global palettes in GIF images where the local palette was a superset of the
   global palette
+- Fixed some rare cases of JPEG component detection and handling
 - Renamed the `user` member of the `plum_image` struct to `userdata`
 - Added and documented new `PLUM_MAX_MEMORY_SIZE` constant
 - Renamed `size` argument of `plum_load_image` and `plum_store_image` to `size_mode`
