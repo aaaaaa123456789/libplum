@@ -51,10 +51,10 @@ int main (int argc, char ** argv) {
   }
   struct plum_image * image;
   if ((argc >= 2) && strcmp(argv[1], "-"))
-    image = plum_load_image(argv[1], PLUM_FILENAME, PLUM_COLOR_64 | palette | flags, &error);
+    image = plum_load_image(argv[1], PLUM_MODE_FILENAME, PLUM_COLOR_64 | palette | flags, &error);
   else {
     clearerr(stdin);
-    image = plum_load_image((const struct plum_callback []) {{.callback = &readcb, .userdata = stdin}}, PLUM_CALLBACK, PLUM_COLOR_64 | palette, &error);
+    image = plum_load_image((const struct plum_callback []) {{.callback = &readcb, .userdata = stdin}}, PLUM_MODE_CALLBACK, PLUM_COLOR_64 | palette, &error);
   }
   if (!image) {
     fprintf(stderr, "load error: %s\n", plum_get_error_text(error));
@@ -72,10 +72,10 @@ int main (int argc, char ** argv) {
   if (argc > 2) {
     if (format) image -> type = format;
     if (strcmp(argv[2], "-"))
-      result = plum_store_image(image, argv[2], PLUM_FILENAME, &error);
+      result = plum_store_image(image, argv[2], PLUM_MODE_FILENAME, &error);
     else {
       clearerr(stdout);
-      result = plum_store_image(image, (struct plum_callback []) {{.callback = &writecb, .userdata = stdout}}, PLUM_CALLBACK, &error);
+      result = plum_store_image(image, (struct plum_callback []) {{.callback = &writecb, .userdata = stdout}}, PLUM_MODE_CALLBACK, &error);
     }
     if (!result) fprintf(stderr, "store error: %s\n", plum_get_error_text(error));
   }

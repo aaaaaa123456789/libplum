@@ -60,7 +60,7 @@ int LLVMFuzzerTestOneInput (const unsigned char * data, size_t size) {
   struct plum_image * image;
   for (transform = 0; transform < (sizeof transforms / sizeof *transforms); transform ++) {
     struct plum_buffer buffer = transforms[transform](data, size);
-    struct plum_image * image = plum_load_image_limited(&buffer, PLUM_BUFFER, PLUM_COLOR_64 | PLUM_PALETTE_LOAD, 0x1000000, NULL);
+    struct plum_image * image = plum_load_image_limited(&buffer, PLUM_MODE_BUFFER, PLUM_COLOR_64 | PLUM_PALETTE_LOAD, 0x1000000, NULL);
     free(buffer.data);
     if (image) process_loaded_image(image);
     plum_destroy_image(image);
@@ -86,12 +86,12 @@ static void process_loaded_image (struct plum_image * image) {
   unsigned format;
   for (format = 1; format < PLUM_NUM_IMAGE_TYPES; format ++) {
     image -> type = format;
-    if (plum_store_image(image, &buffer, PLUM_BUFFER, NULL)) plum_free(NULL, buffer.data); // free(buffer.data), but testing plum_free
+    if (plum_store_image(image, &buffer, PLUM_MODE_BUFFER, NULL)) plum_free(NULL, buffer.data); // free(buffer.data), but testing plum_free
   }
 }
 
 static struct plum_image * load_image_transformed (const struct plum_buffer * buffer, uint16_t flags) {
-  struct plum_image * image = plum_load_image_limited(buffer, PLUM_BUFFER, flags & 0x3f07, 0x1000000, NULL);
+  struct plum_image * image = plum_load_image_limited(buffer, PLUM_MODE_BUFFER, flags & 0x3f07, 0x1000000, NULL);
   if (!image) return NULL;
   plum_rotate_image(image, flags >> 14, flags & 8);
   unsigned newformat = (flags >> 8) & 7;
@@ -166,7 +166,7 @@ static void test_image (struct plum_image * image) {
 }
 
 static void generate_animation_metadata (struct plum_image * image) {
-  struct plum_buffer * buffer = image -> user;
+  struct plum_buffer * buffer = image -> userdata;
   if (!buffer) return;
   if (buffer -> size >= sizeof(uint32_t)) {
     plum_append_metadata(image, PLUM_METADATA_LOOP_COUNT, buffer -> data, sizeof(uint32_t));
@@ -355,8 +355,8 @@ static struct plum_image * regular_image_generator (const unsigned char * data, 
     data += 2;
     size -= 2;
   }
-  image -> user = plum_calloc(image, sizeof(struct plum_buffer));
-  *(struct plum_buffer *) image -> user = (struct plum_buffer) {.data = (unsigned char *) data, .size = size};
+  image -> userdata = plum_calloc(image, sizeof(struct plum_buffer));
+  *(struct plum_buffer *) image -> userdata = (struct plum_buffer) {.data = (unsigned char *) data, .size = size};
   return image;
 }
 
@@ -395,8 +395,8 @@ static struct plum_image * palette_image_generator (const unsigned char * data, 
     data += plum_color_buffer_size(1, color_format);
     size -= plum_color_buffer_size(1, color_format);
   }
-  image -> user = plum_calloc(image, sizeof(struct plum_buffer));
-  *(struct plum_buffer *) image -> user = (struct plum_buffer) {.data = (unsigned char *) data, .size = size};
+  image -> userdata = plum_calloc(image, sizeof(struct plum_buffer));
+  *(struct plum_buffer *) image -> userdata = (struct plum_buffer) {.data = (unsigned char *) data, .size = size};
   return image;
 }
 
