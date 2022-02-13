@@ -77,7 +77,7 @@ Otherwise, add a `#define PLUM_NO_STDINT` definition and `typedef` definitions f
 (The library **requires** 64-bit integer types: if you cannot define the `uint64_t` type, you cannot use the library.)
 This can be done in a separate header, like so:
 
-```c
+``` c
 /* C89-only helper to substitute the missing <stdint.h> header */
 #ifndef HELPER_LIBPLUM_H
 

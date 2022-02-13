@@ -107,7 +107,7 @@ Therefore, a type must be used with this macro: that will be the integer type us
 
 For example, the following declaration:
 
-```c
+``` c
 uint32_t PLUM_PIXEL_ARRAY(pixels, image) = image -> data;
 ```
 
