@@ -263,7 +263,7 @@ uint8_t load_PNG_palette (struct context * context, const struct PNG_chunk_locat
   const unsigned char * data = context -> data + chunks -> palette;
   for (p = 0; p < count; p ++) palette[p] = (data[p * 3] | ((uint64_t) data[p * 3 + 1] << 16) | ((uint64_t) data[p * 3 + 2] << 32)) * 0x101;
   if (chunks -> transparency) {
-    unsigned transparency_count = read_be32_unaligned(context -> data + chunks -> transparency - 8);
+    uint_fast32_t transparency_count = read_be32_unaligned(context -> data + chunks -> transparency - 8);
     if (transparency_count > count) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     data = context -> data + chunks -> transparency;
     for (p = 0; p < transparency_count; p ++) palette[p] |= 0x101000000000000u * (0xff ^ *(data ++));
