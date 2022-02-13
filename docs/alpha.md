@@ -154,6 +154,7 @@ Ordering is pure ASCII (that is, all uppercase letters come before all lowercase
 - [`plum_rotate_image` function](functions.md#plum_rotate_image)
 - [`plum_sort_colors` function](functions.md#plum_sort_colors)
 - [`plum_sort_palette` function](functions.md#plum_sort_palette)
+- [`plum_sort_palette_custom` function](functions.md#plum_sort_palette_custom)
 - [`plum_store_image` function](functions.md#plum_store_image)
 - [`plum_validate_image` function](functions.md#plum_validate_image)
 - [`plum_validate_palette_indexes` function](functions.md#plum_validate_palette_indexes)

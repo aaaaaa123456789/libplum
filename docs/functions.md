@@ -30,6 +30,7 @@ In other words, the function won't modify any of the data accessible through tha
     - [`plum_convert_colors_to_indexes`](#plum_convert_colors_to_indexes)
     - [`plum_convert_indexes_to_colors`](#plum_convert_indexes_to_colors)
     - [`plum_sort_palette`](#plum_sort_palette)
+    - [`plum_sort_palette_custom`](#plum_sort_palette_custom)
     - [`plum_reduce_palette`](#plum_reduce_palette)
     - [`plum_get_highest_palette_index`](#plum_get_highest_palette_index)
 - [Miscellaneous image operations](#miscellaneous-image-operations)
@@ -865,9 +866,65 @@ It can also return one of the following [error constants][errors]:
 - `PLUM_ERR_UNDEFINED_PALETTE`: the image doesn't use [indexed-color mode][image] at all (i.e., it doesn't have a
   palette to begin with).
 
+### `plum_sort_palette_custom`
+
+``` c
+unsigned plum_sort_palette_custom(struct plum_image * image,
+                                  uint64_t (* callback) (void *, uint64_t),
+                                  void * argument, unsigned flags);
+```
+
+**Description:**
+
+This function sorts an image's existing palette, in place, like [`plum_sort_palette`](#plum_sort_palette) does, but
+with a sorting criterion defined by the user.
+Like [`plum_sort_palette`](#plum_sort_palette), it also updates the image's color values (i.e., indexes) to point to
+the new indexes for the same colors.
+
+The sorting criterion will be defined by the function pointed to by the `callback` argument, which must return a
+sorting score for each color value; the colors will be sorted in ascending order of scores, with ties being broken by
+the existing palette order.
+
+The `flags` argument indicates the [color format][colors] expected by the callback function; if the image uses a
+different color format, the color values will be converted to the designated format before being passed to the
+callback function.
+(The function signature takes a `uint64_t` argument so that callbacks may accept any color format, but the library
+will ensure that the value actually passed to the callback will be in range for the chosen color format.)
+
+**Arguments:**
+
+- `image`: image whose palette will be sorted.
+- `callback`: callback function that will be called to assign sorting scores to each color in the image's palette.
+  The callback function will be called with two arguments: the value given to `argument` and the color value converted
+  to the color format designated by `flags`.
+- `argument`: first argument that will be passed to the callback function each time it is called.
+- `flags`: [color format][colors] that the function designated by `callback` expects.
+  This argument is named `flags` after the argument to [`plum_load_image`](#plum_load_image), but only the color
+  format bits are used; other [loading flags][loading-flags] are ignored.
+
+**Return value:**
+
+Zero ([`PLUM_OK`][errors]) on success, or a non-zero [error constant][errors] on error.
+
+**Error values:**
+
+The function may fail for any of the reasons specified for [`plum_validate_image`](#plum_validate_image), returning
+one of the error constants listed there.
+
+It can also return one of the following [error constants][errors]:
+
+- `PLUM_OK` (zero): success.
+  This value will be used only if the function executes without errors.
+- `PLUM_ERR_INVALID_ARGUMENTS`: `callback` is `NULL`.
+  (This error will also occur if `image` is `NULL`, as specified by [`plum_validate_image`](#plum_validate_image).)
+- `PLUM_ERR_INVALID_COLOR_INDEX`: the image contains an invalid color index (i.e.,
+  [`plum_validate_palette_indexes`](#plum_validate_palette_indexes) returns a non-`NULL` value).
+- `PLUM_ERR_UNDEFINED_PALETTE`: the image doesn't use [indexed-color mode][image] at all (i.e., it doesn't have a
+  palette to begin with).
+
 ### `plum_reduce_palette`
 
-```c
+``` c
 unsigned plum_reduce_palette(struct plum_image * image);
 ```
 
