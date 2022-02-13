@@ -18,6 +18,7 @@ void plum_convert_colors(void * restrict destination, const void * restrict sour
 uint64_t plum_convert_color(uint64_t color, unsigned from, unsigned to);
 void plum_remove_alpha(struct plum_image * image);
 unsigned plum_sort_palette(struct plum_image * image, unsigned flags);
+unsigned plum_sort_palette_custom(struct plum_image * image, uint64_t (* callback) (void *, uint64_t), void * argument, unsigned flags);
 unsigned plum_reduce_palette(struct plum_image * image);
 const uint8_t * plum_validate_palette_indexes(const struct plum_image * image);
 int plum_get_highest_palette_index(const struct plum_image * image);

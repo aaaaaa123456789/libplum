@@ -37,24 +37,55 @@ unsigned plum_sort_palette (struct plum_image * image, unsigned flags) {
   return result;
 }
 
-void sort_palette (struct plum_image * image, unsigned flags) {
+unsigned plum_sort_palette_custom (struct plum_image * image, uint64_t (* callback) (void *, uint64_t), void * argument, unsigned flags) {
+  if (!callback) return PLUM_ERR_INVALID_ARGUMENTS;
+  unsigned p = check_image_palette(image);
+  if (p) return p;
+  uint64_t sortdata[0x200];
+  #define filldata(bits) do                                                                                                       \
+    for (p = 0; p <= image -> max_palette_index; p ++) {                                                                          \
+      sortdata[2 * p] = p;                                                                                                        \
+      sortdata[2 * p + 1] = callback(argument, plum_convert_color(image -> palette ## bits[p], image -> color_format, flags));    \
+    }                                                                                                                             \
+  while (0)
+  if ((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_64)
+    filldata(64);
+  else if ((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_16)
+    filldata(16);
+  else
+    filldata(32);
+  #undef filldata
+  qsort(sortdata, image -> max_palette_index + 1, 2 * sizeof *sortdata, &compare_index_value_pairs);
   uint8_t sorted[0x100];
-  plum_sort_colors(image -> palette, image -> max_palette_index, flags, sorted);
+  for (p = 0; p <= image -> max_palette_index; p ++) sorted[sortdata[2 * p]] = p;
+  apply_sorted_palette(image, image -> color_format, sorted);
+  return 0;
+}
+
+void sort_palette (struct plum_image * image, unsigned flags) {
+  uint8_t indexes[0x100];
+  plum_sort_colors(image -> palette, image -> max_palette_index, flags, indexes);
+  uint8_t sorted[0x100];
+  unsigned p;
+  for (p = 0; p <= image -> max_palette_index; p ++) sorted[indexes[p]] = p;
+  apply_sorted_palette(image, flags, sorted);
+}
+
+void apply_sorted_palette (struct plum_image * image, unsigned flags, const uint8_t * sorted) {
   size_t p, limit = (size_t) image -> width * image -> height * image -> frames;
   for (p = 0; p < limit; p ++) image -> data8[p] = sorted[image -> data8[p]];
-  if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_64) {
-    uint64_t colors[0x100];
-    for (p = 0; p <= image -> max_palette_index; p ++) colors[p] = image -> palette64[sorted[p]];
-    memcpy(image -> palette64, colors, p * sizeof *colors);
-  } else if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_16) {
-    uint16_t colors[0x100];
-    for (p = 0; p <= image -> max_palette_index; p ++) colors[p] = image -> palette16[sorted[p]];
-    memcpy(image -> palette16, colors, p * sizeof *colors);
-  } else {
-    uint32_t colors[0x100];
-    for (p = 0; p <= image -> max_palette_index; p ++) colors[p] = image -> palette32[sorted[p]];
-    memcpy(image -> palette32, colors, p * sizeof *colors);
-  }
+  #define sortpalette(bits) do {                                                                           \
+    uint ## bits ## _t colors[0x100];                                                                      \
+    for (p = 0; p <= image -> max_palette_index; p ++) colors[sorted[p]] = image -> palette ## bits[p];    \
+    memcpy(image -> palette ## bits, colors, p * sizeof *colors);                                          \
+  } while(0)
+  if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_64)
+    sortpalette(64);
+  else if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_16)
+    sortpalette(16);
+  else
+    sortpalette(32);
+  #undef sortpalette
 }
 
 unsigned plum_reduce_palette (struct plum_image * image) {
