@@ -888,6 +888,7 @@ the existing palette order.
 The `flags` argument indicates the [color format][colors] expected by the callback function; if the image uses a
 different color format, the color values will be converted to the designated format before being passed to the
 callback function.
+This will **not** modify the image's color format: the color values will only be converted for the callback.
 (The function signature takes a `uint64_t` argument so that callbacks may accept any color format, but the library
 will ensure that the value actually passed to the callback will be in range for the chosen color format.)
 
