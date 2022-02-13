@@ -20,6 +20,7 @@ static struct plum_buffer fixed_PNG_image_data_transform(const unsigned char *, 
 static struct plum_buffer generic_PNG_image_data_transform(const unsigned char *, size_t);
 static struct plum_image * regular_image_generator(const unsigned char *, size_t);
 static struct plum_image * palette_image_generator(const unsigned char *, size_t);
+static uint64_t sort_colors(void *, uint64_t);
 static uint32_t compute_PNG_CRC(const unsigned char *, size_t);
 
 struct plum_buffer (* transforms[]) (const unsigned char *, size_t) = {
@@ -121,6 +122,7 @@ static struct plum_image * load_image_transformed (const struct plum_buffer * bu
       image -> color_format = newformat;
     }
   }
+  plum_sort_palette_custom(image, &sort_colors, NULL, (flags >> 4) & 7);
   return image;
 }
 
@@ -395,9 +397,15 @@ static struct plum_image * palette_image_generator (const unsigned char * data, 
     data += plum_color_buffer_size(1, color_format);
     size -= plum_color_buffer_size(1, color_format);
   }
+  plum_append_metadata(image, PLUM_METADATA_COLOR_DEPTH, (unsigned char []) {0, 0, 0, 0}, 4);
   image -> userdata = plum_calloc(image, sizeof(struct plum_buffer));
   *(struct plum_buffer *) image -> userdata = (struct plum_buffer) {.data = (unsigned char *) data, .size = size};
   return image;
+}
+
+static uint64_t sort_colors (void * unused, uint64_t color) {
+  (void) unused;
+  return color;
 }
 
 static uint32_t compute_PNG_CRC (const unsigned char * data, size_t size) {
