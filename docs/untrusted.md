@@ -54,6 +54,13 @@ cannot know what sizes are reasonable for a specific use case.
 This function allows the user to explicitly tell the library what sizes are reasonable, mitigating the impact of
 malicious images that decode to overly-large frames.
 
+**Warning:** this function is intended to mitigate the risk of decoding a very large image compressed into a very
+small file.
+This is typically only encountered when a malicious user forces a program they don't control to decode such an image
+as part of an attack, such as a denial-of-service attack.
+Programs that don't need to mitigate this risk (like local console-based or interactive image editors) most likely
+won't need this function at all.
+
 ## Untrusted image data
 
 Normally, applications won't let users generate a [`struct plum_image`][image] directly.
@@ -104,6 +111,13 @@ The library provides several functions to validate image data:
   also ensures that the product of all dimensions is no greater than the specified limit.
   This function is used internally by [`plum_load_image_limited`][load-limited] to enforce its pixel count limit (as
   described in [the previous section](#untrusted-image-files)), and it can be used by users for similar purposes.
+
+**Warning:** these validations are only necessary for programs that allow other programs to send them image data (in
+the form of a [`struct plum_image`][image]) directly.
+This is something that might arise in a wrapper library, or any similar program that exposes an API for other code to
+interact with it, but is very uncommon in end-user software.
+Therefore, end-user programs will probably not need any of these functions, except perhaps for those that validate
+image dimensions if the programs allow users to create a new image by specifying its dimensions.
 
 * * *
 
