@@ -78,7 +78,7 @@ void apply_sorted_palette (struct plum_image * image, unsigned flags, const uint
     uint ## bits ## _t colors[0x100];                                                                      \
     for (p = 0; p <= image -> max_palette_index; p ++) colors[sorted[p]] = image -> palette ## bits[p];    \
     memcpy(image -> palette ## bits, colors, p * sizeof *colors);                                          \
-  } while(0)
+  } while (0)
   if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_64)
     sortpalette(64);
   else if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_16)
