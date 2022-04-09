@@ -214,7 +214,7 @@ unsigned get_JPEG_rotation (struct context * context, size_t offset) {
 unsigned load_single_frame_JPEG (struct context * context, const struct JPEG_marker_layout * layout, uint32_t components, double ** output) {
   if (*layout -> frametype & 4) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   struct JPEG_decoder_tables tables;
-  initialize_JPEG_decoder_tables(&tables);
+  initialize_JPEG_decoder_tables(context, &tables, layout);
   unsigned precision = context -> data[*layout -> frames + 2];
   if ((precision < 2) || (precision > 16)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   size_t metadata_index = 0;
@@ -223,15 +223,6 @@ unsigned load_single_frame_JPEG (struct context * context, const struct JPEG_mar
   else
     load_JPEG_DCT_frame(context, layout, components, 0, &tables, &metadata_index, output, precision, context -> image -> width, context -> image -> height);
   return precision;
-}
-
-void initialize_JPEG_decoder_tables (struct JPEG_decoder_tables * tables) {
-  *tables = (struct JPEG_decoder_tables) {
-    .Huffman = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
-    .quantization = {NULL, NULL, NULL, NULL},
-    .arithmetic = {0x10, 0x10, 0x10, 0x10, 5, 5, 5, 5},
-    .restart = 0
-  };
 }
 
 unsigned char process_JPEG_metadata_until_offset (struct context * context, const struct JPEG_marker_layout * layout, struct JPEG_decoder_tables * tables,
@@ -290,42 +281,4 @@ unsigned char process_JPEG_metadata_until_offset (struct context * context, cons
     }
   }
   return expansion;
-}
-
-short * process_JPEG_Huffman_table (struct context * context, const unsigned char ** restrict markerdata, uint16_t * restrict markersize) {
-  if (*markersize < 16) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  uint_fast16_t totalsize = 0, count = 16; // 16 so it counts the initial length bytes too
-  uint_fast8_t size, remainder;
-  const unsigned char * lengths = *markerdata;
-  const unsigned char * data = *markerdata + 16;
-  for (size = 0; size < 16; size ++) {
-    count += lengths[size];
-    totalsize += lengths[size] * (size + 1) * 2; // not necessarily the real size of the table, but an easily calculated upper bound
-  }
-  if (*markersize < count) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  *markersize -= count;
-  *markerdata += count;
-  short * result = ctxmalloc(context, totalsize * sizeof *result);
-  for (count = 0; count < totalsize; count ++) result[count] = -1;
-  uint_fast16_t index, current, next = 2;
-  uint16_t code = 0, offset = 0x8000u;
-  // size is one less because we don't count the link to the leaf
-  for (size = 0; offset; size ++, offset >>= 1) for (count = lengths[size]; count; count --) {
-    current = 0x8000u;
-    index = 0;
-    for (remainder = size; remainder; remainder --) {
-      if (code & current) index ++;
-      current >>= 1;
-      if (result[index] == -1) {
-        result[index] = -(short) next;
-        next += 2;
-      }
-      index = -result[index];
-    }
-    if (code & current) index ++;
-    result[index] = *(data ++);
-    if ((uint16_t) (code + offset) < code) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-    code += offset;
-  }
-  return ctxrealloc(context, result, next * sizeof *result);
 }

@@ -5,7 +5,7 @@ unsigned load_hierarchical_JPEG (struct context * context, const struct JPEG_mar
   unsigned char componentIDs[4];
   write_le32_unaligned(componentIDs, components);
   struct JPEG_decoder_tables tables;
-  initialize_JPEG_decoder_tables(&tables);
+  initialize_JPEG_decoder_tables(context, &tables, layout);
   unsigned precision = context -> data[layout -> hierarchical + 2];
   if ((precision < 2) || (precision > 16)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   size_t p, frame, metadata_index = 0;

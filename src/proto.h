@@ -189,9 +189,7 @@ internal void load_JPEG_data(struct context *, unsigned, size_t);
 internal struct JPEG_marker_layout * load_JPEG_marker_layout(struct context *);
 internal unsigned get_JPEG_rotation(struct context *, size_t);
 internal unsigned load_single_frame_JPEG(struct context *, const struct JPEG_marker_layout *, uint32_t, double **);
-internal void initialize_JPEG_decoder_tables(struct JPEG_decoder_tables *);
 internal unsigned char process_JPEG_metadata_until_offset(struct context *, const struct JPEG_marker_layout *, struct JPEG_decoder_tables *, size_t *, size_t);
-internal short * process_JPEG_Huffman_table(struct context *, const unsigned char ** restrict, uint16_t * restrict);
 
 // jpegreadframe.c
 internal void load_JPEG_DCT_frame(struct context *, const struct JPEG_marker_layout *, uint32_t, size_t, struct JPEG_decoder_tables *, size_t *, double **,
@@ -202,6 +200,11 @@ internal unsigned get_JPEG_component_info(struct context *, const unsigned char 
 internal const unsigned char * get_JPEG_scan_components(struct context *, size_t, struct JPEG_component_info * restrict, unsigned, unsigned char * restrict);
 internal void unpack_JPEG_component(double * restrict, double * restrict, size_t, size_t, size_t, size_t, unsigned char, unsigned char, unsigned char,
                                     unsigned char);
+
+// jpegtables.c
+internal void initialize_JPEG_decoder_tables(struct context *, struct JPEG_decoder_tables *, const struct JPEG_marker_layout *);
+internal short * process_JPEG_Huffman_table(struct context *, const unsigned char ** restrict, uint16_t * restrict);
+internal void load_default_JPEG_Huffman_tables(struct context *, struct JPEG_decoder_tables *);
 
 // jpegwrite.c
 internal void generate_JPEG_data(struct context *);

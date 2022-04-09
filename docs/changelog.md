@@ -2,6 +2,11 @@
 
 Note: releases are listed from latest to oldest.
 
+## Version 1.1 (in development)
+
+- Added support for JPEG files without explicit Huffman tables (using the recommended tables from the standard),
+  following the behavior of many common JPEG viewers
+
 ## Version 1.0 (14 February 2022)
 
 - Fixed `plum_sort_palette` ensuring that no colors are exchanged in the image
