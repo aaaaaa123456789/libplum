@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -e
-
 declare -A files
 addblank=false
 
@@ -20,9 +19,9 @@ function append_file {
       echo "$line"
       addblank=false
     fi
-  done <"$file"
+  done < "$file"
 }
 
-for f; do
-  append_file "$f"
+for inputfile; do
+  append_file "$inputfile"
 done
