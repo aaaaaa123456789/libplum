@@ -262,9 +262,8 @@ void generate_PNG_row_data (struct context * context, const void * restrict data
 }
 
 void filter_PNG_rows (unsigned char * restrict rowdata, const unsigned char * restrict previous, size_t count, unsigned type) {
-  uint_fast8_t pixelsize = type[(const unsigned char []) {1, 1, 1, 1, 3, 4, 6, 8}];
   if (type < 3) count = ((count << type) + 7) >> 3;
-  ptrdiff_t p, rowsize = count * pixelsize; // rowsize doesn't include the filter type byte
+  ptrdiff_t p, pixelsize = type[(const unsigned char []) {1, 1, 1, 1, 3, 4, 6, 8}], rowsize = count * pixelsize; // not including the filter type byte
   rowdata ++;
   previous ++;
   unsigned char * output = rowdata + rowsize;

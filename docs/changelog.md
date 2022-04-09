@@ -4,6 +4,8 @@ Note: releases are listed from latest to oldest.
 
 ## Version 1.1 (in development)
 
+- Fixed invalid memory accesses in PNG file generation that could occur if `uint_fast8_t` was as wide as (or wider
+  than) `ptrdiff_t`
 - Added support for JPEG files without explicit Huffman tables (using the recommended tables from the standard),
   following the behavior of many common JPEG viewers
 
