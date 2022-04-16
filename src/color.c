@@ -83,7 +83,7 @@ uint64_t plum_convert_color (uint64_t color, unsigned from, unsigned to) {
       result = ((color >> 5) & 0x1f) | ((color >> 10) & 0x3e0) | ((color >> 15) & 0x7c00) | ((color >> 16) & 0x8000u);
   }
   if ((to ^ from) & PLUM_ALPHA_INVERT)
-    result ^= (to & PLUM_COLOR_MASK)[(uint64_t []) {0xff000000u, 0xffff000000000000u, 0x8000u, 0xc0000000u}];
+    result ^= (to & PLUM_COLOR_MASK)[(const uint64_t []) {0xff000000u, 0xffff000000000000u, 0x8000u, 0xc0000000u}];
   return result;
 }
 
@@ -200,9 +200,9 @@ uint32_t get_true_color_depth (const struct plum_image * image) {
       if (*data) red = *data;
       if (data[1]) green = data[1];
       if (data[2]) blue = data[2];
-    } else if ((colorinfo -> size >= 5) && data[4])
+    } else if (colorinfo -> size >= 5 && data[4])
       red = green = blue = data[4];
-    if ((colorinfo -> size >= 4) && data[3]) alpha = data[3];
+    if (colorinfo -> size >= 4 && data[3]) alpha = data[3];
   }
   if (!image_has_transparency(image)) alpha = 0;
   if (red > 16) red = 16;

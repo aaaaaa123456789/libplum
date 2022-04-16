@@ -2,16 +2,17 @@
 
 void generate_BMP_data (struct context * context) {
   if (context -> source -> frames > 1) throw(context, PLUM_ERR_NO_MULTI_FRAME);
-  if ((context -> source -> width > 0x7fffffffu) || (context -> source -> height > 0x7fffffffu)) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
+  if (context -> source -> width > 0x7fffffffu || context -> source -> height > 0x7fffffffu) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
   unsigned char * header = append_output_node(context, 14);
   bytewrite(header, 0x42, 0x4d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
   uint32_t depth = get_true_color_depth(context -> source);
   if (depth >= 0x1000000u)
     generate_BMP_bitmasked_data(context, depth, header + 10);
-  else if (context -> source -> palette && (context -> source -> max_palette_index < 16))
-    generate_BMP_palette_halfbyte_data(context, header + 10);
   else if (context -> source -> palette)
-    generate_BMP_palette_byte_data(context, header + 10);
+    if (context -> source -> max_palette_index < 16)
+      generate_BMP_palette_halfbyte_data(context, header + 10);
+    else
+      generate_BMP_palette_byte_data(context, header + 10);
   else if (bit_depth_less_than(depth, 0x80808u))
     generate_BMP_RGB_data(context, header + 10);
   else
@@ -22,18 +23,18 @@ void generate_BMP_data (struct context * context) {
 
 void generate_BMP_bitmasked_data (struct context * context, uint32_t depth, unsigned char * offset_pointer) {
   uint8_t reddepth = depth, greendepth = depth >> 8, bluedepth = depth >> 16, alphadepth = depth >> 24;
-  uint_fast32_t p = reddepth + greendepth + bluedepth + alphadepth;
-  if (p > 32) {
-    reddepth = ((reddepth << 6) / p + 1) >> 1;
-    greendepth = ((greendepth << 6) / p + 1) >> 1;
-    bluedepth = ((bluedepth << 6) / p + 1) >> 1;
-    alphadepth = ((alphadepth << 6) / p + 1) >> 1;
-    p = reddepth + greendepth + bluedepth + alphadepth;
-    while (p > 32) {
-      if (alphadepth > 2) p --, alphadepth --;
-      if ((bluedepth > 2) && (p > 32)) p --, bluedepth --;
-      if ((reddepth > 2) && (p > 32)) p --, reddepth --;
-      if ((greendepth > 2) && (p > 32)) p --, greendepth --;
+  uint_fast8_t totaldepth = reddepth + greendepth + bluedepth + alphadepth;
+  if (totaldepth > 32) {
+    reddepth = ((reddepth << 6) / totaldepth + 1) >> 1;
+    greendepth = ((greendepth << 6) / totaldepth + 1) >> 1;
+    bluedepth = ((bluedepth << 6) / totaldepth + 1) >> 1;
+    alphadepth = ((alphadepth << 6) / totaldepth + 1) >> 1;
+    totaldepth = reddepth + greendepth + bluedepth + alphadepth;
+    while (totaldepth > 32) {
+      if (alphadepth > 2) totaldepth --, alphadepth --;
+      if (bluedepth > 2 && totaldepth > 32) totaldepth --, bluedepth --;
+      if (reddepth > 2 && totaldepth > 32) totaldepth --, reddepth --;
+      if (greendepth > 2 && totaldepth > 32) totaldepth --, greendepth --;
     }
   }
   uint8_t blueshift = reddepth + greendepth, alphashift = blueshift + bluedepth;
@@ -44,7 +45,7 @@ void generate_BMP_bitmasked_data (struct context * context, uint32_t depth, unsi
   write_le32_unaligned(attributes + 4, context -> source -> width);
   write_le32_unaligned(attributes + 8, context -> source -> height);
   attributes[12] = 1;
-  attributes[14] = (p <= 16) ? 16 : 32;
+  attributes[14] = (totaldepth <= 16) ? 16 : 32;
   attributes[16] = 3;
   write_le32_unaligned(attributes + 40, ((uint32_t) 1 << reddepth) - 1);
   write_le32_unaligned(attributes + 44, (((uint32_t) 1 << greendepth) - 1) << reddepth);
@@ -55,14 +56,14 @@ void generate_BMP_bitmasked_data (struct context * context, uint32_t depth, unsi
     write_le32_unaligned(attributes + 52, 0);
   write_le32_unaligned(attributes + 56, 0x73524742u); // 'sRGB'
   size_t rowsize = (size_t) context -> source -> width * (attributes[14] >> 3);
-  if ((attributes[14] == 16) && (context -> source -> width & 1)) rowsize += 2;
+  if (totaldepth <= 16 && (context -> source -> width & 1)) rowsize += 2;
   size_t imagesize = rowsize * context -> source -> height;
   if (imagesize <= 0x7fffffffu) write_le32_unaligned(attributes + 20, imagesize);
   unsigned char * data = append_output_node(context, imagesize);
   uint_fast32_t row = context -> source -> height - 1;
   do {
     size_t index, pos = (size_t) row * context -> source -> width;
-    for (p = 0; p < context -> source -> width; p ++) {
+    for (uint_fast32_t p = 0; p < context -> source -> width; p ++) {
       uint64_t color;
       const void * colordata = context -> source -> data;
       index = pos ++;
@@ -78,8 +79,8 @@ void generate_BMP_bitmasked_data (struct context * context, uint32_t depth, unsi
       color = plum_convert_color(color, context -> source -> color_format, PLUM_COLOR_64 | PLUM_ALPHA_INVERT);
       uint_fast32_t out = ((color & 0xffffu) >> (16 - reddepth)) | ((color & 0xffff0000u) >> (32 - greendepth) << reddepth) |
                           ((color & 0xffff00000000u) >> (48 - bluedepth) << blueshift);
-      if (alphadepth) out |= (color & 0xffff000000000000u) >> (64 - alphadepth) << alphashift;
-      if (attributes[14] == 16) {
+      if (alphadepth) out |= color >> (64 - alphadepth) << alphashift;
+      if (totaldepth <= 16) {
         write_le16_unaligned(data, out);
         data += 2;
       } else {
@@ -87,7 +88,7 @@ void generate_BMP_bitmasked_data (struct context * context, uint32_t depth, unsi
         data += 4;
       }
     }
-    if ((attributes[14] == 16) && (context -> source -> width & 1)) data += byteappend(data, 0x00, 0x00);
+    if (totaldepth <= 16 && (context -> source -> width & 1)) data += byteappend(data, 0x00, 0x00);
   } while (row --);
 }
 
@@ -113,14 +114,14 @@ void generate_BMP_palette_halfbyte_data (struct context * context, unsigned char
     context -> output -> size = compressed;
     return;
   }
-  uint_fast32_t p, row = context -> source -> height - 1;
+  uint_fast32_t row = context -> source -> height - 1;
   const uint8_t * source;
   uint_fast8_t value, padding = 3u & ~((context -> source -> width - 1) >> ((context -> source -> max_palette_index < 2) ? 3 : 1));
   do {
     source = context -> source -> data8 + (size_t) row * context -> source -> width;
     if (context -> source -> max_palette_index < 2) {
       value = 0;
-      for (p = 0; p < context -> source -> width; p ++) {
+      for (uint_fast32_t p = 0; p < context -> source -> width; p ++) {
         value = (value << 1) | source[p];
         if ((p & 7) == 7) {
           *(data ++) = value;
@@ -130,6 +131,7 @@ void generate_BMP_palette_halfbyte_data (struct context * context, unsigned char
       if (context -> source -> width & 7) *(data ++) = value << (8 - (context -> source -> width & 7));
       attributes[14] = 1;
     } else {
+      uint_fast32_t p;
       for (p = 0; p < (context -> source -> width - 1); p += 2)
         *(data ++) = (source[p] << 4) | source[p + 1];
       if (context -> source -> width & 1)
@@ -190,9 +192,9 @@ size_t try_compress_BMP (struct context * context, size_t size, size_t (* rowhan
 size_t compress_BMP_halfbyte_row (uint8_t * result, const uint8_t * data, size_t count) {
   size_t size = 2; // account for the terminator
   while (count > 3)
-    if ((*data == data[2]) && (data[1] == data[3])) {
+    if (*data == data[2] && data[1] == data[3]) {
       uint_fast8_t length;
-      for (length = 4; (length < 0xff) && (length < count) && (data[length] == data[length - 2]); length ++);
+      for (length = 4; length < 0xff && length < count && data[length] == data[length - 2]; length ++);
       result += byteappend(result, length, (*data << 4) | data[1]);
       size += 2;
       data += length;
@@ -262,7 +264,7 @@ size_t compress_BMP_byte_row (uint8_t * result, const uint8_t * data, size_t cou
   while (count > 1)
     if (*data == data[1]) {
       uint_fast8_t length;
-      for (length = 2; (length < 0xff) && (length < count) && (*data == data[length]); length ++);
+      for (length = 2; length < 0xff && length < count && *data == data[length]; length ++);
       result += byteappend(result, length, *data);
       size += 2;
       data += length;
@@ -321,8 +323,7 @@ void append_BMP_palette (struct context * context) {
   unsigned char * data = append_output_node(context, 4 * (context -> source -> max_palette_index + 1));
   uint32_t * colors = ctxmalloc(context, sizeof *colors * (context -> source -> max_palette_index + 1));
   plum_convert_colors(colors, context -> source -> palette, context -> source -> max_palette_index + 1, PLUM_COLOR_32, context -> source -> color_format);
-  unsigned pos;
-  for (pos = 0; pos <= context -> source -> max_palette_index; pos ++) data += byteappend(data, colors[pos] >> 16, colors[pos] >> 8, colors[pos], 0);
+  for (unsigned p = 0; p <= context -> source -> max_palette_index; p ++) data += byteappend(data, colors[p] >> 16, colors[p] >> 8, colors[p], 0);
   ctxfree(context, colors);
 }
 
@@ -349,11 +350,12 @@ void generate_BMP_RGB_data (struct context * context, unsigned char * offset_poi
     rowsize += padding;
   }
   unsigned char * out = append_output_node(context, rowsize * context -> source -> height);
-  uint_fast32_t remaining, row = context -> source -> height - 1;
+  uint_fast32_t row = context -> source -> height - 1;
   do {
     size_t pos = (size_t) row * context -> source -> width;
-    for (remaining = context -> source -> width; remaining; pos ++, remaining --) out += byteappend(out, data[pos] >> 16, data[pos] >> 8, data[pos]);
-    for (remaining = padding; remaining; remaining --) *(out ++) = 0;
+    for (uint_fast32_t remaining = context -> source -> width; remaining; pos ++, remaining --)
+      out += byteappend(out, data[pos] >> 16, data[pos] >> 8, data[pos]);
+    for (uint_fast32_t p = 0; p < padding; p ++) *(out ++) = 0;
   } while (row --);
   if (data != context -> source -> data) ctxfree(context, data);
 }

@@ -13,11 +13,11 @@ void calculate_frame_duration_fraction (uint64_t duration, uint32_t limit, uint3
     duration >>= 1;
     *denominator >>= 1;
   }
-  while (!((duration % 5) || (*denominator % 5))) {
+  while (!(duration % 5 || *denominator % 5)) {
     duration /= 5;
     *denominator /= 5;
   }
-  if ((duration <= limit) && (*denominator <= limit)) {
+  if (duration <= limit && *denominator <= limit) {
     *numerator = duration;
     return;
   }
@@ -52,9 +52,9 @@ void calculate_frame_duration_fraction (uint64_t duration, uint32_t limit, uint3
   // the current coefficient would be too large to fit, so try reducing it until it fits; if a good coefficient is found, use it
   temp = coefficient / 2 + 1;
   if (cumulative_numerator > cumulative_denominator) {
-    while (-- coefficient >= temp) if ((cumulative_numerator * coefficient + previous_numerator) <= limit) break;
+    while (-- coefficient >= temp) if (cumulative_numerator * coefficient + previous_numerator <= limit) break;
   } else
-    while (-- coefficient >= temp) if ((cumulative_denominator * coefficient + previous_denominator) <= limit) break;
+    while (-- coefficient >= temp) if (cumulative_denominator * coefficient + previous_denominator <= limit) break;
   if (coefficient >= temp) {
     *numerator = cumulative_numerator * coefficient + previous_numerator;
     *denominator = cumulative_denominator * coefficient + previous_denominator;
@@ -67,7 +67,7 @@ void calculate_frame_duration_fraction (uint64_t duration, uint32_t limit, uint3
   if (coefficient) {
     cumulative_numerator = cumulative_numerator * coefficient + previous_numerator;
     cumulative_denominator = cumulative_denominator * coefficient + previous_denominator;
-    if ((cumulative_numerator > limit) || (cumulative_denominator > limit)) return;
+    if (cumulative_numerator > limit || cumulative_denominator > limit) return;
     /* The exact value, old approximation and new approximation are respectively proportional to the products of three quantities:
        exact value       ~ *denominator * duration * cumulative_denominator
        old approximation ~ *numerator * original_denominator * cumulative_denominator
@@ -112,7 +112,7 @@ void calculate_frame_duration_fraction (uint64_t duration, uint32_t limit, uint3
       } else
         new_high = -new_high;
     // and finally, compare and use the new results if they are better
-    if ((new_high < old_high) || ((new_high == old_high) && (new_low <= old_low))) {
+    if (new_high < old_high || (new_high == old_high && new_low <= old_low)) {
       *numerator = cumulative_numerator;
       *denominator = cumulative_denominator;
     }

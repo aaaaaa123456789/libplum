@@ -4,16 +4,16 @@ unsigned char * compress_GIF_data (struct context * context, const unsigned char
   struct compressed_GIF_code * codes = ctxmalloc(context, sizeof *codes * 4097);
   initialize_GIF_compression_codes(codes, codesize);
   *length = 0;
-  size_t allocated = 254;
+  size_t allocated = 254; // initial size
   unsigned char * output = ctxmalloc(context, allocated);
   unsigned current_codesize = codesize + 1, bits = current_codesize, max_code = (1 << codesize) + 1, current_code = *(data ++);
   count --;
   uint_fast32_t chain = 1, codeword = 1 << codesize;
-  uint_fast16_t p;
-  uint_fast8_t search, shortchains = 0;
+  uint_fast8_t shortchains = 0;
   while (count --) {
-    search = *(data ++);
-    for (p = 0; p <= max_code; p ++) if (!codes[p].type && (codes[p].reference == current_code) && (codes[p].value == search)) break;
+    uint_fast8_t search = *(data ++);
+    uint_fast16_t p;
+    for (p = 0; p <= max_code; p ++) if (!codes[p].type && codes[p].reference == current_code && codes[p].value == search) break;
     if (p <= max_code) {
       current_code = p;
       chain ++;
@@ -22,15 +22,16 @@ unsigned char * compress_GIF_data (struct context * context, const unsigned char
       bits += current_codesize;
       codes[++ max_code] = (struct compressed_GIF_code) {.type = 0, .reference = current_code, .value = search};
       current_code = search;
-      if (current_codesize > (codesize + 2))
-        if (chain <= (current_codesize / codesize))
+      if (current_codesize > codesize + 2)
+        if (chain <= current_codesize / codesize)
           shortchains ++;
         else if (shortchains)
           shortchains --;
       chain = 1;
       if (max_code > 4095) max_code = 4095;
       if (max_code == (1 << current_codesize)) current_codesize ++;
-      if (shortchains > (codesize + 8)) {
+      if (shortchains > codesize + 8) {
+        // output a clear code and reset the code table
         codeword |= 1 << (bits + codesize);
         bits += current_codesize;
         max_code = (1 << codesize) + 1;
@@ -64,24 +65,22 @@ void decompress_GIF_data (struct context * context, unsigned char * restrict res
   struct compressed_GIF_code * codes = ctxmalloc(context, sizeof *codes * 4097);
   initialize_GIF_compression_codes(codes, codesize);
   unsigned bits = 0, current_codesize = codesize + 1, max_code = (1 << codesize) + 1;
-  uint_fast32_t code, codeword = 0;
+  uint_fast32_t codeword = 0;
   int lastcode = -1;
   unsigned char * current = result;
   unsigned char * limit = result + expected_length;
   while (1) {
     while (bits < current_codesize) {
       if (!(length --)) {
-        if (current == limit) {
-          // handle images that are so broken that they never emit a stop code
-          ctxfree(context, codes);
-          return;
-        }
-        throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+        // handle images that are so broken that they never emit a stop code
+        if (current != limit) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+        ctxfree(context, codes);
+        return;
       }
       codeword |= (uint_fast32_t) *(source ++) << bits;
       bits += 8;
     }
-    code = codeword & (((uint_fast32_t) 1 << current_codesize) - 1);
+    uint_fast16_t code = codeword & ((1u << current_codesize) - 1);
     codeword >>= current_codesize;
     bits -= current_codesize;
     switch (codes[code].type) {
@@ -102,7 +101,7 @@ void decompress_GIF_data (struct context * context, unsigned char * restrict res
         ctxfree(context, codes);
         return;
       case 3:
-        if (code != (max_code + 1)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+        if (code != max_code + 1) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         if (lastcode < 0) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         codes[++ max_code] = (struct compressed_GIF_code) {.reference = lastcode, .value = find_leading_GIF_code(codes, lastcode), .type = 0};
         emit_GIF_data(context, codes, max_code, &current, limit);
