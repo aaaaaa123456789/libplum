@@ -237,7 +237,7 @@ void load_GIF_frame (struct context * context, size_t * offset, unsigned flags, 
     if (transparent_index < 0) throw(context, PLUM_ERR_INVALID_FILE_FORMAT); // if we got here somehow, it's irrecoverable
     uint8_t * fullframe = ctxmalloc(context, context -> image -> width * context -> image -> height);
     memset(fullframe, transparent_index, context -> image -> width * context -> image -> height);
-    for (uint_fast16_t row = top; row < (top + height); row ++)
+    for (uint_fast16_t row = top; row < top + height; row ++)
       memcpy(fullframe + context -> image -> width * row + left, buffer + width * (row - top), width);
     write_palette_framebuffer_to_image(context, fullframe, palette, frame, flags, 0xff);
     ctxfree(context, fullframe);

@@ -3,11 +3,11 @@
 struct JPEG_encoded_value * generate_JPEG_luminance_data_stream (struct context * context, double (* restrict data)[64], size_t units,
                                                                  const uint8_t quantization[restrict static 64], size_t * restrict count) {
   *count = 0;
-  size_t unit, allocated = 3 * units + 64;
+  size_t allocated = 3 * units + 64;
   struct JPEG_encoded_value * result = ctxmalloc(context, sizeof *result * allocated);
   double predicted = 0.0;
-  for (unit = 0; unit < units; unit ++) {
-    if ((allocated - *count) < 64) {
+  for (size_t unit = 0; unit < units; unit ++) {
+    if (allocated - *count < 64) {
       size_t newsize = allocated + 3 * (units - unit) + 64;
       if (newsize < allocated) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
       result = ctxrealloc(context, result, sizeof *result * (allocated = newsize));
@@ -20,11 +20,11 @@ struct JPEG_encoded_value * generate_JPEG_luminance_data_stream (struct context 
 struct JPEG_encoded_value * generate_JPEG_chrominance_data_stream (struct context * context, double (* restrict blue)[64], double (* restrict red)[64],
                                                                    size_t units, const uint8_t quantization[restrict static 64], size_t * restrict count) {
   *count = 0;
-  size_t unit, allocated = 6 * units + 128;
+  size_t allocated = 6 * units + 128;
   struct JPEG_encoded_value * result = ctxmalloc(context, sizeof *result * allocated);
   double predicted_blue = 0.0, predicted_red = 0.0;
-  for (unit = 0; unit < units; unit ++) {
-    if ((allocated - *count) < 128) {
+  for (size_t unit = 0; unit < units; unit ++) {
+    if (allocated - *count < 128) {
       size_t newsize = allocated + 6 * (units - unit) + 128;
       if (newsize < allocated) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
       result = ctxrealloc(context, result, sizeof *result * (allocated = newsize));
@@ -39,9 +39,9 @@ double generate_JPEG_data_unit (struct JPEG_encoded_value * data, size_t * restr
                                 const uint8_t quantization[restrict static 64], double predicted) {
   int16_t output[64];
   predicted = apply_JPEG_DCT(output, unit, quantization, predicted);
-  size_t p, last = 0;
+  uint_fast8_t last = 0;
   encode_JPEG_value(data + ((*count) ++), *output, 0, 0);
-  for (p = 1; p < 63; p ++) if (output[p]) {
+  for (uint_fast8_t p = 1; p < 63; p ++) if (output[p]) {
     for (; (p - last) > 16; last += 16) data[(*count) ++] = (struct JPEG_encoded_value) {.code = 0xf0, .bits = 0, .type = 1};
     encode_JPEG_value(data + ((*count) ++), output[p], 1, (p - last - 1) << 4);
     last = p;
@@ -53,7 +53,7 @@ double generate_JPEG_data_unit (struct JPEG_encoded_value * data, size_t * restr
 void encode_JPEG_value (struct JPEG_encoded_value * data, int16_t value, unsigned type, unsigned char addend) {
   unsigned bits = bit_width(absolute_value(value));
   if (value < 0) value += 0x7fff; // make it positive and subtract 1 from the significant bits
-  value &= (1 << bits) - 1;
+  value &= (1u << bits) - 1;
   *data = (struct JPEG_encoded_value) {.code = addend + bits, .bits = bits, .type = type, .value = value};
 }
 
@@ -62,14 +62,13 @@ size_t generate_JPEG_Huffman_table (struct context * context, const struct JPEG_
   // returns the number of bytes spent encoding the table in the JPEG data (in output)
   size_t counts[0x101] = {[0x100] = 1}; // use 0x100 as a dummy value to absorb the highest (invalid) code
   unsigned char lengths[0x101];
-  size_t p;
   *output = index;
   index >>= 4;
-  for (p = 0; p < count; p ++) if (data[p].type == index) counts[data[p].code] ++;
+  for (size_t p = 0; p < count; p ++) if (data[p].type == index) counts[data[p].code] ++;
   generate_Huffman_tree(context, counts, lengths, 0x101, 16);
   unsigned char codecounts[16] = {0};
-  unsigned char maxcode, maxlength = 0;
-  for (p = 0; p < 0x100; p ++) if (lengths[p]) {
+  uint_fast8_t maxcode, maxlength = 0;
+  for (uint_fast16_t p = 0; p < 0x100; p ++) if (lengths[p]) {
     codecounts[lengths[p] - 1] ++;
     if (lengths[p] > maxlength) {
       maxlength = lengths[p];
@@ -84,7 +83,7 @@ size_t generate_JPEG_Huffman_table (struct context * context, const struct JPEG_
   memcpy(table, lengths, 0x100);
   memcpy(output + 1, codecounts, 16);
   size_t outsize = 17;
-  for (maxlength = 1; maxlength <= 16; maxlength ++) for (p = 0; p < 0x100; p ++) if (lengths[p] == maxlength) output[outsize ++] = p;
+  for (uint_fast8_t length = 1; length <= 16; length ++) for (uint_fast16_t p = 0; p < 0x100; p ++) if (lengths[p] == length) output[outsize ++] = p;
   return outsize;
 }
 
@@ -93,10 +92,10 @@ void encode_JPEG_scan (struct context * context, const struct JPEG_encoded_value
   generate_Huffman_codes(codes, 0x100, table, 0);
   generate_Huffman_codes(codes + 0x100, 0x100, table + 0x100, 0);
   unsigned char * node = append_output_node(context, 0x4000);
-  size_t p, size = 0;
+  size_t size = 0;
   uint_fast32_t output = 0;
   unsigned char bits = 0;
-  for (p = 0; p < count; p ++) {
+  for (size_t p = 0; p < count; p ++) {
     if (size > 0x3ff8) {
       context -> output -> size = size;
       node = append_output_node(context, 0x4000);
