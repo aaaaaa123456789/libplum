@@ -26,13 +26,14 @@ void initialize_JPEG_decompressor_state_common (struct context * context, struct
     unsigned char * entry = state -> MCU;
     uint_fast8_t component;
     for (component = 0; component < 4 && componentIDs[component] != 0xff; component ++) {
-      state -> unit_offset[componentIDs[component]] = components[componentIDs[component]].scaleH;
-      state -> row_offset[componentIDs[component]] = *unitsH * state -> unit_offset[componentIDs[component]];
-      state -> unit_row_offset[componentIDs[component]] = (components[componentIDs[component]].scaleV - 1) * state -> row_offset[componentIDs[component]];
-      state -> row_offset[componentIDs[component]] -= state -> unit_offset[componentIDs[component]];
-      for (uint_fast8_t row = 0; row < components[componentIDs[component]].scaleV; row ++) {
+      uint_fast8_t p = componentIDs[component];
+      state -> unit_offset[p] = components[p].scaleH;
+      state -> row_offset[p] = *unitsH * state -> unit_offset[p];
+      state -> unit_row_offset[p] = (components[p].scaleV - 1) * state -> row_offset[p];
+      state -> row_offset[p] -= state -> unit_offset[p];
+      for (uint_fast8_t row = 0; row < components[p].scaleV; row ++) {
         *(entry ++) = row ? MCU_NEXT_ROW : MCU_ZERO_COORD;
-        for (uint_fast8_t col = 0; col < components[componentIDs[component]].scaleH; col ++) *(entry ++) = componentIDs[component];
+        for (uint_fast8_t col = 0; col < components[p].scaleH; col ++) *(entry ++) = p;
       }
     }
     *entry = MCU_END_LIST;
