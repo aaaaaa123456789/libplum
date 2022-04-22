@@ -18,11 +18,11 @@ void generate_Huffman_tree (struct context * context, const size_t * restrict co
   size_t * pendingnodes = ctxmalloc(context, truecount * sizeof *pendingnodes);
   size_t * pendingcounts = ctxmalloc(context, truecount * sizeof *pendingcounts);
   size_t next = entries;
-  uint64_t remaining = truecount;
   for (size_t p = 0; p < truecount; p ++) {
     pendingnodes[p] = sorted[2 * p];
     pendingcounts[p] = counts[pendingnodes[p]];
   }
+  uint64_t remaining = truecount;
   while (remaining > 1) {
     parents[pendingnodes[-- remaining]] = next;
     parents[pendingnodes[remaining - 1]] = next;
@@ -45,10 +45,10 @@ void generate_Huffman_tree (struct context * context, const size_t * restrict co
   ctxfree(context, pendingcounts);
   ctxfree(context, pendingnodes);
   size_t root = next - 1;
-  unsigned char length, maxlength = 0;
+  unsigned char maxlength = 0;
   for (size_t p = 0; p < truecount; p ++) {
     next = sorted[p * 2];
-    length = 0;
+    unsigned char length = 0;
     while (next != root) {
       if (length < 0xff) length ++;
       next = parents[next];
