@@ -50,10 +50,7 @@ void generate_BMP_bitmasked_data (struct context * context, uint32_t depth, unsi
   write_le32_unaligned(attributes + 40, ((uint32_t) 1 << reddepth) - 1);
   write_le32_unaligned(attributes + 44, (((uint32_t) 1 << greendepth) - 1) << reddepth);
   write_le32_unaligned(attributes + 48, (((uint32_t) 1 << bluedepth) - 1) << blueshift);
-  if (alphadepth)
-    write_le32_unaligned(attributes + 52, (((uint32_t) 1 << alphadepth) - 1) << alphashift);
-  else
-    write_le32_unaligned(attributes + 52, 0);
+  write_le32_unaligned(attributes + 52, alphadepth ? (((uint32_t) 1 << alphadepth) - 1) << alphashift : 0);
   write_le32_unaligned(attributes + 56, 0x73524742u); // 'sRGB'
   size_t rowsize = (size_t) context -> source -> width * (attributes[14] >> 3);
   if (totaldepth <= 16 && (context -> source -> width & 1)) rowsize += 2;
@@ -62,11 +59,11 @@ void generate_BMP_bitmasked_data (struct context * context, uint32_t depth, unsi
   unsigned char * data = append_output_node(context, imagesize);
   uint_fast32_t row = context -> source -> height - 1;
   do {
-    size_t index, pos = (size_t) row * context -> source -> width;
+    size_t pos = (size_t) row * context -> source -> width;
     for (uint_fast32_t p = 0; p < context -> source -> width; p ++) {
       uint64_t color;
       const void * colordata = context -> source -> data;
-      index = pos ++;
+      size_t index = pos ++;
       if (context -> source -> palette) {
         index = context -> source -> data8[index];
         colordata = context -> source -> palette;

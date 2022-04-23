@@ -35,8 +35,7 @@ size_t plum_pixel_buffer_size (const struct plum_image * image) {
   if (!image) return 0;
   if (!plum_check_valid_image_size(image -> width, image -> height, image -> frames)) return 0;
   size_t count = (size_t) image -> width * image -> height * image -> frames;
-  if (image -> palette) return count;
-  return plum_color_buffer_size(count, image -> color_format);
+  return image -> palette ? count : plum_color_buffer_size(count, image -> color_format);
 }
 
 size_t plum_palette_buffer_size (const struct plum_image * image) {
@@ -58,9 +57,9 @@ void write_framebuffer_to_image (struct plum_image * image, const uint64_t * fra
 
 void write_palette_framebuffer_to_image (struct context * context, const uint8_t * framebuffer, const uint64_t * palette, uint32_t frame, unsigned flags,
                                          uint8_t max_palette_index) {
-  size_t pos, framesize = (size_t) context -> image -> width * context -> image -> height;
+  size_t framesize = (size_t) context -> image -> width * context -> image -> height;
   if (max_palette_index < 0xff)
-    for (pos = 0; pos < framesize; pos ++) if (framebuffer[pos] > max_palette_index) throw(context, PLUM_ERR_INVALID_COLOR_INDEX);
+    for (size_t pos = 0; pos < framesize; pos ++) if (framebuffer[pos] > max_palette_index) throw(context, PLUM_ERR_INVALID_COLOR_INDEX);
   if (context -> image -> palette) {
     memcpy(context -> image -> data8 + framesize * frame, framebuffer, framesize);
     return;
@@ -120,8 +119,7 @@ unsigned plum_rotate_image (struct plum_image * image, unsigned count, int flip)
 #define ROTATE_FRAME_FUNCTION(bits) \
 void rotate_frame_ ## bits (uint ## bits ## _t * restrict frame, uint ## bits ## _t * restrict buffer, size_t width, size_t height, \
                             size_t (* coordinate) (size_t, size_t, size_t, size_t)) {                                               \
-  size_t row, col;                                                                                                                  \
-  for (row = 0; row < height; row ++) for (col = 0; col < width; col ++)                                                            \
+  for (size_t row = 0; row < height; row ++) for (size_t col = 0; col < width; col ++)                                              \
     buffer[row * width + col] = frame[coordinate(row, col, width, height)];                                                         \
   memcpy(frame, buffer, sizeof *frame * width * height);                                                                            \
 }

@@ -33,7 +33,7 @@ void load_JPEG_DCT_frame (struct context * context, const struct JPEG_marker_lay
       // check that all quantization and Huffman tables (when applicable) used by the scan have already been loaded
       if (!tables -> quantization[component_info[scancomponents[p]].tableQ]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
       if (!(layout -> frametype[frameindex] & 8)) {
-        if (!(first || tables -> Huffman[component_info[scancomponents[p]].tableDC])) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+        if (!first && !tables -> Huffman[component_info[scancomponents[p]].tableDC]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         if (last && !tables -> Huffman[component_info[scancomponents[p]].tableAC + 4]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
       }
       // ensure that this scan's successive approximation bit parameters match what is expected based on previous scans, and update currentbits
@@ -208,8 +208,7 @@ void unpack_JPEG_component (double * restrict result, double * restrict source, 
     scaleV = 1;
   }
   // indexes into the interpolation index lists: 1-4 for integer ratios (scale = 1 after normalization above), 0 for 3/2, 5 for 4/3
-  unsigned char indexH = (scaleH != 1) ? (scaleH == 3) * 5 : maxH;
-  unsigned char indexV = (scaleV != 1) ? (scaleV == 3) * 5 : maxV;
+  unsigned char indexH = (scaleH == 2) ? 0 : (scaleH == 3) ? 5 : maxH, indexV = (scaleV == 2) ? 0 : (scaleV == 3) ? 5 : maxV;
   // weights for all possible scaling factors (3/2, 1 to 4, 4/3); a subset of these will be selected for each axis depending on the actual scale factor
   static const double interpolation_weights[] = {0x0.55555555555558p+0, 0x0.aaaaaaaaaaaaa8p+0, 1.0, 0x0.aaaaaaaaaaaaa8p+0, 0x0.55555555555558p+0, 0.0,
                                                  0x0.4p+0, 0x0.cp+0, 0x0.4p+0, 0x0.2aaaaaaaaaaaa8p+0, 0x0.8p+0, 0x0.d5555555555558p+0, 0x0.8p+0,

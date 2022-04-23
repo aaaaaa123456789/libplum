@@ -22,7 +22,7 @@ void generate_GIF_data (struct context * context) {
 }
 
 void generate_GIF_data_with_palette (struct context * context, unsigned char * header) {
-  uint_fast16_t current, colors = context -> source -> max_palette_index + 1;
+  uint_fast16_t colors = context -> source -> max_palette_index + 1;
   uint32_t * palette = ctxcalloc(context, 256 * sizeof *palette);
   plum_convert_colors(palette, context -> source -> palette, colors, PLUM_COLOR_32, context -> source -> color_format);
   int transparent = -1;
@@ -42,15 +42,17 @@ void generate_GIF_data_with_palette (struct context * context, unsigned char * h
   }
   int_fast32_t background = get_GIF_background_color(context);
   if (background >= 0) {
-    for (current = 0; current < colors; current ++) if (palette[current] == background) break;
-    if (current == colors && colors < 256) palette[colors ++] = background;
-    background = (current < colors) ? current : -1;
+    uint_fast16_t bg_index;
+    for (bg_index = 0; bg_index < colors; bg_index ++) if (palette[bg_index] == background) break;
+    if (bg_index == colors && colors < 256) palette[colors ++] = background;
+    background = (bg_index < colors) ? bg_index : -1;
   }
-  for (current = 0; colors > (2 << current); current ++);
-  colors = 2 << current;
-  header[4] |= 0x80 + current;
+  uint_fast16_t colorbits;
+  for (colorbits = 0; colors > (2 << colorbits); colorbits ++);
+  uint_fast16_t colorcount = 2 << colorbits;
+  header[4] |= 0x80 + colorbits;
   if (background >= 0) header[5] = background;
-  write_GIF_palette(context, palette, colors);
+  write_GIF_palette(context, palette, colorcount);
   ctxfree(context, palette);
   write_GIF_loop_info(context);
   size_t framesize = (size_t) context -> source -> width * context -> source -> height;
@@ -90,7 +92,7 @@ void generate_GIF_data_with_palette (struct context * context, unsigned char * h
           memmove(framebuffer, framebuffer + context -> source -> width * top, context -> source -> width * height);
       }
     }
-    write_GIF_frame(context, framebuffer, NULL, colors, transparent, frame, left, top, width, height, durations, disposals);
+    write_GIF_frame(context, framebuffer, NULL, colorcount, transparent, frame, left, top, width, height, durations, disposals);
   }
   if (mapping) ctxfree(context, mapping);
   ctxfree(context, framebuffer);
@@ -210,10 +212,10 @@ void write_GIF_frame (struct context * context, const unsigned char * restrict d
   }
   uint_fast8_t colorbits;
   for (colorbits = 0; colors > (2 << colorbits); colorbits ++);
-  colors = 2 << colorbits;
+  unsigned colorcount = 2 << colorbits;
   byteoutput(context, 0x21, 0xf9, 0x04, (disposal + 1) * 4 + (transparent >= 0), duration, duration >> 8, (transparent >= 0) ? transparent : 0, 0x00,
                       0x2c, left, left >> 8, top, top >> 8, width, width >> 8, height, height >> 8, colorbits | (palette ? 0x80 : 0));
-  if (palette) write_GIF_palette(context, palette, colors);
+  if (palette) write_GIF_palette(context, palette, colorcount);
   if (!colorbits) colorbits = 1;
   byteoutput(context, ++ colorbits); // incremented because compression starts with one bit extra
   size_t length;

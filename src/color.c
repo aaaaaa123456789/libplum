@@ -6,17 +6,13 @@ void plum_convert_colors (void * restrict destination, const void * restrict sou
     memcpy(destination, source, plum_color_buffer_size(count, to));
     return;
   }
-  #define convert(sp) do                                                     \
-    if ((to & PLUM_COLOR_MASK) == PLUM_COLOR_16) {                           \
-      uint16_t * dp = destination;                                           \
-      while (count --) *(dp ++) = plum_convert_color(*(sp ++), from, to);    \
-    } else if ((to & PLUM_COLOR_MASK) == PLUM_COLOR_64) {                    \
-      uint64_t * dp = destination;                                           \
-      while (count --) *(dp ++) = plum_convert_color(*(sp ++), from, to);    \
-    } else {                                                                 \
-      uint32_t * dp = destination;                                           \
-      while (count --) *(dp ++) = plum_convert_color(*(sp ++), from, to);    \
-    }                                                                        \
+  #define convert(sp) do                                                                                       \
+    if ((to & PLUM_COLOR_MASK) == PLUM_COLOR_16)                                                               \
+      for (uint16_t * dp = destination; count; count --) *(dp ++) = plum_convert_color(*(sp ++), from, to);    \
+    else if ((to & PLUM_COLOR_MASK) == PLUM_COLOR_64)                                                          \
+      for (uint64_t * dp = destination; count; count --) *(dp ++) = plum_convert_color(*(sp ++), from, to);    \
+    else                                                                                                       \
+      for (uint32_t * dp = destination; count; count --) *(dp ++) = plum_convert_color(*(sp ++), from, to);    \
   while (0)
   if ((from & PLUM_COLOR_MASK) == PLUM_COLOR_16) {
     const uint16_t * sp = source;
@@ -88,57 +84,57 @@ uint64_t plum_convert_color (uint64_t color, unsigned from, unsigned to) {
 }
 
 void plum_remove_alpha (struct plum_image * image) {
-  void * buffer;
-  size_t count;
   if (!(image && image -> data && plum_check_valid_image_size(image -> width, image -> height, image -> frames))) return;
+  void * colordata;
+  size_t count;
   if (image -> palette) {
-    buffer = image -> palette;
+    colordata = image -> palette;
     count = image -> max_palette_index + 1;
   } else {
-    buffer = image -> data;
+    colordata = image -> data;
     count = (size_t) image -> width * image -> height * image -> frames;
   }
   switch (image -> color_format & PLUM_COLOR_MASK) {
     case PLUM_COLOR_32: {
-      uint32_t * p = buffer;
+      uint32_t * color = colordata;
       if (image -> color_format & PLUM_ALPHA_INVERT)
-        while (count --) *(p ++) |= 0xff000000u;
+        while (count --) *(color ++) |= 0xff000000u;
       else
-        while (count --) *(p ++) &= 0xffffffu;
+        while (count --) *(color ++) &= 0xffffffu;
     } break;
     case PLUM_COLOR_64: {
-      uint64_t * p = buffer;
+      uint64_t * color = colordata;
       if (image -> color_format & PLUM_ALPHA_INVERT)
-        while (count --) *(p ++) |= 0xffff000000000000u;
+        while (count --) *(color ++) |= 0xffff000000000000u;
       else
-        while (count --) *(p ++) &= 0xffffffffffffu;
+        while (count --) *(color ++) &= 0xffffffffffffu;
     } break;
     case PLUM_COLOR_16: {
-      uint16_t * p = buffer;
+      uint16_t * color = colordata;
       if (image -> color_format & PLUM_ALPHA_INVERT)
-        while (count --) *(p ++) |= 0x8000u;
+        while (count --) *(color ++) |= 0x8000u;
       else
-        while (count --) *(p ++) &= 0x7fffu;
+        while (count --) *(color ++) &= 0x7fffu;
     } break;
     case PLUM_COLOR_32X: {
-      uint32_t * p = buffer;
+      uint32_t * color = colordata;
       if (image -> color_format & PLUM_ALPHA_INVERT)
-        while (count --) *(p ++) |= 0xc0000000u;
+        while (count --) *(color ++) |= 0xc0000000u;
       else
-        while (count --) *(p ++) &= 0x3fffffffu;
+        while (count --) *(color ++) &= 0x3fffffffu;
     }
   }
 }
 
 int image_has_transparency (const struct plum_image * image) {
-  size_t count;
   const void * colordata;
+  size_t count;
   if (image -> palette) {
-    count = image -> max_palette_index + 1;
     colordata = image -> palette;
+    count = image -> max_palette_index + 1;
   } else {
-    count = (size_t) image -> width * image -> height * image -> frames;
     colordata = image -> data;
+    count = (size_t) image -> width * image -> height * image -> frames;
   }
   switch (image -> color_format & PLUM_COLOR_MASK) {
     case PLUM_COLOR_32: {

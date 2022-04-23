@@ -7,10 +7,9 @@ unsigned char * compress_GIF_data (struct context * context, const unsigned char
   size_t allocated = 254; // initial size
   unsigned char * output = ctxmalloc(context, allocated);
   unsigned current_codesize = codesize + 1, bits = current_codesize, max_code = (1 << codesize) + 1, current_code = *(data ++);
-  count --;
   uint_fast32_t chain = 1, codeword = 1 << codesize;
   uint_fast8_t shortchains = 0;
-  while (count --) {
+  while (-- count) {
     uint_fast8_t search = *(data ++);
     uint_fast16_t p;
     for (p = 0; p <= max_code; p ++) if (!codes[p].type && codes[p].reference == current_code && codes[p].value == search) break;
@@ -123,8 +122,7 @@ void initialize_GIF_compression_codes (struct compressed_GIF_code * codes, unsig
 }
 
 uint8_t find_leading_GIF_code (const struct compressed_GIF_code * codes, unsigned code) {
-  if (codes[code].reference < 0) return codes[code].value;
-  return find_leading_GIF_code(codes, codes[code].reference);
+  return (codes[code].reference < 0) ? codes[code].value : find_leading_GIF_code(codes, codes[code].reference);
 }
 
 void emit_GIF_data (struct context * context, const struct compressed_GIF_code * codes, unsigned code, unsigned char ** result, unsigned char * limit) {
