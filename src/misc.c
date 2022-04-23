@@ -78,6 +78,6 @@ int compare64 (const void * first, const void * second) {
 int compare_index_value_pairs (const void * first, const void * second) {
   const uint64_t * p1 = first;
   const uint64_t * p2 = second;
-  if (p1[1] != p2[1]) return (p1[1] > p2[1]) - (p1[1] < p2[1]);
-  return (*p1 > *p2) - (*p1 < *p2);
+  size_t index = p1[1] != p2[1];
+  return (p1[index] > p2[index]) - (p1[index] < p2[index]);
 }

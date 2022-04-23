@@ -2,7 +2,6 @@
 
 void load_BMP_data (struct context * context, unsigned flags, size_t limit) {
   if (context -> size < 54) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  uint_fast32_t dataoffset = read_le32_unaligned(context -> data + 10);
   uint_fast32_t subheader = read_le32_unaligned(context -> data + 14);
   if (subheader < 40 || subheader >= 0xffffffe6u) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   context -> image -> type = PLUM_IMAGE_BMP;
@@ -16,6 +15,7 @@ void load_BMP_data (struct context * context, unsigned flags, size_t limit) {
     inverted = 0;
   }
   validate_image_size(context, limit);
+  uint_fast32_t dataoffset = read_le32_unaligned(context -> data + 10);
   if (dataoffset < subheader + 14 || dataoffset >= context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   if (read_le16_unaligned(context -> data + 26) != 1) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   uint_fast16_t bits = read_le16_unaligned(context -> data + 28);
@@ -244,8 +244,8 @@ uint8_t * load_halfbyte_compressed_BMP (struct context * context, size_t offset,
       default: {
         if (col + databyte > context -> image -> width) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         if (remaining < (((databyte + 3) & ~3u) >> 1)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-        uint_fast8_t pos;
         uint8_t * framedata = frame + (size_t) row * context -> image -> width + col;
+        uint_fast8_t pos;
         for (pos = 0; pos < (databyte >> 1); pos ++) {
           *(framedata ++) = data[pos] >> 4;
           *(framedata ++) = data[pos] & 15;
