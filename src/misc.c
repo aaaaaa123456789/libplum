@@ -5,16 +5,15 @@ unsigned plum_validate_image (const struct plum_image * image) {
   if (!(image -> width && image -> height && image -> frames && image -> data)) return PLUM_ERR_NO_DATA;
   if (!plum_check_valid_image_size(image -> width, image -> height, image -> frames)) return PLUM_ERR_IMAGE_TOO_LARGE;
   if (image -> type >= PLUM_NUM_IMAGE_TYPES) return PLUM_ERR_INVALID_FILE_FORMAT;
-  const struct plum_metadata * metadata;
   uint_fast8_t found[PLUM_NUM_METADATA_TYPES - 1] = {0};
-  for (metadata = image -> metadata; metadata; metadata = metadata -> next) {
+  for (const struct plum_metadata * metadata = image -> metadata; metadata; metadata = metadata -> next) {
     if (metadata -> size && !metadata -> data) return PLUM_ERR_INVALID_METADATA;
     if (metadata -> type <= 0) continue;
-    if ((metadata -> type >= PLUM_NUM_METADATA_TYPES) || found[metadata -> type - 1]) return PLUM_ERR_INVALID_METADATA;
+    if (metadata -> type >= PLUM_NUM_METADATA_TYPES || found[metadata -> type - 1]) return PLUM_ERR_INVALID_METADATA;
     found[metadata -> type - 1] = 1;
     switch (metadata -> type) {
       case PLUM_METADATA_COLOR_DEPTH:
-        if ((metadata -> size < 3) || (metadata -> size > 5)) return PLUM_ERR_INVALID_METADATA;
+        if (metadata -> size < 3 || metadata -> size > 5) return PLUM_ERR_INVALID_METADATA;
         break;
       case PLUM_METADATA_BACKGROUND:
         if (metadata -> size != plum_color_buffer_size(1, image -> color_format)) return PLUM_ERR_INVALID_METADATA;
@@ -25,10 +24,8 @@ unsigned plum_validate_image (const struct plum_image * image) {
       case PLUM_METADATA_FRAME_DURATION:
         if (metadata -> size % sizeof(uint64_t)) return PLUM_ERR_INVALID_METADATA;
         break;
-      case PLUM_METADATA_FRAME_DISPOSAL: {
-        size_t p;
-        for (p = 0; p < metadata -> size; p ++) if (p[(uint8_t *) metadata -> data] >= PLUM_NUM_DISPOSAL_METHODS) return PLUM_ERR_INVALID_METADATA;
-      }
+      case PLUM_METADATA_FRAME_DISPOSAL:
+        for (size_t p = 0; p < metadata -> size; p ++) if (p[(uint8_t *) metadata -> data] >= PLUM_NUM_DISPOSAL_METHODS) return PLUM_ERR_INVALID_METADATA;
     }
   }
   return 0;

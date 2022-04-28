@@ -27,9 +27,9 @@ unsigned plum_append_metadata (struct plum_image * image, int type, const void *
 }
 
 struct plum_metadata * plum_find_metadata (const struct plum_image * image, int type) {
-  struct plum_metadata * metadata;
   if (!image) return NULL;
-  for (metadata = (struct plum_metadata *) image -> metadata; metadata; metadata = metadata -> next) if (metadata -> type == type) return metadata;
+  for (struct plum_metadata * metadata = (struct plum_metadata *) image -> metadata; metadata; metadata = metadata -> next)
+    if (metadata -> type == type) return metadata;
   return NULL;
 }
 
