@@ -29,6 +29,7 @@ size_t plum_store_image (const struct plum_image * image, void * restrict buffer
     case PLUM_MODE_BUFFER: {
       void * out = malloc(output_size);
       if (!out) throw(context, PLUM_ERR_OUT_OF_MEMORY);
+      // the function must succeed after reaching this point (otherwise, memory would be leaked)
       *(struct plum_buffer *) buffer = (struct plum_buffer) {.size = output_size, .data = out};
       write_generated_image_data(out, context -> output);
     } break;
@@ -72,12 +73,12 @@ void write_generated_image_data_to_callback (struct context * context, const str
   struct data_node * node;
   for (node = context -> output; node -> previous; node = node -> previous);
   while (node) {
-    unsigned char * data = node -> data;
+    unsigned char * data = node -> data; // not const because the callback takes an unsigned char *
     size_t size = node -> size;
     while (size) {
       int block = (size > 0x4000) ? 0x4000 : size;
       int count = callback -> callback(callback -> userdata, data, block);
-      if ((count < 0) || (count > block)) throw(context, PLUM_ERR_FILE_ERROR);
+      if (count < 0 || count > block) throw(context, PLUM_ERR_FILE_ERROR);
       data += count;
       size -= count;
     }
@@ -88,19 +89,16 @@ void write_generated_image_data_to_callback (struct context * context, const str
 void write_generated_image_data (void * restrict buffer, const struct data_node * data) {
   const struct data_node * node;
   for (node = data; node -> previous; node = node -> previous);
-  unsigned char * out = buffer;
-  while (node) {
+  for (unsigned char * out = buffer; node; node = node -> next) {
     memcpy(out, node -> data, node -> size);
     out += node -> size;
-    node = node -> next;
   }
 }
 
 size_t get_total_output_size (struct context * context) {
   size_t result = 0;
-  const struct data_node * node;
-  for (node = context -> output; node; node = node -> previous) {
-    if ((result + node -> size) < result) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
+  for (const struct data_node * node = context -> output; node; node = node -> previous) {
+    if (result + node -> size < result) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
     result += node -> size;
   }
   return result;
