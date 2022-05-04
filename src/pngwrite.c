@@ -268,7 +268,7 @@ void filter_PNG_rows (unsigned char * restrict rowdata, const unsigned char * re
   for (ptrdiff_t p = 0; p < pixelsize; p ++) *(output ++) = rowdata[p];
   for (ptrdiff_t p = pixelsize; p < rowsize; p ++) *(output ++) = rowdata[p] - rowdata[p - pixelsize];
   *(output ++) = 2;
-  for (ptrdiff_t  p = 0; p < rowsize; p ++) *(output ++) = rowdata[p] - previous[p];
+  for (ptrdiff_t p = 0; p < rowsize; p ++) *(output ++) = rowdata[p] - previous[p];
   *(output ++) = 3;
   for (ptrdiff_t p = 0; p < pixelsize; p ++) *(output ++) = rowdata[p] - (previous[p] >> 1);
   for (ptrdiff_t p = pixelsize; p < rowsize; p ++) *(output ++) = rowdata[p] - ((previous[p] + rowdata[p - pixelsize]) >> 1);

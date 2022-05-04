@@ -42,10 +42,10 @@ void generate_GIF_data_with_palette (struct context * context, unsigned char * h
   }
   int_fast32_t background = get_GIF_background_color(context);
   if (background >= 0) {
-    uint_fast16_t bg_index;
-    for (bg_index = 0; bg_index < colors; bg_index ++) if (palette[bg_index] == background) break;
-    if (bg_index == colors && colors < 256) palette[colors ++] = background;
-    background = (bg_index < colors) ? bg_index : -1;
+    uint_fast16_t index;
+    for (index = 0; index < colors; index ++) if (palette[index] == background) break;
+    if (index == colors && colors < 256) palette[colors ++] = background;
+    background = (index < colors) ? index : -1;
   }
   uint_fast16_t colorbits;
   for (colorbits = 0; colors > (2 << colorbits); colorbits ++);

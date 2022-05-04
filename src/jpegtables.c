@@ -28,7 +28,7 @@ short * process_JPEG_Huffman_table (struct context * context, const unsigned cha
   for (uint_fast16_t p = 0; p < totalsize; p ++) result[p] = -1;
   uint_fast16_t code = 0, next = 2, offset = 0x8000u;
   // size is one less because we don't count the link to the leaf
-  for (uint_fast8_t size = 0; offset; size ++, offset >>= 1) for (uint_fast8_t count = lengths[size]; count; count --) {
+  for (uint_fast8_t size = 0; size < 16; size ++, offset >>= 1) for (uint_fast8_t count = lengths[size]; count; count --) {
     uint_fast16_t current = 0x8000u, index = 0;
     for (uint_fast8_t remainder = size; remainder; remainder --) {
       if (code & current) index ++;

@@ -40,10 +40,10 @@ double generate_JPEG_data_unit (struct JPEG_encoded_value * data, size_t * restr
   int16_t output[64];
   predicted = apply_JPEG_DCT(output, unit, quantization, predicted);
   uint_fast8_t last = 0;
-  encode_JPEG_value(data + ((*count) ++), *output, 0, 0);
+  encode_JPEG_value(data + (*count) ++, *output, 0, 0);
   for (uint_fast8_t p = 1; p < 63; p ++) if (output[p]) {
     for (; (p - last) > 16; last += 16) data[(*count) ++] = (struct JPEG_encoded_value) {.code = 0xf0, .bits = 0, .type = 1};
-    encode_JPEG_value(data + ((*count) ++), output[p], 1, (p - last - 1) << 4);
+    encode_JPEG_value(data + (*count) ++, output[p], 1, (p - last - 1) << 4);
     last = p;
   }
   if (last != 63) data[(*count) ++] = (struct JPEG_encoded_value) {.code = 0, .bits = 0, .type = 1};

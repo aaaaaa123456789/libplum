@@ -155,13 +155,16 @@ void load_GIF_palette (struct context * context, uint64_t * palette, size_t * of
 void * load_GIF_data_blocks (struct context * context, size_t * restrict offset, size_t * restrict loaded_size) {
   if (*offset >= context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   size_t current_size = 0;
-  for (size_t block, p = *offset; block = context -> data[p ++]; current_size += block) {
+  uint_fast8_t block;
+  for (size_t p = *offset; block; current_size += block) {
+    block = context -> data[p ++];
     p += block;
-    if (p >= context -> size || p < block) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    if (p >= context -> size || p <= block) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   }
   *loaded_size = current_size;
   unsigned char * result = ctxmalloc(context, current_size);
-  for (size_t block, copied_size = 0; block = context -> data[(*offset) ++]; copied_size += block) {
+  for (size_t copied_size = 0; block; copied_size += block) {
+    block = context -> data[(*offset) ++];
     memcpy(result + copied_size, context -> data + *offset, block);
     *offset += block;
   }

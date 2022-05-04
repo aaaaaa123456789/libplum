@@ -48,8 +48,8 @@ double apply_JPEG_DCT (int16_t output[restrict static 64], const double input[re
   for (uint_fast8_t index = 0; index < 64; index ++) {
     uint_fast8_t p = 0;
     double converted = 0.0;
-    for (uint_fast8_t row = 0; row < 8; row ++) for (uint_fast8_t col = 0; col < 8; p ++, col ++)
-      converted += input[p] * coefficients[col][cols[index]] * coefficients[row][rows[index]];
+    for (uint_fast8_t row = 0; row < 8; row ++) for (uint_fast8_t col = 0; col < 8; col ++)
+      converted += input[p ++] * coefficients[col][cols[index]] * coefficients[row][rows[index]];
     converted = converted * factors[index] / quantization[index];
     if (index)
       if (converted >= -zeroflush[index] && converted <= zeroflush[index])

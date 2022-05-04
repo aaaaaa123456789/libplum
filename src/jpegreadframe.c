@@ -221,12 +221,9 @@ void unpack_JPEG_component (double * restrict result, double * restrict source, 
   const double * secondH = interpolation_weights + second_interpolation_indexes[indexH];
   const double * secondV = interpolation_weights + second_interpolation_indexes[indexV];
   // scale up the component, as determined by the scale parameters, by interpolating the decoded data
-  unsigned char offsetV = maxV / (2 * scaleV);
-  size_t p = 0, sourceY = 0;
-  for (size_t row = 0; row < height; row ++) {
-    size_t sourceX = 0;
-    unsigned char offsetH = maxH / (2 * scaleH);
-    for (size_t col = 0; col < width; col ++) {
+  unsigned char offsetV = maxV / (2 * scaleV), offsetH = maxH / (2 * scaleH);
+  for (size_t p = 0, sourceY = 0, row = 0; row < height; row ++) {
+    for (size_t sourceX = 0, col = 0; col < width; col ++) {
       result[p ++] += source[sourceX + sourceY * scaled_width] * firstH[offsetH] * firstV[offsetV] +
                       source[sourceX + 1 + sourceY * scaled_width] * secondH[offsetH] * firstV[offsetV] +
                       source[sourceX + (sourceY + 1) * scaled_width] * firstH[offsetH] * secondV[offsetV] +
