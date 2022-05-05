@@ -3,39 +3,36 @@
 void decompress_JPEG_arithmetic_scan (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_decoder_tables * tables,
                                       size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned shift, unsigned char first,
                                       unsigned char last, int differential) {
-  size_t restart_interval;
-  for (restart_interval = 0; restart_interval <= state -> restart_count; restart_interval ++) {
+  for (size_t restart_interval = 0; restart_interval <= state -> restart_count; restart_interval ++) {
     size_t units = (restart_interval == state -> restart_count) ? state -> last_size : state -> restart_size;
     if (!units) break;
     size_t offset = *(offsets ++);
     size_t remaining = *(offsets ++);
-    int16_t (* outputunit)[64];
-    const unsigned char * decodepos;
     size_t colcount = 0, rowcount = 0, skipunits = 0;
     uint16_t accumulator = 0;
     uint32_t current = 0;
-    unsigned char p, conditioning, bits = 0;
+    unsigned char bits = 0;
     initialize_JPEG_arithmetic_counters(context, &offset, &remaining, &current);
     signed char indexesDC[4][49] = {0};
     signed char indexesAC[4][245] = {0};
     uint16_t prevDC[4] = {0};
     uint16_t prevdiff[4] = {0};
-    int prevzero;
     while (units --) {
-      for (decodepos = state -> MCU; *decodepos != MCU_END_LIST; decodepos ++) switch (*decodepos) {
+      int16_t (* outputunit)[64];
+      for (const unsigned char * decodepos = state -> MCU; *decodepos != MCU_END_LIST; decodepos ++) switch (*decodepos) {
         case MCU_ZERO_COORD:
           outputunit = state -> current_block[decodepos[1]];
           break;
         case MCU_NEXT_ROW:
           outputunit += state -> row_offset[decodepos[1]];
           break;
-        default:
-          prevzero = 0;
-          for (p = first; p <= last; p ++) {
+        default: {
+          int prevzero = 0; // was the previous coefficient zero?
+          for (uint_fast8_t p = first; p <= last; p ++) {
             if (skipunits)
               p[*outputunit] = 0;
             else if (p) {
-              conditioning = tables -> arithmetic[components[*decodepos].tableAC + 4];
+              unsigned char conditioning = tables -> arithmetic[components[*decodepos].tableAC + 4];
               signed char * index = indexesAC[components[*decodepos].tableAC] + 3 * (p - 1);
               if (!prevzero && next_JPEG_arithmetic_bit(context, &offset, &remaining, index, &current, &accumulator, &bits)) {
                 p[*outputunit] = 0;
@@ -49,7 +46,7 @@ void decompress_JPEG_arithmetic_scan (struct context * context, struct JPEG_deco
                 prevzero = 1;
               }
             } else {
-              conditioning = tables -> arithmetic[components[*decodepos].tableDC];
+              unsigned char conditioning = tables -> arithmetic[components[*decodepos].tableDC];
               unsigned char category = classify_JPEG_arithmetic_value(prevdiff[*decodepos], conditioning);
               if (next_JPEG_arithmetic_bit(context, &offset, &remaining, indexesDC[components[*decodepos].tableDC] + 4 * category, &current, &accumulator, &bits))
                 prevdiff[*decodepos] = next_JPEG_arithmetic_value(context, &offset, &remaining, &current, &accumulator, &bits,
@@ -65,14 +62,15 @@ void decompress_JPEG_arithmetic_scan (struct context * context, struct JPEG_deco
           }
           outputunit ++;
           if (skipunits) skipunits --;
+        }
       }
-      if ((++ colcount) == rowunits) {
+      if (++ colcount == rowunits) {
         colcount = 0;
         rowcount ++;
         if (rowcount == state -> row_skip_index) skipunits += (rowunits - state -> column_skip_count) * state -> row_skip_count;
       }
       if (colcount == state -> column_skip_index) skipunits += state -> column_skip_count;
-      for (p = 0; p < 4; p ++) if (state -> current_block[p]) {
+      for (uint_fast8_t p = 0; p < 4; p ++) if (state -> current_block[p]) {
         state -> current_block[p] += state -> unit_offset[p];
         if (!colcount) state -> current_block[p] += state -> unit_row_offset[p];
       }
@@ -86,22 +84,20 @@ void decompress_JPEG_arithmetic_bit_scan (struct context * context, struct JPEG_
                                           unsigned char last) {
   // this function is very similar to decompress_JPEG_arithmetic_scan, but it only decodes the next bit for already-initialized data
   if (last && !first) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  size_t restart_interval;
-  for (restart_interval = 0; restart_interval <= state -> restart_count; restart_interval ++) {
+  for (size_t restart_interval = 0; restart_interval <= state -> restart_count; restart_interval ++) {
     size_t units = (restart_interval == state -> restart_count) ? state -> last_size : state -> restart_size;
     if (!units) break;
     size_t offset = *(offsets ++);
     size_t remaining = *(offsets ++);
-    int16_t (* outputunit)[64];
-    const unsigned char * decodepos;
     size_t colcount = 0, rowcount = 0, skipunits = 0;
     uint16_t accumulator = 0;
     uint32_t current = 0;
-    unsigned char p, bits = 0;
+    unsigned char bits = 0;
     initialize_JPEG_arithmetic_counters(context, &offset, &remaining, &current);
     signed char indexes[4][189] = {0}; // most likely very few will be actually used, but allocate for the worst case
     while (units --) {
-      for (decodepos = state -> MCU; *decodepos != MCU_END_LIST; decodepos ++) switch (*decodepos) {
+      int16_t (* outputunit)[64];
+      for (const unsigned char * decodepos = state -> MCU; *decodepos != MCU_END_LIST; decodepos ++) switch (*decodepos) {
         case MCU_ZERO_COORD:
           outputunit = state -> current_block[decodepos[1]];
           break;
@@ -112,12 +108,12 @@ void decompress_JPEG_arithmetic_bit_scan (struct context * context, struct JPEG_
           if (skipunits)
             skipunits --;
           else if (first) {
-            unsigned char lastnonzero;
+            unsigned char lastnonzero; // last non-zero coefficient up to the previous scan (for the same component)
             for (lastnonzero = 63; lastnonzero; lastnonzero --) if (lastnonzero[*outputunit]) break;
-            int prevzero = 0;
-            for (p = first; p <= last; p ++) {
+            int prevzero = 0; // was the previous coefficient zero?
+            for (uint_fast8_t p = first; p <= last; p ++) {
               signed char * index = indexes[components[*decodepos].tableAC] + 3 * (p - 1);
-              if (!prevzero && (p > lastnonzero) && next_JPEG_arithmetic_bit(context, &offset, &remaining, index, &current, &accumulator, &bits)) break;
+              if (!prevzero && p > lastnonzero && next_JPEG_arithmetic_bit(context, &offset, &remaining, index, &current, &accumulator, &bits)) break;
               if (p[*outputunit]) {
                 prevzero = 0;
                 if (next_JPEG_arithmetic_bit(context, &offset, &remaining, index + 2, &current, &accumulator, &bits))
@@ -136,13 +132,13 @@ void decompress_JPEG_arithmetic_bit_scan (struct context * context, struct JPEG_
             **outputunit += 1 << shift;
           outputunit ++;
       }
-      if ((++ colcount) == rowunits) {
+      if (++ colcount == rowunits) {
         colcount = 0;
         rowcount ++;
         if (rowcount == state -> row_skip_index) skipunits += (rowunits - state -> column_skip_count) * state -> row_skip_count;
       }
       if (colcount == state -> column_skip_index) skipunits += state -> column_skip_count;
-      for (p = 0; p < 4; p ++) if (state -> current_block[p]) {
+      for (uint_fast8_t p = 0; p < 4; p ++) if (state -> current_block[p]) {
         state -> current_block[p] += state -> unit_offset[p];
         if (!colcount) state -> current_block[p] += state -> unit_row_offset[p];
       }
@@ -154,30 +150,29 @@ void decompress_JPEG_arithmetic_bit_scan (struct context * context, struct JPEG_
 void decompress_JPEG_arithmetic_lossless_scan (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_decoder_tables * tables,
                                                size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned char predictor,
                                                unsigned precision) {
-  size_t p, restart_interval;
   uint8_t scancomponents[4] = {0};
-  for (p = 0; state -> MCU[p] != MCU_END_LIST; p ++) if (state -> MCU[p] < 4) scancomponents[state -> MCU[p]] = 1;
+  for (uint_fast8_t p = 0; state -> MCU[p] != MCU_END_LIST; p ++) if (state -> MCU[p] < 4) scancomponents[state -> MCU[p]] = 1;
   uint16_t * rowdifferences[4] = {0};
-  for (p = 0; p < 4; p ++) if (scancomponents[p])
+  for (uint_fast8_t p = 0; p < 4; p ++) if (scancomponents[p])
     rowdifferences[p] = ctxmalloc(context, sizeof **rowdifferences * rowunits * ((state -> component_count > 1) ? components[p].scaleH : 1));
-  for (restart_interval = 0; restart_interval <= state -> restart_count; restart_interval ++) {
+  for (size_t restart_interval = 0; restart_interval <= state -> restart_count; restart_interval ++) {
     size_t units = (restart_interval == state -> restart_count) ? state -> last_size : state -> restart_size;
     if (!units) break;
     size_t offset = *(offsets ++);
     size_t remaining = *(offsets ++);
-    uint16_t * outputpos;
-    const unsigned char * decodepos;
-    size_t x, y, colcount = 0, rowcount = 0, skipunits = 0;
-    uint16_t predicted, difference, accumulator = 0;
+    size_t colcount = 0, rowcount = 0, skipunits = 0;
+    uint16_t accumulator = 0;
     uint32_t current = 0;
-    unsigned char conditioning, bits = 0;
+    unsigned char bits = 0;
     initialize_JPEG_arithmetic_counters(context, &offset, &remaining, &current);
     signed char indexes[4][158] = {0};
-    for (p = 0; p < 4; p ++) if (scancomponents[p])
-      for (x = 0; x < (rowunits * ((state -> component_count > 1) ? components[p].scaleH : 1)); x ++) rowdifferences[p][x] = 0;
+    for (uint_fast8_t p = 0; p < 4; p ++) if (scancomponents[p])
+      for (uint_fast16_t x = 0; x < (rowunits * ((state -> component_count > 1) ? components[p].scaleH : 1)); x ++) rowdifferences[p][x] = 0;
     uint16_t coldifferences[4][4] = {0};
     while (units --) {
-      for (decodepos = state -> MCU; *decodepos != MCU_END_LIST; decodepos ++) switch (*decodepos) {
+      uint_fast16_t x, y;
+      uint16_t * outputpos;
+      for (const unsigned char * decodepos = state -> MCU; *decodepos != MCU_END_LIST; decodepos ++) switch (*decodepos) {
         case MCU_ZERO_COORD:
           outputpos = state -> current_value[decodepos[1]];
           x = colcount * ((state -> component_count > 1) ? components[decodepos[1]].scaleH : 1);
@@ -193,9 +188,9 @@ void decompress_JPEG_arithmetic_lossless_scan (struct context * context, struct 
             *(outputpos ++) = 0;
             skipunits --;
           } else {
-            conditioning = tables -> arithmetic[components[*decodepos].tableDC];
-            predicted = predict_JPEG_lossless_sample(outputpos, rowunits * ((state -> component_count > 1) ? components[*decodepos].scaleH : 1),
-                                                     !x, !(y || rowcount), predictor, precision);
+            unsigned char conditioning = tables -> arithmetic[components[*decodepos].tableDC];
+            size_t rowsize = rowunits * ((state -> component_count > 1) ? components[*decodepos].scaleH : 1);
+            uint16_t difference, predicted = predict_JPEG_lossless_sample(outputpos, rowsize, !x, !(y || rowcount), predictor, precision);
             // the JPEG standard calculates this the other way around, but it makes no difference and doing it in this order enables an optimization
             unsigned char reference = 5 * classify_JPEG_arithmetic_value(rowdifferences[*decodepos][x], conditioning) +
                                       classify_JPEG_arithmetic_value(coldifferences[*decodepos][y], conditioning);
@@ -209,27 +204,27 @@ void decompress_JPEG_arithmetic_lossless_scan (struct context * context, struct 
           }
           x ++;
       }
-      if ((++ colcount) == rowunits) {
+      if (++ colcount == rowunits) {
         colcount = 0;
         rowcount ++;
         if (rowcount == state -> row_skip_index) skipunits += (rowunits - state -> column_skip_count) * state -> row_skip_count;
         memset(coldifferences, 0, sizeof coldifferences);
       }
       if (colcount == state -> column_skip_index) skipunits += state -> column_skip_count;
-      for (p = 0; p < 4; p ++) if (state -> current_value[p]) {
+      for (uint_fast8_t p = 0; p < 4; p ++) if (state -> current_value[p]) {
         state -> current_value[p] += state -> unit_offset[p];
         if (!colcount) state -> current_value[p] += state -> unit_row_offset[p];
       }
     }
     if (remaining || skipunits) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   }
-  for (p = 0; p < state -> component_count; p ++) ctxfree(context, rowdifferences[p]);
+  for (uint_fast8_t p = 0; p < state -> component_count; p ++) ctxfree(context, rowdifferences[p]);
 }
 
 void initialize_JPEG_arithmetic_counters (struct context * context, size_t * restrict offset, size_t * restrict remaining, uint32_t * restrict current) {
-  unsigned char data, loopcount = 2;
+  unsigned char loopcount = 2;
   while (loopcount --) {
-    data = 0;
+    unsigned char data = 0;
     if (*remaining) {
       data = context -> data[(*offset) ++];
       -- *remaining;
@@ -247,9 +242,9 @@ int16_t next_JPEG_arithmetic_value (struct context * context, size_t * restrict 
                                     unsigned char conditioning) {
   // mode = 0 for DC (reference = DC category), 1 for AC (reference = coefficient index), 2 for lossless (reference = 5 * top category + left category)
   signed char * index = (mode == 1) ? NULL : (indexes + 4 * reference + 1);
-  unsigned size, negative = next_JPEG_arithmetic_bit(context, offset, remaining, index, current, accumulator, bits);
+  int negative = next_JPEG_arithmetic_bit(context, offset, remaining, index, current, accumulator, bits);
   index = (mode == 1) ? indexes + 3 * reference - 1 : (index + 1 + negative);
-  size = next_JPEG_arithmetic_bit(context, offset, remaining, index, current, accumulator, bits);
+  uint_fast8_t size = next_JPEG_arithmetic_bit(context, offset, remaining, index, current, accumulator, bits);
   uint16_t result = 0;
   if (size) {
     if (!mode)

@@ -8,9 +8,8 @@ void load_PNG_frame (struct context * context, const size_t * chunks, uint32_t f
     write_palette_framebuffer_to_image(context, data, palette, frame, context -> image -> color_format, 0xff); // 0xff to avoid a redundant range check
   else {
     if (transparent != 0xffffffffffffffffu) {
-      uint64_t * current = data;
       size_t count = (size_t) context -> image -> width * context -> image -> height;
-      for (; count; count --, current ++) if (*current == transparent) *current = background | 0xffff000000000000u;
+      for (uint64_t * current = data; count; count --, current ++) if (*current == transparent) *current = background | 0xffff000000000000u;
     }
     write_framebuffer_to_image(context -> image, data, frame, context -> image -> color_format);
   }
@@ -21,10 +20,9 @@ void * load_PNG_frame_part (struct context * context, const size_t * chunks, int
                             uint32_t width, uint32_t height, size_t chunkoffset) {
   // max_palette_index < 0: no palette (return uint64_t *); otherwise, use a palette (return uint8_t *)
   size_t p = 0, total_compressed_size = 0;
-  const size_t * chunk;
-  for (chunk = chunks; *chunk; chunk ++) total_compressed_size += read_be32_unaligned(context -> data + *chunk - 8) - chunkoffset;
+  for (const size_t * chunk = chunks; *chunk; chunk ++) total_compressed_size += read_be32_unaligned(context -> data + *chunk - 8) - chunkoffset;
   unsigned char * compressed = ctxmalloc(context, total_compressed_size);
-  for (chunk = chunks; *chunk; chunk ++) {
+  for (const size_t * chunk = chunks; *chunk; chunk ++) {
     size_t current = read_be32_unaligned(context -> data + *chunk - 8) - chunkoffset;
     memcpy(compressed + p, context -> data + *chunk + chunkoffset, current);
     p += current;
@@ -50,35 +48,33 @@ uint8_t * load_PNG_palette_frame (struct context * context, const void * compres
     const unsigned char coordsV[] = {0, 0, 4, 0, 2, 0, 1};
     const unsigned char offsetsH[] = {8, 8, 4, 4, 2, 2, 1};
     const unsigned char offsetsV[] = {8, 8, 8, 4, 4, 2, 2};
-    size_t rowsize, cumulative_size = 0;
-    uint_fast8_t pass;
-    for (pass = 0; pass < 7; pass ++) if (widths[pass] && heights[pass]) {
-      rowsize = ((size_t) widths[pass] * bitdepth + 7) / 8 + 1;
+    size_t cumulative_size = 0;
+    for (uint_fast8_t pass = 0; pass < 7; pass ++) if (widths[pass] && heights[pass]) {
+      size_t rowsize = ((size_t) widths[pass] * bitdepth + 7) / 8 + 1;
       cumulative_size += heights[pass] * rowsize;
     }
     decompressed = decompress_PNG_data(context, compressed, compressed_size, cumulative_size);
     unsigned char * current = decompressed;
-    size_t row, col;
     unsigned char * rowdata = ctxmalloc(context, width);
-    for (pass = 0; pass < 7; pass ++) if (widths[pass] && heights[pass]) {
-      rowsize = ((size_t) widths[pass] * bitdepth + 7) / 8 + 1;
+    for (uint_fast8_t pass = 0; pass < 7; pass ++) if (widths[pass] && heights[pass]) {
+      size_t rowsize = ((size_t) widths[pass] * bitdepth + 7) / 8 + 1;
       remove_PNG_filter(context, current, widths[pass], heights[pass], 3, bitdepth);
-      for (row = 0; row < heights[pass]; row ++) {
+      for (size_t row = 0; row < heights[pass]; row ++) {
         expand_bitpacked_PNG_data(rowdata, current + 1, widths[pass], bitdepth);
         current += rowsize;
-        for (col = 0; col < widths[pass]; col ++) result[(row * offsetsV[pass] + coordsV[pass]) * width + col * offsetsH[pass] + coordsH[pass]] = rowdata[col];
+        for (size_t col = 0; col < widths[pass]; col ++)
+          result[(row * offsetsV[pass] + coordsV[pass]) * width + col * offsetsH[pass] + coordsH[pass]] = rowdata[col];
       }
     }
     ctxfree(context, rowdata);
   } else {
-    size_t row, rowsize = ((size_t) width * bitdepth + 7) / 8 + 1;
+    size_t rowsize = ((size_t) width * bitdepth + 7) / 8 + 1;
     decompressed = decompress_PNG_data(context, compressed, compressed_size, rowsize * height);
     remove_PNG_filter(context, decompressed, width, height, 3, bitdepth);
-    for (row = 0; row < height; row ++) expand_bitpacked_PNG_data(result + row * width, decompressed + row * rowsize + 1, width, bitdepth);
+    for (size_t row = 0; row < height; row ++) expand_bitpacked_PNG_data(result + row * width, decompressed + row * rowsize + 1, width, bitdepth);
   }
   ctxfree(context, decompressed);
-  size_t p;
-  for (p = 0; p < ((size_t) width * height); p ++) if (result[p] > max_palette_index) throw(context, PLUM_ERR_INVALID_COLOR_INDEX);
+  for (size_t p = 0; p < (size_t) width * height; p ++) if (result[p] > max_palette_index) throw(context, PLUM_ERR_INVALID_COLOR_INDEX);
   return result;
 }
 
@@ -96,18 +92,17 @@ uint64_t * load_PNG_raw_frame (struct context * context, const void * compressed
     const unsigned char coordsV[] = {0, 0, 4, 0, 2, 0, 1};
     const unsigned char offsetsH[] = {8, 8, 4, 4, 2, 2, 1};
     const unsigned char offsetsV[] = {8, 8, 8, 4, 4, 2, 2};
-    size_t rowsize, cumulative_size = 0;
-    uint_fast8_t pass;
-    for (pass = 0; pass < 7; pass ++) if (widths[pass] && heights[pass]) {
-      rowsize = pixelsize ? pixelsize * widths[pass] + 1 : (((size_t) widths[pass] * bitdepth + 7) / 8 + 1);
+    size_t cumulative_size = 0;
+    for (uint_fast8_t pass = 0; pass < 7; pass ++) if (widths[pass] && heights[pass]) {
+      size_t rowsize = pixelsize ? pixelsize * widths[pass] + 1 : (((size_t) widths[pass] * bitdepth + 7) / 8 + 1);
       cumulative_size += rowsize * heights[pass];
     }
     decompressed = decompress_PNG_data(context, compressed, compressed_size, cumulative_size);
     unsigned char * current = decompressed;
-    for (pass = 0; pass < 7; pass ++) if (widths[pass] && heights[pass]) {
+    for (uint_fast8_t pass = 0; pass < 7; pass ++) if (widths[pass] && heights[pass]) {
       load_PNG_raw_frame_pass(context, current, result, heights[pass], widths[pass], width, imagetype, bitdepth, coordsH[pass], coordsV[pass],
                               offsetsH[pass], offsetsV[pass]);
-      rowsize = pixelsize ? pixelsize * widths[pass] + 1 : (((size_t) widths[pass] * bitdepth + 7) / 8 + 1);
+      size_t rowsize = pixelsize ? pixelsize * widths[pass] + 1 : (((size_t) widths[pass] * bitdepth + 7) / 8 + 1);
       current += rowsize * heights[pass];
     }
   } else {
@@ -125,46 +120,43 @@ void load_PNG_raw_frame_pass (struct context * context, unsigned char * restrict
   size_t pixelsize = bitdepth / 8; // 0 will be treated as a special value
   pixelsize *= (imagetype >> 1)[(unsigned char []) {1, 3, 2, 4}];
   size_t rowsize = pixelsize ? pixelsize * width + 1 : (((size_t) width * bitdepth + 7) / 8 + 1);
-  size_t row, col;
   remove_PNG_filter(context, data, width, height, imagetype, bitdepth);
-  unsigned char * rowdata;
-  uint64_t * rowoutput;
-  for (row = 0; row < height; row ++) {
-    rowoutput = output + (row * offsetV + coordV) * fullwidth;
-    rowdata = data + 1;
+  for (size_t row = 0; row < height; row ++) {
+    uint64_t * rowoutput = output + (row * offsetV + coordV) * fullwidth;
+    unsigned char * rowdata = data + 1;
     switch (bitdepth + imagetype) {
       // since bitdepth must be 8 or 16 here unless imagetype is 0, all combinations are unique
       case 8: // imagetype = 0, bitdepth = 8
-        for (col = 0; col < width; col ++) rowoutput[col * offsetH + coordH] = (uint64_t) rowdata[col] * 0x10101010101u;
+        for (size_t col = 0; col < width; col ++) rowoutput[col * offsetH + coordH] = (uint64_t) rowdata[col] * 0x10101010101u;
         break;
       case 10: // imagetype = 2, bitdepth = 8
-        for (col = 0; col < width; col ++)
+        for (size_t col = 0; col < width; col ++)
           rowoutput[col * offsetH + coordH] = (rowdata[3 * col] | ((uint64_t) rowdata[3 * col + 1] << 16) | ((uint64_t) rowdata[3 * col + 2] << 32)) * 0x101;
         break;
       case 12: // imagetype = 4, bitdepth = 8
-        for (col = 0; col < width; col ++)
+        for (size_t col = 0; col < width; col ++)
           rowoutput[col * offsetH + coordH] = ((uint64_t) rowdata[2 * col] * 0x10101010101u) | ((uint64_t) (rowdata[2 * col + 1] ^ 0xff) * 0x101000000000000u);
         break;
       case 14: // imagetype = 6, bitdepth = 8
-        for (col = 0; col < width; col ++)
+        for (size_t col = 0; col < width; col ++)
           rowoutput[col * offsetH + coordH] = 0x101 * (rowdata[4 * col] | ((uint64_t) rowdata[4 * col + 1] << 16) |
                                                        ((uint64_t) rowdata[4 * col + 2] << 32) | ((uint64_t) (rowdata[4 * col + 3] ^ 0xff) << 48));
         break;
       case 16: // imagetype = 0, bitdepth = 16
-        for (col = 0; col < width; col ++) rowoutput[col * offsetH + coordH] = (uint64_t) read_be16_unaligned(rowdata + 2 * col) * 0x100010001u;
+        for (size_t col = 0; col < width; col ++) rowoutput[col * offsetH + coordH] = (uint64_t) read_be16_unaligned(rowdata + 2 * col) * 0x100010001u;
         break;
       case 18: // imagetype = 2, bitdepth = 16
-        for (col = 0; col < width; col ++)
+        for (size_t col = 0; col < width; col ++)
           rowoutput[col * offsetH + coordH] = read_be16_unaligned(rowdata + 6 * col) | ((uint64_t) read_be16_unaligned(rowdata + 6 * col + 2) << 16) |
                                               ((uint64_t) read_be16_unaligned(rowdata + 6 * col + 4) << 32);
         break;
       case 20: // imagetype = 4, bitdepth = 16
-        for (col = 0; col < width; col ++)
+        for (size_t col = 0; col < width; col ++)
           rowoutput[col * offsetH + coordH] = ((uint64_t) read_be16_unaligned(rowdata + 4 * col) * 0x100010001u) |
                                               ((uint64_t) ~read_be16_unaligned(rowdata + 4 * col + 2) << 48);
         break;
       case 22: // imagetype = 6, bitdepth = 16
-        for (col = 0; col < width; col ++)
+        for (size_t col = 0; col < width; col ++)
           rowoutput[col * offsetH + coordH] = read_be16_unaligned(rowdata + 8 * col) | ((uint64_t) read_be16_unaligned(rowdata + 8 * col + 2) << 16) |
                                               ((uint64_t) read_be16_unaligned(rowdata + 8 * col + 4) << 32) |
                                               ((uint64_t) ~read_be16_unaligned(rowdata + 8 * col + 6) << 48);
@@ -172,7 +164,7 @@ void load_PNG_raw_frame_pass (struct context * context, unsigned char * restrict
       default: { // imagetype = 0, bitdepth < 8
         unsigned char * buffer = ctxmalloc(context, width);
         expand_bitpacked_PNG_data(buffer, rowdata, width, bitdepth);
-        for (col = 0; col < width; col ++) rowoutput[col * offsetH + coordH] = (uint64_t) bitextend16(buffer[col], bitdepth) * 0x100010001u;
+        for (size_t col = 0; col < width; col ++) rowoutput[col * offsetH + coordH] = (uint64_t) bitextend16(buffer[col], bitdepth) * 0x100010001u;
         ctxfree(context, buffer);
       }
     }
@@ -181,7 +173,6 @@ void load_PNG_raw_frame_pass (struct context * context, unsigned char * restrict
 }
 
 void expand_bitpacked_PNG_data (unsigned char * restrict result, const unsigned char * restrict source, size_t count, uint8_t bitdepth) {
-  unsigned char remainder;
   switch (bitdepth) {
     case 1:
       for (; count > 7; count -= 8) {
@@ -194,7 +185,7 @@ void expand_bitpacked_PNG_data (unsigned char * restrict result, const unsigned 
         *(result ++) = !!(*source & 2);
         *(result ++) = *(source ++) & 1;
       }
-      if (count) for (remainder = *source; count; count --, remainder <<= 1) *(result ++) = remainder >> 7;
+      if (count) for (unsigned char remainder = *source; count; count --, remainder <<= 1) *(result ++) = remainder >> 7;
       break;
     case 2:
       for (; count > 3; count -= 4) {
@@ -203,7 +194,7 @@ void expand_bitpacked_PNG_data (unsigned char * restrict result, const unsigned 
         *(result ++) = (*source >> 2) & 3;
         *(result ++) = *(source ++) & 3;
       }
-      if (count) for (remainder = *source; count; count --, remainder <<= 2) *(result ++) = remainder >> 6;
+      if (count) for (unsigned char remainder = *source; count; count --, remainder <<= 2) *(result ++) = remainder >> 6;
       break;
     case 4:
       for (; count > 1; count -= 2) {
@@ -224,32 +215,31 @@ void remove_PNG_filter (struct context * context, unsigned char * restrict data,
     pixelsize = 1;
     width = ((size_t) width * bitdepth + 7) / 8;
   }
-  if (((size_t) pixelsize * width + 1) > PTRDIFF_MAX) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
-  ptrdiff_t p, rowsize = pixelsize * width + 1;
-  uint_fast32_t row;
-  for (row = 0; row < height; row ++) {
+  if ((size_t) pixelsize * width + 1 > PTRDIFF_MAX) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
+  ptrdiff_t rowsize = pixelsize * width + 1;
+  for (uint_fast32_t row = 0; row < height; row ++) {
     unsigned char * rowdata = data + 1;
     switch (*data) {
       case 4:
-        for (p = 0; p < (pixelsize * width); p ++) {
+        for (size_t p = 0; p < pixelsize * width; p ++) {
           int top = row ? rowdata[p - rowsize] : 0, left = (p < pixelsize) ? 0 : rowdata[p - pixelsize];
-          int diagonal = (row && (p >= pixelsize)) ? rowdata[p - pixelsize - rowsize] : 0;
+          int diagonal = (row && p >= pixelsize) ? rowdata[p - pixelsize - rowsize] : 0;
           int topdiff = absolute_value(left - diagonal), leftdiff = absolute_value(top - diagonal), diagdiff = absolute_value(left + top - diagonal * 2);
-          rowdata[p] += ((leftdiff <= topdiff) && (leftdiff <= diagdiff)) ? left : (topdiff <= diagdiff) ? top : diagonal;
+          rowdata[p] += (leftdiff <= topdiff && leftdiff <= diagdiff) ? left : (topdiff <= diagdiff) ? top : diagonal;
         }
         break;
       case 3:
         if (row) {
-          for (p = 0; p < pixelsize; p ++) rowdata[p] += rowdata[p - rowsize] >> 1;
-          for (; p < (pixelsize * width); p ++) rowdata[p] += (rowdata[p - pixelsize] + rowdata[p - rowsize]) >> 1;
+          for (size_t p = 0; p < pixelsize; p ++) rowdata[p] += rowdata[p - rowsize] >> 1;
+          for (size_t p = pixelsize; p < pixelsize * width; p ++) rowdata[p] += (rowdata[p - pixelsize] + rowdata[p - rowsize]) >> 1;
         } else
-          for (p = pixelsize; p < (pixelsize * width); p ++) rowdata[p] += rowdata[p - pixelsize] >> 1;
+          for (size_t p = pixelsize; p < pixelsize * width; p ++) rowdata[p] += rowdata[p - pixelsize] >> 1;
         break;
       case 2:
-        if (row) for (p = 0; p < (pixelsize * width); p ++) rowdata[p] += rowdata[p - rowsize];
+        if (row) for (size_t p = 0; p < pixelsize * width; p ++) rowdata[p] += rowdata[p - rowsize];
         break;
       case 1:
-        for (p = pixelsize; p < (pixelsize * width); p ++) rowdata[p] += rowdata[p - pixelsize];
+        for (size_t p = pixelsize; p < pixelsize * width; p ++) rowdata[p] += rowdata[p - pixelsize];
       case 0:
         break;
       default:

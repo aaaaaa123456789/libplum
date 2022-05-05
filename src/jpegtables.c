@@ -8,33 +8,29 @@ void initialize_JPEG_decoder_tables (struct context * context, struct JPEG_decod
     .restart = 0
   };
   // if the image doesn't define a Huffman table (no DHT markers), load the standard's recommended tables as "default" tables
-  size_t p;
-  for (p = 0; layout -> markers[p]; p ++) if (layout -> markertype[p] == 0xc4) return;
+  for (size_t p = 0; layout -> markers[p]; p ++) if (layout -> markertype[p] == 0xc4) return;
   load_default_JPEG_Huffman_tables(context, tables);
 }
 
 short * process_JPEG_Huffman_table (struct context * context, const unsigned char ** restrict markerdata, uint16_t * restrict markersize) {
   if (*markersize < 16) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  uint_fast16_t totalsize = 0, count = 16; // 16 so it counts the initial length bytes too
-  uint_fast8_t size, remainder;
+  uint_fast16_t totalsize = 0, tablesize = 16; // 16 so it counts the initial length bytes too
   const unsigned char * lengths = *markerdata;
   const unsigned char * data = *markerdata + 16;
-  for (size = 0; size < 16; size ++) {
-    count += lengths[size];
+  for (uint_fast8_t size = 0; size < 16; size ++) {
+    tablesize += lengths[size];
     totalsize += lengths[size] * (size + 1) * 2; // not necessarily the real size of the table, but an easily calculated upper bound
   }
-  if (*markersize < count) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  *markersize -= count;
-  *markerdata += count;
+  if (*markersize < tablesize) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  *markersize -= tablesize;
+  *markerdata += tablesize;
   short * result = ctxmalloc(context, totalsize * sizeof *result);
-  for (count = 0; count < totalsize; count ++) result[count] = -1;
-  uint_fast16_t index, current, next = 2;
-  uint16_t code = 0, offset = 0x8000u;
+  for (uint_fast16_t p = 0; p < totalsize; p ++) result[p] = -1;
+  uint_fast16_t code = 0, next = 2, offset = 0x8000u;
   // size is one less because we don't count the link to the leaf
-  for (size = 0; offset; size ++, offset >>= 1) for (count = lengths[size]; count; count --) {
-    current = 0x8000u;
-    index = 0;
-    for (remainder = size; remainder; remainder --) {
+  for (uint_fast8_t size = 0; size < 16; size ++, offset >>= 1) for (uint_fast8_t count = lengths[size]; count; count --) {
+    uint_fast16_t current = 0x8000u, index = 0;
+    for (uint_fast8_t remainder = size; remainder; remainder --) {
       if (code & current) index ++;
       current >>= 1;
       if (result[index] == -1) {
@@ -45,7 +41,7 @@ short * process_JPEG_Huffman_table (struct context * context, const unsigned cha
     }
     if (code & current) index ++;
     result[index] = *(data ++);
-    if ((uint16_t) (code + offset) < code) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    if ((uint_fast32_t) code + offset > 0xffffu) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     code += offset;
   }
   return ctxrealloc(context, result, next * sizeof *result);

@@ -45,19 +45,19 @@ double apply_JPEG_DCT (int16_t output[restrict static 64], const double input[re
     0x0.a1p+0, 0x0.a2p+0, 0x0.a1p+0, 0x0.a0p+0, 0x0.a4p+0, 0x0.a5p+0, 0x0.a5p+0, 0x0.a4p+0, 0x0.a8p+0, 0x0.a9p+0,
     0x0.a8p+0, 0x0.acp+0, 0x0.acp+0, 0x0.b0p+0
   };
-  uint_fast8_t row, col, index, p;
-  for (index = 0; index < 64; index ++) {
+  for (uint_fast8_t index = 0; index < 64; index ++) {
+    uint_fast8_t p = 0;
     double converted = 0.0;
-    for (p = row = 0; row < 8; row ++) for (col = 0; col < 8; p ++, col ++)
-      converted += input[p] * coefficients[col][cols[index]] * coefficients[row][rows[index]];
+    for (uint_fast8_t row = 0; row < 8; row ++) for (uint_fast8_t col = 0; col < 8; col ++)
+      converted += input[p ++] * coefficients[col][cols[index]] * coefficients[row][rows[index]];
     converted = converted * factors[index] / quantization[index];
     if (index)
-      if (converted > 1023.0)
+      if (converted >= -zeroflush[index] && converted <= zeroflush[index])
+        output[index] = 0;
+      else if (converted > 1023.0)
         output[index] = 1023;
       else if (converted < -1023.0)
         output[index] = -1023;
-      else if ((converted >= -zeroflush[index]) && (converted <= zeroflush[index]))
-        output[index] = 0;
       else if (converted < 0)
         output[index] = converted - 0.5;
       else
@@ -95,20 +95,20 @@ void apply_JPEG_inverse_DCT (double output[restrict static 64], const int16_t in
   static const unsigned char cols[] = {0, 1, 0, 0, 1, 2, 3, 2, 1, 0, 0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4,
                                        3, 2, 1, 0, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 5, 6, 7, 7, 6, 7};
   double dequantized[64];
-  uint_fast8_t row, col, index, p = 0;
-  for (index = 0; index < 64; index ++) dequantized[index] = (double) input[index] * quantization[index];
-  for (row = 0; row < 8; row ++) for (col = 0; col < 8; col ++) {
+  for (uint_fast8_t index = 0; index < 64; index ++) dequantized[index] = (double) input[index] * quantization[index];
+  uint_fast8_t p = 0;
+  for (uint_fast8_t row = 0; row < 8; row ++) for (uint_fast8_t col = 0; col < 8; col ++) {
     output[p] = 0;
-    for (index = 0; index < 64; index ++) output[p] += coefficients[col][cols[index]] * coefficients[row][rows[index]] * dequantized[index];
+    for (uint_fast8_t index = 0; index < 64; index ++) output[p] += coefficients[col][cols[index]] * coefficients[row][rows[index]] * dequantized[index];
     p ++;
   }
 }
 
-#undef C1
-#undef C2
-#undef C3
-#undef C4
-#undef C5
-#undef C6
-#undef C7
 #undef HR2
+#undef C7
+#undef C6
+#undef C5
+#undef C4
+#undef C3
+#undef C2
+#undef C1

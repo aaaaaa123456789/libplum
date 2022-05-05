@@ -4,8 +4,8 @@ uint32_t determine_JPEG_components (struct context * context, size_t offset) {
   uint_fast16_t size = read_be16_unaligned(context -> data + offset);
   if (size < 8) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   uint_fast8_t p, count = context -> data[offset + 7];
-  if (!count || (count > 4)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT); // only recognize up to four components
-  if (size != (8 + 3 * count)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  if (!count || count > 4) throw(context, PLUM_ERR_INVALID_FILE_FORMAT); // only recognize up to four components
+  if (size != 8 + 3 * count) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   unsigned char components[4] = {0};
   for (p = 0; p < count; p ++) components[p] = context -> data[offset + 8 + 3 * p];
   #define swap(first, second) p = first, first = second, second = p
@@ -58,14 +58,14 @@ void (* get_JPEG_component_transfer_function (struct context * context, const st
         if (components < 0x10000u)
           throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         else if (components < 0x1000000u)
-          if ((components == 0x524742u) || (components == 0x726762u)) // 'R', 'G', 'B' (including lowercase)
+          if (components == 0x524742u || components == 0x726762u) // 'R', 'G', 'B' (including lowercase)
             return &JPEG_transfer_BGR;
           else if (!((components + 0x102) % 0x10101u)) // any sequential IDs
             return &JPEG_transfer_RGB;
           else
             throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         else
-          if ((components == 0x594d4b43u) || (components == 0x796d6b63u)) // 'C', 'M', 'Y', 'K' (including lowercase)
+          if (components == 0x594d4b43u || components == 0x796d6b63u) // 'C', 'M', 'Y', 'K' (including lowercase)
             return &JPEG_transfer_CKMY;
           else if (!((components + 0x10203u) % 0x1010101u)) // any sequential IDs
             return &JPEG_transfer_CMYK;
@@ -73,7 +73,7 @@ void (* get_JPEG_component_transfer_function (struct context * context, const st
             throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
       case 1:
         // YCbCr: verify three components and detect the order
-        if ((components < 0x10000u) || (components >= 0x1000000u)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+        if (components < 0x10000u || components >= 0x1000000u) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         if (components == 0x635943u) // 'Y', 'C', 'c'
           return &JPEG_transfer_CbYCr;
         else if (!((components + 0x102) % 0x10101u)) // any sequential IDs
@@ -92,14 +92,12 @@ void (* get_JPEG_component_transfer_function (struct context * context, const st
     }
   }
   if (layout -> JFIF) {
-    // JFIF mandates one of two possibilities: grayscale (handled already) or YCbCr with IDs of 1, 2, 3
-    if (components == 0x30201u) return &JPEG_transfer_YCbCr;
-    // but a number of encoders use 0, 1, 2 for some reason
-    if (components == 0x20100u) return &JPEG_transfer_YCbCr;
+    // JFIF mandates one of two possibilities: grayscale (handled already) or YCbCr with IDs of 1, 2, 3 (although some encoders also use 0, 1, 2)
+    if (components == 0x30201u || components == 0x20100u) return &JPEG_transfer_YCbCr;
     throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   }
   // below this line it's pure guesswork: there are no application headers hinting at components, so just guess from popular ID values
-  if (((*layout -> frametype & 3) == 3) && (components >= 0x10000u) && (components < 0x1000000u) && !((components + 0x102) % 0x10101u))
+  if ((*layout -> frametype & 3) == 3 && components >= 0x10000u && components < 0x1000000u && !((components + 0x102) % 0x10101u))
     // lossless encoding, three sequential component IDs
     return &JPEG_transfer_RGB;
   switch (components) {
@@ -136,7 +134,7 @@ void append_JPEG_color_depth_metadata (struct context * context, void (* transfe
     add_color_depth_metadata(context, 0, 0, 0, 0, bitdepth);
   else if (transfer == &JPEG_transfer_alpha_grayscale)
     add_color_depth_metadata(context, 0, 0, 0, bitdepth, bitdepth);
-  else if ((transfer == &JPEG_transfer_ABGR) || (transfer == &JPEG_transfer_ACbYCr))
+  else if (transfer == &JPEG_transfer_ABGR || transfer == &JPEG_transfer_ACbYCr)
     add_color_depth_metadata(context, bitdepth, bitdepth, bitdepth, bitdepth, 0);
   else
     add_color_depth_metadata(context, bitdepth, bitdepth, bitdepth, 0, 0);

@@ -2,7 +2,7 @@
 
 void generate_JPEG_data (struct context * context) {
   if (context -> source -> frames > 1) throw(context, PLUM_ERR_NO_MULTI_FRAME);
-  if ((context -> source -> width > 0xffffu) || (context -> source -> height > 0xffffu)) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
+  if (context -> source -> width > 0xffffu || context -> source -> height > 0xffffu) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
   byteoutput(context,
              0xff, 0xd8, // SOI
              0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x02, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, // JFIF marker (no thumbnail)
@@ -35,8 +35,8 @@ void generate_JPEG_data (struct context * context) {
   red_chrominance = buffer;
   size_t luminance_count, chrominance_count;
   // do chrominance first, since it will generally use less memory, so the chrominance data can be freed afterwards to reduce overall memory usage
-  struct JPEG_encoded_value * chrominance_data = generate_JPEG_chrominance_data_stream(context, blue_chrominance, red_chrominance, reduced_units, chrominance_table,
-                                                                                       &chrominance_count);
+  struct JPEG_encoded_value * chrominance_data = generate_JPEG_chrominance_data_stream(context, blue_chrominance, red_chrominance, reduced_units,
+                                                                                       chrominance_table, &chrominance_count);
   ctxfree(context, red_chrominance);
   ctxfree(context, blue_chrominance);
   struct JPEG_encoded_value * luminance_data = generate_JPEG_luminance_data_stream(context, luminance, units, luminance_table, &luminance_count);
@@ -75,29 +75,28 @@ void calculate_JPEG_quantization_tables (struct context * context, uint8_t lumin
   score += current;
   score = (score > 24) ? score - 22 : 2;
   // adjust the chrominance accuracy based on the color depth
-  current = get_true_color_depth(context -> source);
-  uint_fast32_t adjustment = 72 - (current & 0xff) - ((current >> 8) & 0xff) - ((current >> 16) & 0xff);
+  uint_fast32_t depth = get_true_color_depth(context -> source);
+  uint_fast32_t adjustment = 72 - (depth & 0xff) - ((depth >> 8) & 0xff) - ((depth >> 16) & 0xff);
   // compute the final quantization coefficients based on the scores above
-  for (current = 0; current < 64; current ++) {
-    luminance_table[current] = 1 + luminance_base[current] * score / 25;
-    chrominance_table[current] = 1 + chrominance_base[current] * score * adjustment / 1200;
+  for (uint_fast8_t p = 0; p < 64; p ++) {
+    luminance_table[p] = 1 + luminance_base[p] * score / 25;
+    chrominance_table[p] = 1 + chrominance_base[p] * score * adjustment / 1200;
   }
 }
 
 void convert_JPEG_components_to_YCbCr (struct context * context, double (* restrict luminance)[64], double (* restrict blue)[64], double (* restrict red)[64]) {
   const unsigned char * data = context -> source -> data;
   size_t offset = context -> source -> palette ? 1 : plum_color_buffer_size(1, context -> source -> color_format), rowoffset = offset * context -> source -> width;
-  size_t unitrow, unitcol, row, col;
   double palette_luminance[256];
   double palette_blue[256];
   double palette_red[256];
-  uint64_t * buffer = ctxmalloc(context, sizeof *buffer * ((context -> source -> palette && (context -> source -> max_palette_index > 7)) ?
+  uint64_t * buffer = ctxmalloc(context, sizeof *buffer * ((context -> source -> palette && context -> source -> max_palette_index > 7) ?
                                                            context -> source -> max_palette_index + 1 : 8));
   // define macros to reduce repetition within the function
   #define nextunit luminance ++, blue ++, red ++
   #define convertblock(rows, cols) do                                                                                                                          \
     if (context -> source -> palette)                                                                                                                          \
-      for (row = 0; row < (rows); row ++) for (col = 0; col < (cols); col ++) {                                                                                \
+      for (uint_fast8_t row = 0; row < (rows); row ++) for (uint_fast8_t col = 0; col < (cols); col ++) {                                                      \
         unsigned char index = data[(unitrow * 8 + row) * context -> source -> width + unitcol * 8 + col], coord = row * 8 + col;                               \
         coord[*luminance] = palette_luminance[index];                                                                                                          \
         coord[*blue] = palette_blue[index];                                                                                                                    \
@@ -105,20 +104,21 @@ void convert_JPEG_components_to_YCbCr (struct context * context, double (* restr
       }                                                                                                                                                        \
     else {                                                                                                                                                     \
       size_t index = unitrow * 8 * rowoffset + unitcol * 8 * offset;                                                                                           \
-      for (row = 0; row < (rows); row ++, index += rowoffset)                                                                                                  \
+      for (uint_fast8_t row = 0; row < (rows); row ++, index += rowoffset)                                                                                     \
         convert_JPEG_colors_to_YCbCr(data + index, cols, context -> source -> color_format, *luminance + 8 * row, *blue + 8 * row, *red + 8 * row, buffer);    \
     }                                                                                                                                                          \
   while (0)
   #define copyvalues(index, offset) do {                     \
-    unsigned char coord = (index);                           \
-    (*luminance)[coord] = (*luminance)[coord - (offset)];    \
-    (*blue)[coord] = (*blue)[coord - (offset)];              \
-    (*red)[coord] = (*red)[coord - (offset)];                \
+    uint_fast8_t coord = (index), ref = coord - (offset);    \
+    coord[*luminance] = ref[*luminance];                     \
+    coord[*blue] = ref[*blue];                               \
+    coord[*red] = ref[*red];                                 \
   } while (0)
   // actually do the conversion
   if (context -> source -> palette)
     convert_JPEG_colors_to_YCbCr(context -> source -> palette, context -> source -> max_palette_index + 1, context -> source -> color_format, palette_luminance,
                                  palette_blue, palette_red, buffer);
+  size_t unitrow, unitcol; // used by convertblock (and thus required to keep their values after the loops exit)
   for (unitrow = 0; unitrow < (context -> source -> height >> 3); unitrow ++) {
     for (unitcol = 0; unitcol < (context -> source -> width >> 3); unitcol ++) {
       convertblock(8, 8);
@@ -126,20 +126,21 @@ void convert_JPEG_components_to_YCbCr (struct context * context, double (* restr
     }
     if (context -> source -> width & 7) {
       convertblock(8, context -> source -> width & 7);
-      for (row = 0; row < 8; row ++) for (col = context -> source -> width & 7; col < 8; col ++) copyvalues(row * 8 + col, 1);
+      for (uint_fast8_t row = 0; row < 8; row ++) for (uint_fast8_t col = context -> source -> width & 7; col < 8; col ++) copyvalues(row * 8 + col, 1);
       nextunit;
     }
   }
   if (context -> source -> height & 7) {
     for (unitcol = 0; unitcol < (context -> source -> width >> 3); unitcol ++) {
       convertblock(context -> source -> height & 7, 8);
-      for (col = 8 * (context -> source -> height & 7); col < 64; col ++) copyvalues(col, 8);
+      for (uint_fast8_t p = 8 * (context -> source -> height & 7); p < 64; p ++) copyvalues(p, 8);
       nextunit;
     }
     if (context -> source -> width & 7) {
       convertblock(context -> source -> height & 7, context -> source -> width & 7);
-      for (row = 0; row < (context -> source -> height & 7); row ++) for (col = context -> source -> width & 7; col < 8; col ++) copyvalues(row * 8 + col, 1);
-      for (col = 8 * (context -> source -> height & 7); col < 64; col ++) copyvalues(col, 8);
+      for (uint_fast8_t row = 0; row < (context -> source -> height & 7); row ++) for (uint_fast8_t col = context -> source -> width & 7; col < 8; col ++)
+        copyvalues(row * 8 + col, 1);
+      for (uint_fast8_t p = 8 * (context -> source -> height & 7); p < 64; p ++) copyvalues(p, 8);
     }
   }
   #undef copyvalues
@@ -151,8 +152,7 @@ void convert_JPEG_components_to_YCbCr (struct context * context, double (* restr
 void convert_JPEG_colors_to_YCbCr (const void * restrict colors, size_t count, unsigned char flags, double * restrict luminance, double * restrict blue,
                                    double * restrict red, uint64_t * restrict buffer) {
   plum_convert_colors(buffer, colors, count, PLUM_COLOR_64, flags);
-  size_t p;
-  for (p = 0; p < count; p ++) {
+  for (size_t p = 0; p < count; p ++) {
     double R = (double) (buffer[p] & 0xffffu) / 257.0, G = (double) ((buffer[p] >> 16) & 0xffffu) / 257.0, B = (double) ((buffer[p] >> 32) & 0xffffu) / 257.0;
     luminance[p] = 0x0.4c8b4395810628p+0 * R + 0x0.9645a1cac08310p+0 * G + 0x0.1d2f1a9fbe76c8p+0 * B - 128.0;
     blue[p] = 0.5 * (B - 1.0) - 0x0.2b32468049f7e8p+0 * R - 0x0.54cdb97fb60818p+0 * G;
@@ -161,44 +161,48 @@ void convert_JPEG_colors_to_YCbCr (const void * restrict colors, size_t count, u
 }
 
 void subsample_JPEG_component (double (* restrict component)[64], double (* restrict output)[64], size_t unitsH, size_t unitsV) {
-  size_t unitrow, unitcol, row, col, p;
-  #define reduce(offset, shift) do {                                                             \
-    const double * ref = component[(offset) * unitsH] + (row * 16 + col * 2 - 64 * (offset));    \
-    (*output)[row * 8 + col + (shift)] = (*ref + ref[1] + ref[8] + ref[9]) * 0.25;               \
+  #define reduce(offset, shift, y, x) do {                                              \
+    uint_fast8_t index = (y) * 8 + (x);                                                 \
+    const double * ref = component[(offset) * unitsH] + (index * 2 - 64 * (offset));    \
+    (*output)[index + (shift)] = (*ref + ref[1] + ref[8] + ref[9]) * 0.25;              \
   } while (0)
-  for (unitrow = 0; unitrow < (unitsV >> 1); unitrow ++) {
-    for (unitcol = 0; unitcol < (unitsH >> 1); unitcol ++) {
-      for (p = 0; p < 8; p += 4) {
-        for (row = 0; row < 4; row ++) for (col = 0; col < 4; col ++) reduce(0, p);
-        for (; row < 8; row ++) for (col = 0; col < 4; col ++) reduce(1, p);
+  for (size_t unitrow = 0; unitrow < (unitsV >> 1); unitrow ++) {
+    for (size_t unitcol = 0; unitcol < (unitsH >> 1); unitcol ++) {
+      for (uint_fast8_t p = 0; p < 8; p += 4) {
+        for (uint_fast8_t row = 0; row < 4; row ++) for (uint_fast8_t col = 0; col < 4; col ++) {
+          reduce(0, p, row, col);
+          reduce(1, p, row + 4, col);
+        }
         component ++;
       }
       output ++;
     }
     if (unitsH & 1) {
-      for (row = 0; row < 4; row ++) for (col = 0; col < 4; col ++) reduce(0, 0);
-      for (; row < 8; row ++) for (col = 0; col < 4; col ++) reduce(1, 0);
+      for (uint_fast8_t row = 0; row < 4; row ++) for (uint_fast8_t col = 0; col < 4; col ++) {
+        reduce(0, 0, row, col);
+        reduce(1, 0, row + 4, col);
+      }
       component ++;
-      for (row = 0; row < 8; row ++) for (col = 4; col < 8; col ++) (*output)[row * 8 + col] = (*output)[row * 8 + col - 1];
+      for (uint_fast8_t row = 0; row < 8; row ++) for (uint_fast8_t col = 4; col < 8; col ++) (*output)[row * 8 + col] = (*output)[row * 8 + col - 1];
       output ++;
     }
     component += unitsH; // skip odd rows
   }
   if (unitsV & 1) {
-    for (unitcol = 0; unitcol < (unitsH >> 1); unitcol ++) {
-      for (p = 0; p < 8; p += 4) {
-        for (row = 0; row < 4; row ++) for (col = 0; col < 4; col ++) reduce(0, p);
+    for (size_t unitcol = 0; unitcol < (unitsH >> 1); unitcol ++) {
+      for (uint_fast8_t p = 0; p < 8; p += 4) {
+        for (uint_fast8_t row = 0; row < 4; row ++) for (uint_fast8_t col = 0; col < 4; col ++) reduce(0, p, row, col);
         component ++;
       }
-      for (p = 32; p < 64; p ++) (*output)[p] = (*output)[p - 8];
+      for (uint_fast8_t p = 32; p < 64; p ++) (*output)[p] = (*output)[p - 8];
       output ++;
     }
     if (unitsH & 1) {
-      for (row = 0; row < 4; row ++) for (col = 0; col < 4; col ++) {
-        reduce(0, 0);
+      for (uint_fast8_t row = 0; row < 4; row ++) for (uint_fast8_t col = 0; col < 4; col ++) {
+        reduce(0, 0, row, col);
         (*output)[row * 8 + col + 4] = (*output)[row * 8 + col];
       }
-      for (p = 32; p < 64; p ++) (*output)[p] = (*output)[p - 8];
+      for (uint_fast8_t p = 32; p < 64; p ++) (*output)[p] = (*output)[p - 8];
     }
   }
   #undef reduce

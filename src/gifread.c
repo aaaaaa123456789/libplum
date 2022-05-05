@@ -14,8 +14,7 @@ void load_GIF_data (struct context * context, unsigned flags, size_t limit) {
   uint64_t * durations;
   uint8_t * disposals;
   add_animation_metadata(context, &durations, &disposals);
-  uint_fast32_t frame;
-  for (frame = 0; frame < context -> image -> frames; frame ++)
+  for (uint_fast32_t frame = 0; frame < context -> image -> frames; frame ++)
     load_GIF_frame(context, &offset, flags, frame, palettes ? palettes[frame] : NULL, transparent, durations + frame, disposals + frame);
   if (!plum_find_metadata(context -> image, PLUM_METADATA_LOOP_COUNT)) add_loop_count_metadata(context, 1);
 }
@@ -59,13 +58,13 @@ uint64_t ** load_GIF_palettes_and_frame_count (struct context * context, unsigne
           skip_GIF_data_blocks(context, &scan_offset);
       } break;
       case 0x2c: {
-        if (scan_offset > (context -> size - 9)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+        if (scan_offset > context -> size - 9) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         scan_offset += 9;
         context -> image -> frames ++;
-        if (!(context -> image -> frames)) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
+        if (!context -> image -> frames) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
         int smaller_size = read_le16_unaligned(context -> data + scan_offset - 9) || read_le16_unaligned(context -> data + scan_offset - 7) ||
-                           (read_le16_unaligned(context -> data + scan_offset - 5) != context -> image -> width) ||
-                           (read_le16_unaligned(context -> data + scan_offset - 3) != context -> image -> height);
+                           read_le16_unaligned(context -> data + scan_offset - 5) != context -> image -> width ||
+                           read_le16_unaligned(context -> data + scan_offset - 3) != context -> image -> height;
         uint64_t * local_palette = ctxmalloc(context, 256 * sizeof *local_palette);
         unsigned local_palette_size = 2 << (context -> data[scan_offset - 1] & 7);
         if (context -> data[scan_offset - 1] & 0x80)
@@ -80,7 +79,7 @@ uint64_t ** load_GIF_palettes_and_frame_count (struct context * context, unsigne
         if (transparent_index == 256) transparent_index = next_transparent_index;
         if (global_palette_size && !result) {
           // check if the current palette is compatible with the global one; if so, don't add any per-frame palettes
-          if (!(smaller_size && (next_transparent_index == 256)) && (transparent_index == next_transparent_index)) {
+          if (!(smaller_size && next_transparent_index == 256) && transparent_index == next_transparent_index) {
             if (!local_palette_size) goto added;
             unsigned min = (local_palette_size < global_palette_size) ? local_palette_size : global_palette_size;
             // temporarily reset this location so it won't fail the check on that spot
@@ -100,9 +99,8 @@ uint64_t ** load_GIF_palettes_and_frame_count (struct context * context, unsigne
           if (context -> image -> frames) {
             result = ctxmalloc(context, (context -> image -> frames - 1) * sizeof *result);
             uint64_t * palcopy = ctxcalloc(context, 256 * sizeof *palcopy);
-            uint_fast32_t p;
             // it doesn't matter that the pointer is reused, because it won't be freed explicitly
-            for (p = 0; p < (context -> image -> frames - 1); p ++) result[p] = palcopy;
+            for (uint_fast32_t p = 0; p < context -> image -> frames - 1; p ++) result[p] = palcopy;
             memcpy(palcopy, global_palette, global_palette_size * sizeof *palcopy);
             if (transparent_index < global_palette_size) palcopy[transparent_index] = *transparent_color;
           }
@@ -145,30 +143,28 @@ uint64_t ** load_GIF_palettes_and_frame_count (struct context * context, unsigne
 }
 
 void load_GIF_palette (struct context * context, uint64_t * palette, size_t * offset, unsigned size) {
-  if ((3 * size) > (context -> size - *offset)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  uint64_t color;
+  if (3 * size > context -> size - *offset) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   while (size --) {
-    color = context -> data[(*offset) ++];
-    color |= (uint64_t) context -> data[(*offset) ++] << 16;
-    color |= (uint64_t) context -> data[(*offset) ++] << 32;
+    uint_fast64_t color = context -> data[(*offset) ++];
+    color |= (uint_fast64_t) context -> data[(*offset) ++] << 16;
+    color |= (uint_fast64_t) context -> data[(*offset) ++] << 32;
     *(palette ++) = color * 0x101;
   }
 }
 
 void * load_GIF_data_blocks (struct context * context, size_t * restrict offset, size_t * restrict loaded_size) {
-  size_t block, p = *offset, current_size = 0;
-  if (p >= context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  if (*offset >= context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  size_t current_size = 0, p = *offset;
+  uint_fast8_t block;
   while (block = context -> data[p ++]) {
-    current_size += block;
     p += block;
-    if (p >= context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    current_size += block;
+    if (p >= context -> size || p <= block) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   }
   *loaded_size = current_size;
   unsigned char * result = ctxmalloc(context, current_size);
-  current_size = 0;
-  while (block = context -> data[(*offset) ++]) {
-    memcpy(result + current_size, context -> data + *offset, block);
-    current_size += block;
+  for (size_t copied_size = 0; block = context -> data[(*offset) ++]; copied_size += block) {
+    memcpy(result + copied_size, context -> data + *offset, block);
     *offset += block;
   }
   return result;
@@ -179,7 +175,7 @@ void skip_GIF_data_blocks (struct context * context, size_t * offset) {
   do {
     if (*offset >= context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     skip = context -> data[(*offset) ++];
-    if ((context -> size < skip) || (*offset > (context -> size - skip))) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    if (context -> size < skip || *offset > context -> size - skip) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     *offset += skip;
   } while (skip);
 }
@@ -191,14 +187,14 @@ void load_GIF_frame (struct context * context, size_t * offset, unsigned flags, 
   // frames have already been validated, so at this point, we can only have extensions (0x21 ID block block block...) or image descriptors
   while (context -> data[(*offset) ++] == 0x21) {
     unsigned char extkind = context -> data[(*offset) ++];
-    if ((extkind != 0xf9) && (extkind != 0xff)) {
+    if (extkind != 0xf9 && extkind != 0xff) {
       skip_GIF_data_blocks(context, offset);
       continue;
     }
     size_t extsize;
     unsigned char * extdata = load_GIF_data_blocks(context, offset, &extsize);
     if (extkind == 0xff) {
-      if ((extsize == 14) && bytematch(extdata, 0x4e, 0x45, 0x54, 0x53, 0x43, 0x41, 0x50, 0x45, 0x32, 0x2e, 0x30, 0x01)) {
+      if (extsize == 14 && bytematch(extdata, 0x4e, 0x45, 0x54, 0x53, 0x43, 0x41, 0x50, 0x45, 0x32, 0x2e, 0x30, 0x01)) {
         if (plum_find_metadata(context -> image, PLUM_METADATA_LOOP_COUNT)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         add_loop_count_metadata(context, read_le16_unaligned(extdata + 12));
       }
@@ -216,46 +212,46 @@ void load_GIF_frame (struct context * context, size_t * offset, unsigned flags, 
   uint_fast32_t top = read_le16_unaligned(context -> data + *offset + 2);
   uint_fast32_t width = read_le16_unaligned(context -> data + *offset + 4);
   uint_fast32_t height = read_le16_unaligned(context -> data + *offset + 6);
-  if (((left + width) > context -> image -> width) || ((top + height) > context -> image -> height)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  uint_fast32_t p = context -> data[*offset + 8];
+  if (left + width > context -> image -> width || top + height > context -> image -> height) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  uint_fast8_t frameflags = context -> data[*offset + 8];
   *offset += 9;
   uint8_t max_palette_index;
-  if (p & 0x80) {
-    *offset += 6 << (p & 7);
-    max_palette_index = (2 << (p & 7)) - 1;
+  if (frameflags & 0x80) {
+    *offset += 6 << (frameflags & 7);
+    max_palette_index = (2 << (frameflags & 7)) - 1;
   } else
     max_palette_index = (2 << (context -> data[10] & 7)) - 1;
   uint8_t codesize = context -> data[(*offset) ++];
-  if ((codesize < 2) || (codesize > 11)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  if (codesize < 2 || codesize > 11) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   size_t length;
   unsigned char * compressed = load_GIF_data_blocks(context, offset, &length);
   unsigned char * buffer = ctxmalloc(context, (size_t) width * height);
   decompress_GIF_data(context, buffer, compressed, width * height, length, codesize);
   ctxfree(context, compressed);
-  if (p & 0x40) deinterlace_GIF_frame(context, buffer, width, height);
-  for (p = 0; p < (width * height); p ++) if (buffer[p] > max_palette_index) throw(context, PLUM_ERR_INVALID_COLOR_INDEX);
-  if ((width == context -> image -> width) && (height == context -> image -> height))
+  if (frameflags & 0x40) deinterlace_GIF_frame(context, buffer, width, height);
+  for (size_t p = 0; p < width * height; p ++) if (buffer[p] > max_palette_index) throw(context, PLUM_ERR_INVALID_COLOR_INDEX);
+  if (width == context -> image -> width && height == context -> image -> height)
     write_palette_framebuffer_to_image(context, buffer, palette, frame, flags, 0xff);
   else if (context -> image -> palette) {
     if (transparent_index < 0) throw(context, PLUM_ERR_INVALID_FILE_FORMAT); // if we got here somehow, it's irrecoverable
     uint8_t * fullframe = ctxmalloc(context, context -> image -> width * context -> image -> height);
     memset(fullframe, transparent_index, context -> image -> width * context -> image -> height);
-    uint_fast16_t row;
-    for (row = top; row < (top + height); row ++)
+    for (uint_fast16_t row = top; row < top + height; row ++)
       memcpy(fullframe + context -> image -> width * row + left, buffer + width * (row - top), width);
     write_palette_framebuffer_to_image(context, fullframe, palette, frame, flags, 0xff);
     ctxfree(context, fullframe);
   } else {
     uint64_t * fullframe = ctxmalloc(context, sizeof *fullframe * context -> image -> width * context -> image -> height);
     uint64_t * current = fullframe;
-    uint_fast16_t row, col;
-    for (row = 0; row < top; row ++) for (col = 0; col < context -> image -> width; col ++) *(current ++) = transparent_color;
-    for (; row < (top + height); row ++) {
-      for (col = 0; col < left; col ++) *(current ++) = transparent_color;
-      for (; col < (left + width); col ++) *(current ++) = palette[buffer[(row - top) * width + col - left]];
-      for (; col < context -> image -> width; col ++) *(current ++) = transparent_color;
+    for (uint_fast16_t row = 0; row < top; row ++)
+      for (uint_fast16_t col = 0; col < context -> image -> width; col ++) *(current ++) = transparent_color;
+    for (uint_fast16_t row = top; row < top + height; row ++) {
+      for (uint_fast16_t col = 0; col < left; col ++) *(current ++) = transparent_color;
+      for (uint_fast16_t col = left; col < left + width; col ++) *(current ++) = palette[buffer[(row - top) * width + col - left]];
+      for (uint_fast16_t col = left + width; col < context -> image -> width; col ++) *(current ++) = transparent_color;
     }
-    for (; row < context -> image -> height; row ++) for (col = 0; col < context -> image -> width; col ++) *(current ++) = transparent_color;
+    for (uint_fast16_t row = top + height; row < context -> image -> height; row ++)
+      for (uint_fast16_t col = 0; col < context -> image -> width; col ++) *(current ++) = transparent_color;
     write_framebuffer_to_image(context -> image, fullframe, frame, flags);
     ctxfree(context, fullframe);
   }
@@ -264,11 +260,11 @@ void load_GIF_frame (struct context * context, size_t * offset, unsigned flags, 
 
 void deinterlace_GIF_frame (struct context * context, unsigned char * restrict buffer, uint16_t width, uint16_t height) {
   unsigned char * temp = ctxmalloc(context, (size_t) width * height);
-  uint_fast32_t row, target = 0;
-  for (row = 0; row < height; row += 8) memcpy(temp + row * width, buffer + (target ++) * width, width);
-  for (row = 4; row < height; row += 8) memcpy(temp + row * width, buffer + (target ++) * width, width);
-  for (row = 2; row < height; row += 4) memcpy(temp + row * width, buffer + (target ++) * width, width);
-  for (row = 1; row < height; row += 2) memcpy(temp + row * width, buffer + (target ++) * width, width);
+  uint_fast32_t target = 0;
+  for (uint_fast32_t row = 0; row < height; row += 8) memcpy(temp + row * width, buffer + (target ++) * width, width);
+  for (uint_fast32_t row = 4; row < height; row += 8) memcpy(temp + row * width, buffer + (target ++) * width, width);
+  for (uint_fast32_t row = 2; row < height; row += 4) memcpy(temp + row * width, buffer + (target ++) * width, width);
+  for (uint_fast32_t row = 1; row < height; row += 2) memcpy(temp + row * width, buffer + (target ++) * width, width);
   memcpy(buffer, temp, (size_t) width * height);
   ctxfree(context, temp);
 }
