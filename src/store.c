@@ -7,41 +7,42 @@ size_t plum_store_image (const struct plum_image * image, void * restrict buffer
     return 0;
   }
   context -> source = image;
-  if (setjmp(context -> target)) goto done;
-  if (!(image && buffer && size_mode)) throw(context, PLUM_ERR_INVALID_ARGUMENTS);
-  if (context -> status = plum_validate_image(image)) goto done;
-  if (plum_validate_palette_indexes(image)) throw(context, PLUM_ERR_INVALID_COLOR_INDEX);
-  switch (image -> type) {
-    case PLUM_IMAGE_BMP: generate_BMP_data(context); break;
-    case PLUM_IMAGE_GIF: generate_GIF_data(context); break;
-    case PLUM_IMAGE_PNG: generate_PNG_data(context); break;
-    case PLUM_IMAGE_APNG: generate_APNG_data(context); break;
-    case PLUM_IMAGE_JPEG: generate_JPEG_data(context); break;
-    case PLUM_IMAGE_PNM: generate_PNM_data(context); break;
-    default: throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  if (!setjmp(context -> target)) {
+    if (!(image && buffer && size_mode)) throw(context, PLUM_ERR_INVALID_ARGUMENTS);
+    unsigned rv = plum_validate_image(image);
+    if (rv) throw(context, rv);
+    if (plum_validate_palette_indexes(image)) throw(context, PLUM_ERR_INVALID_COLOR_INDEX);
+    switch (image -> type) {
+      case PLUM_IMAGE_BMP: generate_BMP_data(context); break;
+      case PLUM_IMAGE_GIF: generate_GIF_data(context); break;
+      case PLUM_IMAGE_PNG: generate_PNG_data(context); break;
+      case PLUM_IMAGE_APNG: generate_APNG_data(context); break;
+      case PLUM_IMAGE_JPEG: generate_JPEG_data(context); break;
+      case PLUM_IMAGE_PNM: generate_PNM_data(context); break;
+      default: throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    }
+    size_t output_size = get_total_output_size(context);
+    if (!output_size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    switch (size_mode) {
+      case PLUM_MODE_FILENAME:
+        write_generated_image_data_to_file(context, buffer);
+        break;
+      case PLUM_MODE_BUFFER: {
+        void * out = malloc(output_size);
+        if (!out) throw(context, PLUM_ERR_OUT_OF_MEMORY);
+        // the function must succeed after reaching this point (otherwise, memory would be leaked)
+        *(struct plum_buffer *) buffer = (struct plum_buffer) {.size = output_size, .data = out};
+        write_generated_image_data(out, context -> output);
+      } break;
+      case PLUM_MODE_CALLBACK:
+        write_generated_image_data_to_callback(context, buffer);
+        break;
+      default:
+        if (output_size > size_mode) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
+        write_generated_image_data(buffer, context -> output);
+    }
+    context -> size = output_size;
   }
-  size_t output_size = get_total_output_size(context);
-  if (!output_size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  switch (size_mode) {
-    case PLUM_MODE_FILENAME:
-      write_generated_image_data_to_file(context, buffer);
-      break;
-    case PLUM_MODE_BUFFER: {
-      void * out = malloc(output_size);
-      if (!out) throw(context, PLUM_ERR_OUT_OF_MEMORY);
-      // the function must succeed after reaching this point (otherwise, memory would be leaked)
-      *(struct plum_buffer *) buffer = (struct plum_buffer) {.size = output_size, .data = out};
-      write_generated_image_data(out, context -> output);
-    } break;
-    case PLUM_MODE_CALLBACK:
-      write_generated_image_data_to_callback(context, buffer);
-      break;
-    default:
-      if (output_size > size_mode) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
-      write_generated_image_data(buffer, context -> output);
-  }
-  context -> size = output_size;
-  done:
   if (context -> file) fclose(context -> file);
   if (error) *error = context -> status;
   size_t result = context -> size;

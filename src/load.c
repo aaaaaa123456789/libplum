@@ -10,29 +10,29 @@ struct plum_image * plum_load_image_limited (const void * restrict buffer, size_
     if (error) *error = PLUM_ERR_OUT_OF_MEMORY;
     return NULL;
   }
-  if (setjmp(context -> target)) goto done;
-  if (!buffer) throw(context, PLUM_ERR_INVALID_ARGUMENTS);
-  if (!(context -> image = plum_new_image())) throw(context, PLUM_ERR_OUT_OF_MEMORY);
-  prepare_image_buffer_data(context, buffer, size_mode);
-  load_image_buffer_data(context, flags, limit);
-  if (flags & PLUM_ALPHA_REMOVE) plum_remove_alpha(context -> image);
-  if (flags & PLUM_PALETTE_GENERATE)
-    if (context -> image -> palette) {
-      int colors = plum_get_highest_palette_index(context -> image);
-      if (colors < 0) throw(context, -colors);
-      context -> image -> max_palette_index = colors;
-      update_loaded_palette(context, flags);
-    } else {
-      generate_palette(context, flags);
-      // PLUM_PALETTE_FORCE == PLUM_PALETTE_LOAD | PLUM_PALETTE_GENERATE
-      if (!(context -> image -> palette) && (flags & PLUM_PALETTE_LOAD)) throw(context, PLUM_ERR_TOO_MANY_COLORS);
-    }
-  else if (context -> image -> palette)
-    if ((flags & PLUM_PALETTE_MASK) == PLUM_PALETTE_NONE)
-      remove_palette(context);
-    else
-      update_loaded_palette(context, flags);
-  done:
+  if (!setjmp(context -> target)) {
+    if (!buffer) throw(context, PLUM_ERR_INVALID_ARGUMENTS);
+    if (!(context -> image = plum_new_image())) throw(context, PLUM_ERR_OUT_OF_MEMORY);
+    prepare_image_buffer_data(context, buffer, size_mode);
+    load_image_buffer_data(context, flags, limit);
+    if (flags & PLUM_ALPHA_REMOVE) plum_remove_alpha(context -> image);
+    if (flags & PLUM_PALETTE_GENERATE)
+      if (context -> image -> palette) {
+        int colors = plum_get_highest_palette_index(context -> image);
+        if (colors < 0) throw(context, -colors);
+        context -> image -> max_palette_index = colors;
+        update_loaded_palette(context, flags);
+      } else {
+        generate_palette(context, flags);
+        // PLUM_PALETTE_FORCE == PLUM_PALETTE_LOAD | PLUM_PALETTE_GENERATE
+        if (!(context -> image -> palette) && (flags & PLUM_PALETTE_LOAD)) throw(context, PLUM_ERR_TOO_MANY_COLORS);
+      }
+    else if (context -> image -> palette)
+      if ((flags & PLUM_PALETTE_MASK) == PLUM_PALETTE_NONE)
+        remove_palette(context);
+      else
+        update_loaded_palette(context, flags);
+  }
   if (context -> file) fclose(context -> file);
   if (error) *error = context -> status;
   struct plum_image * image = context -> image;

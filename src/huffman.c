@@ -11,7 +11,8 @@ void generate_Huffman_tree (struct context * context, const size_t * restrict co
   memset(lengths, 0, entries);
   if (truecount < 2) {
     if (truecount) lengths[*sorted] = 1;
-    goto done;
+    ctxfree(context, sorted);
+    return;
   }
   qsort(sorted, truecount, 2 * sizeof *sorted, &compare_index_value_pairs);
   size_t * parents = ctxmalloc(context, (entries + truecount) * sizeof *parents);
@@ -57,28 +58,28 @@ void generate_Huffman_tree (struct context * context, const size_t * restrict co
     if (length > maxlength) maxlength = length;
   }
   ctxfree(context, parents);
-  if (maxlength <= max) goto done;
-  // the maximum length has been exceeded, so increase some other lengths to make everything fit
-  remaining = (uint64_t) 1 << max;
-  for (size_t p = 0; p < truecount; p ++) {
-    next = sorted[p * 2];
-    if (lengths[next] > max) {
-      lengths[next] = max;
-      remaining --;
-    } else {
-      while (((uint64_t) 1 << (max - lengths[next])) > remaining) lengths[next] ++;
-      while (remaining - ((uint64_t) 1 << (max - lengths[next])) < truecount - p - 1) lengths[next] ++;
-      remaining -= (uint64_t) 1 << (max - lengths[next]);
+  if (maxlength > max) {
+    // the maximum length has been exceeded, so increase some other lengths to make everything fit
+    remaining = (uint64_t) 1 << max;
+    for (size_t p = 0; p < truecount; p ++) {
+      next = sorted[p * 2];
+      if (lengths[next] > max) {
+        lengths[next] = max;
+        remaining --;
+      } else {
+        while (((uint64_t) 1 << (max - lengths[next])) > remaining) lengths[next] ++;
+        while (remaining - ((uint64_t) 1 << (max - lengths[next])) < truecount - p - 1) lengths[next] ++;
+        remaining -= (uint64_t) 1 << (max - lengths[next]);
+      }
+    }
+    for (size_t p = 0; remaining; p ++) {
+      next = sorted[p * 2];
+      while (lengths[next] > 1 && remaining >= ((uint64_t) 1 << (max - lengths[next]))) {
+        remaining -= (uint64_t) 1 << (max - lengths[next]);
+        lengths[next] --;
+      }
     }
   }
-  for (size_t p = 0; remaining; p ++) {
-    next = sorted[p * 2];
-    while (lengths[next] > 1 && remaining >= ((uint64_t) 1 << (max - lengths[next]))) {
-      remaining -= (uint64_t) 1 << (max - lengths[next]);
-      lengths[next] --;
-    }
-  }
-  done:
   ctxfree(context, sorted);
 }
 

@@ -36,98 +36,97 @@ uint64_t ** load_GIF_palettes_and_frame_count (struct context * context, unsigne
   size_t scan_offset = *offset;
   unsigned real_global_palette_size = global_palette_size, transparent_index = 256, next_transparent_index = 256, seen_extension = 0;
   uint64_t ** result = NULL;
-  while (scan_offset < context -> size)
-    switch (context -> data[scan_offset ++]) {
-      case 0x21: {
-        if (scan_offset == context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-        uint_fast8_t exttype = context -> data[scan_offset ++];
-        if (exttype == 0xf9) {
-          if (seen_extension) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-          seen_extension = 1;
-          size_t extsize;
-          unsigned char * extdata = load_GIF_data_blocks(context, &scan_offset, &extsize);
-          if (extsize != 4) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-          if (*extdata & 1)
-            next_transparent_index = extdata[3];
-          else
-            next_transparent_index = 256;
-          ctxfree(context, extdata);
-        } else if (exttype < 0x80)
-          throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-        else
-          skip_GIF_data_blocks(context, &scan_offset);
-      } break;
-      case 0x2c: {
-        if (scan_offset > context -> size - 9) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-        scan_offset += 9;
-        context -> image -> frames ++;
-        if (!context -> image -> frames) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
-        int smaller_size = read_le16_unaligned(context -> data + scan_offset - 9) || read_le16_unaligned(context -> data + scan_offset - 7) ||
-                           read_le16_unaligned(context -> data + scan_offset - 5) != context -> image -> width ||
-                           read_le16_unaligned(context -> data + scan_offset - 3) != context -> image -> height;
-        uint64_t * local_palette = ctxmalloc(context, 256 * sizeof *local_palette);
-        unsigned local_palette_size = 2 << (context -> data[scan_offset - 1] & 7);
-        if (context -> data[scan_offset - 1] & 0x80)
-          load_GIF_palette(context, local_palette, &scan_offset, local_palette_size);
-        else
-          local_palette_size = 0;
-        if (!(local_palette_size || real_global_palette_size)) throw(context, PLUM_ERR_UNDEFINED_PALETTE);
-        if (next_transparent_index < (local_palette_size ? local_palette_size : real_global_palette_size))
-          local_palette[next_transparent_index] = *transparent_color;
+  while (scan_offset < context -> size) switch (context -> data[scan_offset ++]) {
+    case 0x21: {
+      if (scan_offset == context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+      uint_fast8_t exttype = context -> data[scan_offset ++];
+      if (exttype == 0xf9) {
+        if (seen_extension) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+        seen_extension = 1;
+        size_t extsize;
+        unsigned char * extdata = load_GIF_data_blocks(context, &scan_offset, &extsize);
+        if (extsize != 4) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+        if (*extdata & 1)
+          next_transparent_index = extdata[3];
         else
           next_transparent_index = 256;
-        if (transparent_index == 256) transparent_index = next_transparent_index;
-        if (global_palette_size && !result) {
-          // check if the current palette is compatible with the global one; if so, don't add any per-frame palettes
-          if (!(smaller_size && next_transparent_index == 256) && transparent_index == next_transparent_index) {
-            if (!local_palette_size) goto added;
-            unsigned min = (local_palette_size < global_palette_size) ? local_palette_size : global_palette_size;
-            // temporarily reset this location so it won't fail the check on that spot
-            if (next_transparent_index < min) local_palette[next_transparent_index] = global_palette[next_transparent_index];
-            int palcheck = memcmp(local_palette, global_palette, min * sizeof *global_palette);
-            if (next_transparent_index < min) local_palette[next_transparent_index] = *transparent_color;
-            if (!palcheck) {
-              if (local_palette_size > global_palette_size) {
-                memcpy(global_palette + global_palette_size, local_palette + global_palette_size,
-                       (local_palette_size - global_palette_size) * sizeof *global_palette);
-                global_palette_size = local_palette_size;
-              }
-              goto added;
-            }
-          }
-          // palettes are incompatible: break down the current global palette into per-frame copies
-          if (context -> image -> frames) {
-            result = ctxmalloc(context, (context -> image -> frames - 1) * sizeof *result);
-            uint64_t * palcopy = ctxcalloc(context, 256 * sizeof *palcopy);
-            // it doesn't matter that the pointer is reused, because it won't be freed explicitly
-            for (uint_fast32_t p = 0; p < context -> image -> frames - 1; p ++) result[p] = palcopy;
-            memcpy(palcopy, global_palette, global_palette_size * sizeof *palcopy);
-            if (transparent_index < global_palette_size) palcopy[transparent_index] = *transparent_color;
-          }
-        }
-        result = ctxrealloc(context, result, context -> image -> frames * sizeof *result);
-        result[context -> image -> frames - 1] = ctxcalloc(context, 256 * sizeof **result);
-        if (local_palette_size)
-          memcpy(result[context -> image -> frames - 1], local_palette, local_palette_size * sizeof **result);
-        else {
-          memcpy(result[context -> image -> frames - 1], global_palette, global_palette_size * sizeof **result);
-          if (next_transparent_index < global_palette_size)
-            result[context -> image -> frames - 1][next_transparent_index] = *transparent_color;
-        }
-        // either the frame palette has been added to the per-frame list or the global palette is still in use
-        added:
-        ctxfree(context, local_palette);
-        scan_offset ++;
-        if (scan_offset >= context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-        skip_GIF_data_blocks(context, &scan_offset);
-        next_transparent_index = 256;
-        seen_extension = 0;
-      } break;
-      case 0x3b:
-        if (!seen_extension) goto done;
-      default:
+        ctxfree(context, extdata);
+      } else if (exttype < 0x80)
         throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-    }
+      else
+        skip_GIF_data_blocks(context, &scan_offset);
+    } break;
+    case 0x2c: {
+      if (scan_offset > context -> size - 9) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+      scan_offset += 9;
+      context -> image -> frames ++;
+      if (!context -> image -> frames) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
+      int smaller_size = read_le16_unaligned(context -> data + scan_offset - 9) || read_le16_unaligned(context -> data + scan_offset - 7) ||
+                         read_le16_unaligned(context -> data + scan_offset - 5) != context -> image -> width ||
+                         read_le16_unaligned(context -> data + scan_offset - 3) != context -> image -> height;
+      uint64_t * local_palette = ctxmalloc(context, 256 * sizeof *local_palette);
+      unsigned local_palette_size = 2 << (context -> data[scan_offset - 1] & 7);
+      if (context -> data[scan_offset - 1] & 0x80)
+        load_GIF_palette(context, local_palette, &scan_offset, local_palette_size);
+      else
+        local_palette_size = 0;
+      if (!(local_palette_size || real_global_palette_size)) throw(context, PLUM_ERR_UNDEFINED_PALETTE);
+      if (next_transparent_index < (local_palette_size ? local_palette_size : real_global_palette_size))
+        local_palette[next_transparent_index] = *transparent_color;
+      else
+        next_transparent_index = 256;
+      if (transparent_index == 256) transparent_index = next_transparent_index;
+      if (global_palette_size && !result) {
+        // check if the current palette is compatible with the global one; if so, don't add any per-frame palettes
+        if (!(smaller_size && next_transparent_index == 256) && transparent_index == next_transparent_index) {
+          if (!local_palette_size) goto added;
+          unsigned min = (local_palette_size < global_palette_size) ? local_palette_size : global_palette_size;
+          // temporarily reset this location so it won't fail the check on that spot
+          if (next_transparent_index < min) local_palette[next_transparent_index] = global_palette[next_transparent_index];
+          int palcheck = memcmp(local_palette, global_palette, min * sizeof *global_palette);
+          if (next_transparent_index < min) local_palette[next_transparent_index] = *transparent_color;
+          if (!palcheck) {
+            if (local_palette_size > global_palette_size) {
+              memcpy(global_palette + global_palette_size, local_palette + global_palette_size,
+                     (local_palette_size - global_palette_size) * sizeof *global_palette);
+              global_palette_size = local_palette_size;
+            }
+            goto added;
+          }
+        }
+        // palettes are incompatible: break down the current global palette into per-frame copies
+        if (context -> image -> frames) {
+          result = ctxmalloc(context, (context -> image -> frames - 1) * sizeof *result);
+          uint64_t * palcopy = ctxcalloc(context, 256 * sizeof *palcopy);
+          // it doesn't matter that the pointer is reused, because it won't be freed explicitly
+          for (uint_fast32_t p = 0; p < context -> image -> frames - 1; p ++) result[p] = palcopy;
+          memcpy(palcopy, global_palette, global_palette_size * sizeof *palcopy);
+          if (transparent_index < global_palette_size) palcopy[transparent_index] = *transparent_color;
+        }
+      }
+      result = ctxrealloc(context, result, context -> image -> frames * sizeof *result);
+      result[context -> image -> frames - 1] = ctxcalloc(context, 256 * sizeof **result);
+      if (local_palette_size)
+        memcpy(result[context -> image -> frames - 1], local_palette, local_palette_size * sizeof **result);
+      else {
+        memcpy(result[context -> image -> frames - 1], global_palette, global_palette_size * sizeof **result);
+        if (next_transparent_index < global_palette_size)
+          result[context -> image -> frames - 1][next_transparent_index] = *transparent_color;
+      }
+      // either the frame palette has been added to the per-frame list or the global palette is still in use
+      added:
+      ctxfree(context, local_palette);
+      scan_offset ++;
+      if (scan_offset >= context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+      skip_GIF_data_blocks(context, &scan_offset);
+      next_transparent_index = 256;
+      seen_extension = 0;
+    } break;
+    case 0x3b:
+      if (!seen_extension) goto done;
+    default:
+      throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  }
   throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   done:
   if (!context -> image -> frames) throw(context, PLUM_ERR_NO_DATA);
