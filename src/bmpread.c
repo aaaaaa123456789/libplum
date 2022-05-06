@@ -105,7 +105,7 @@ uint8_t load_BMP_palette (struct context * context, size_t offset, unsigned max_
 
 void load_BMP_bitmasks (struct context * context, size_t headersize, uint8_t * bitmasks, unsigned maxbits) {
   const uint8_t * bp;
-  unsigned count;
+  unsigned count, valid = 0;
   if (headersize >= 56) {
     bp = context -> data + 54;
     count = 4;
@@ -133,10 +133,12 @@ void load_BMP_bitmasks (struct context * context, size_t headersize, uint8_t * b
         bitmasks[1] = 16;
       }
       if (*bitmasks + bitmasks[1] > maxbits) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+      valid = 1; // at least one mask is not empty
     }
     bp += 4;
     bitmasks += 2;
   }
+  if (!valid) throw(context, PLUM_ERR_NO_DATA);
 }
 
 uint8_t * load_monochrome_BMP (struct context * context, size_t offset, int inverted) {

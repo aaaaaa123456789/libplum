@@ -11,6 +11,7 @@ Note: releases are listed from latest to oldest.
   to unusual environments (such as paths with spaces in them)
 - Added support for JPEG files without explicit Huffman tables (using the recommended tables from the standard),
   following the behavior of many common JPEG viewers
+- Prevented bitmasked BMP files with completely empty bitmasks from loading (erroring out with `PLUM_ERR_NO_DATA`)
 
 ## Version 1.0 (14 February 2022)
 
