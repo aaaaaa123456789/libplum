@@ -145,7 +145,7 @@ struct PNG_chunk_locations * load_PNG_chunk_locations (struct context * context)
       case 0x49454e44u: // IEND
         if (length) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         offset += 4;
-        goto exit;
+        goto done;
       case 0x504c5445u: // PLTE
         if (result -> palette || length % 3 || length > 0x300 || !length) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
         result -> palette = offset;
@@ -196,7 +196,7 @@ struct PNG_chunk_locations * load_PNG_chunk_locations (struct context * context)
     }
     offset += length + 4;
   }
-  exit:
+  done:
   if (offset != context -> size || chunk_type != 0x49454e44u) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   if (!result -> data) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   append_PNG_chunk_location(context, &result -> data, 0, &data_count);
