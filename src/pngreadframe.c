@@ -48,20 +48,20 @@ uint8_t * load_PNG_palette_frame (struct context * context, const void * compres
     const unsigned char coordsV[] = {0, 0, 4, 0, 2, 0, 1};
     const unsigned char offsetsH[] = {8, 8, 4, 4, 2, 2, 1};
     const unsigned char offsetsV[] = {8, 8, 8, 4, 4, 2, 2};
+    size_t rowsizes[7];
     size_t cumulative_size = 0;
     for (uint_fast8_t pass = 0; pass < 7; pass ++) if (widths[pass] && heights[pass]) {
-      size_t rowsize = ((size_t) widths[pass] * bitdepth + 7) / 8 + 1;
-      cumulative_size += heights[pass] * rowsize;
+      rowsizes[pass] = ((size_t) widths[pass] * bitdepth + 7) / 8 + 1;
+      cumulative_size += heights[pass] * rowsizes[pass];
     }
     decompressed = decompress_PNG_data(context, compressed, compressed_size, cumulative_size);
     unsigned char * current = decompressed;
     unsigned char * rowdata = ctxmalloc(context, width);
     for (uint_fast8_t pass = 0; pass < 7; pass ++) if (widths[pass] && heights[pass]) {
-      size_t rowsize = ((size_t) widths[pass] * bitdepth + 7) / 8 + 1;
       remove_PNG_filter(context, current, widths[pass], heights[pass], 3, bitdepth);
       for (size_t row = 0; row < heights[pass]; row ++) {
         expand_bitpacked_PNG_data(rowdata, current + 1, widths[pass], bitdepth);
-        current += rowsize;
+        current += rowsizes[pass];
         for (size_t col = 0; col < widths[pass]; col ++)
           result[(row * offsetsV[pass] + coordsV[pass]) * width + col * offsetsH[pass] + coordsH[pass]] = rowdata[col];
       }
@@ -92,18 +92,18 @@ uint64_t * load_PNG_raw_frame (struct context * context, const void * compressed
     const unsigned char coordsV[] = {0, 0, 4, 0, 2, 0, 1};
     const unsigned char offsetsH[] = {8, 8, 4, 4, 2, 2, 1};
     const unsigned char offsetsV[] = {8, 8, 8, 4, 4, 2, 2};
+    size_t rowsizes[7];
     size_t cumulative_size = 0;
     for (uint_fast8_t pass = 0; pass < 7; pass ++) if (widths[pass] && heights[pass]) {
-      size_t rowsize = pixelsize ? pixelsize * widths[pass] + 1 : (((size_t) widths[pass] * bitdepth + 7) / 8 + 1);
-      cumulative_size += rowsize * heights[pass];
+      rowsizes[pass] = pixelsize ? pixelsize * widths[pass] + 1 : (((size_t) widths[pass] * bitdepth + 7) / 8 + 1);
+      cumulative_size += rowsizes[pass] * heights[pass];
     }
     decompressed = decompress_PNG_data(context, compressed, compressed_size, cumulative_size);
     unsigned char * current = decompressed;
     for (uint_fast8_t pass = 0; pass < 7; pass ++) if (widths[pass] && heights[pass]) {
       load_PNG_raw_frame_pass(context, current, result, heights[pass], widths[pass], width, imagetype, bitdepth, coordsH[pass], coordsV[pass],
                               offsetsH[pass], offsetsV[pass]);
-      size_t rowsize = pixelsize ? pixelsize * widths[pass] + 1 : (((size_t) widths[pass] * bitdepth + 7) / 8 + 1);
-      current += rowsize * heights[pass];
+      current += rowsizes[pass] * heights[pass];
     }
   } else {
     size_t rowsize = pixelsize ? pixelsize * width + 1 : (((size_t) width * bitdepth + 7) / 8 + 1);

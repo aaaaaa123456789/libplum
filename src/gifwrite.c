@@ -110,13 +110,9 @@ void generate_GIF_data_from_raw (struct context * context, unsigned char * heade
   unsigned char * framebuffer = ctxmalloc(context, framesize);
   const struct plum_metadata * durations = plum_find_metadata(context -> source, PLUM_METADATA_FRAME_DURATION);
   const struct plum_metadata * disposals = plum_find_metadata(context -> source, PLUM_METADATA_FRAME_DISPOSAL);
+  size_t offset = plum_color_buffer_size(framesize, context -> source -> color_format);
   for (uint_fast32_t frame = 0; frame < context -> source -> frames; frame ++) {
-    if ((context -> source -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_64)
-      plum_convert_colors(colorbuffer, context -> source -> data64 + framesize * frame, framesize, PLUM_COLOR_32, context -> source -> color_format);
-    else if ((context -> source -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_16)
-      plum_convert_colors(colorbuffer, context -> source -> data16 + framesize * frame, framesize, PLUM_COLOR_32, context -> source -> color_format);
-    else
-      plum_convert_colors(colorbuffer, context -> source -> data32 + framesize * frame, framesize, PLUM_COLOR_32, context -> source -> color_format);
+    plum_convert_colors(colorbuffer, context -> source -> data8 + offset * frame, framesize, PLUM_COLOR_32, context -> source -> color_format);
     generate_GIF_frame_data(context, colorbuffer, framebuffer, frame, durations, disposals);
   }
   ctxfree(context, framebuffer);

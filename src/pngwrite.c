@@ -249,10 +249,13 @@ void generate_PNG_row_data (struct context * context, const void * restrict data
     case 6: case 7: {
       uint64_t * pixels = ctxmalloc(context, sizeof *pixels * context -> source -> width);
       plum_convert_colors(pixels, data, context -> source -> width, PLUM_COLOR_64 | PLUM_ALPHA_INVERT, context -> source -> color_format);
-      for (uint_fast32_t p = 0; p < context -> source -> width; p ++) {
-        output += byteappend(output, pixels[p] >> 8, pixels[p], pixels[p] >> 24, pixels[p] >> 16, pixels[p] >> 40, pixels[p] >> 32);
-        if (type == 7) output += byteappend(output, pixels[p] >> 56, pixels[p] >> 48);
-      }
+      if (type == 7)
+        for (uint_fast32_t p = 0; p < context -> source -> width; p ++)
+          output += byteappend(output, pixels[p] >> 8, pixels[p], pixels[p] >> 24, pixels[p] >> 16, pixels[p] >> 40, pixels[p] >> 32,
+                               pixels[p] >> 56, pixels[p] >> 48);
+      else
+        for (uint_fast32_t p = 0; p < context -> source -> width; p ++)
+          output += byteappend(output, pixels[p] >> 8, pixels[p], pixels[p] >> 24, pixels[p] >> 16, pixels[p] >> 40, pixels[p] >> 32);
       ctxfree(context, pixels);
     }
   }

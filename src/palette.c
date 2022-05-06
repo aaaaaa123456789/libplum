@@ -188,7 +188,7 @@ int plum_convert_colors_to_indexes (uint8_t * restrict destination, const void *
       color = *(const uint32_t *) sp;
     uint_fast16_t index;
     unsigned char slot, hash = 0;
-    for (uint_fast8_t p = 0; p < sizeof color; p ++) hash += (color >> (p * 8)) * (p + 1);
+    for (uint_fast8_t p = 0; p < sizeof color; p ++) hash += (color >> (p * 8)) * (6 * p + 17);
     for (slot = 0; slot < (counts[hash] & 7); slot ++) {
       index = (hash << 3) | slot;
       if (colors[index] == color) goto found;

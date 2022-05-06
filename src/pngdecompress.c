@@ -163,7 +163,7 @@ short * decode_PNG_Huffman_tree (struct context * context, const unsigned char *
     }
   }
   if (code > (1u << codelength)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  return result;
+  return ctxrealloc(context, result, last * sizeof *result);
 }
 
 uint16_t next_PNG_Huffman_code (struct context * context, const short * tree, const unsigned char ** compressed, size_t * restrict size,
