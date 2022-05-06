@@ -173,7 +173,7 @@ int plum_convert_colors_to_indexes (uint8_t * restrict destination, const void *
   int result = -PLUM_ERR_TOO_MANY_COLORS; // default result (which will be returned if generating the color table fails)
   if (!(colors && sorted && counts && indexes)) {
     result = -PLUM_ERR_OUT_OF_MEMORY;
-    goto done;
+    goto fail;
   }
   const unsigned char * sp = source;
   unsigned total = 0, offset = plum_color_buffer_size(1, flags);
@@ -204,7 +204,7 @@ int plum_convert_colors_to_indexes (uint8_t * restrict destination, const void *
       }
       counts[hash] |= 0x80; // mark the overflow slot for that hash code as in use
     }
-    if (total >= 0x100) goto done;
+    if (total >= 0x100) goto fail;
     total ++;
     index = (hash << 3) | slot;
     colors[index] = color;
@@ -241,7 +241,7 @@ int plum_convert_colors_to_indexes (uint8_t * restrict destination, const void *
   // and finally, write out the color indexes to the frame buffer
   for (size_t pos = 0; pos < count; pos ++) destination[pos] = colors[indexes[pos]];
   result = total - 1;
-  done:
+  fail:
   free(indexes);
   free(counts);
   free(sorted);
