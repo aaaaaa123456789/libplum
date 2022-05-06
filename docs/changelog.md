@@ -12,6 +12,8 @@ Note: releases are listed from latest to oldest.
 - Added support for JPEG files without explicit Huffman tables (using the recommended tables from the standard),
   following the behavior of many common JPEG viewers
 - Prevented bitmasked BMP files with completely empty bitmasks from loading (erroring out with `PLUM_ERR_NO_DATA`)
+- Adjusted frame durations when generating animations to accumulate rounding errors into subsequent frames, preserving
+  the average frame rate of longer animations
 
 ## Version 1.0 (14 February 2022)
 

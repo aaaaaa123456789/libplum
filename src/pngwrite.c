@@ -31,11 +31,12 @@ void generate_APNG_data (struct context * context) {
   uint_fast8_t last_disposal = (disposal_count >= context -> source -> frames) ? disposals[context -> source -> frames - 1] : 0;
   unsigned char animation_data[8];
   write_be32_unaligned(animation_data + 4, loops);
+  int64_t duration_remainder = 0;
   if ((duration_count && *durations) || context -> source -> frames == 1) {
     write_be32_unaligned(animation_data, context -> source -> frames);
     output_PNG_chunk(context, 0x6163544cu, sizeof animation_data, animation_data); // acTL
     uint_fast8_t disposal = disposal_count ? *disposals : 0;
-    append_APNG_frame_header(context, duration_count ? *durations : 0, disposal, last_disposal, &chunkID);
+    append_APNG_frame_header(context, duration_count ? *durations : 0, disposal, last_disposal, &chunkID, &duration_remainder);
     last_disposal = disposal;
   } else {
     write_be32_unaligned(animation_data, context -> source -> frames - 1);
@@ -46,7 +47,7 @@ void generate_APNG_data (struct context * context) {
   if (!context -> source -> palette) framesize = plum_color_buffer_size(framesize, context -> source -> color_format);
   for (uint_fast32_t frame = 1; frame < context -> source -> frames; frame ++) {
     uint_fast8_t disposal = (disposal_count > frame) ? disposals[frame] : 0;
-    append_APNG_frame_header(context, (duration_count > frame) ? durations[frame] : 0, disposal, last_disposal, &chunkID);
+    append_APNG_frame_header(context, (duration_count > frame) ? durations[frame] : 0, disposal, last_disposal, &chunkID, &duration_remainder);
     last_disposal = disposal;
     append_PNG_image_data(context, context -> source -> data8 + framesize * frame, type, &chunkID);
   }
@@ -166,16 +167,25 @@ void append_PNG_image_data (struct context * context, const void * restrict data
   ctxfree(context, compressed);
 }
 
-void append_APNG_frame_header (struct context * context, uint64_t duration, uint8_t disposal, uint8_t previous, uint32_t * restrict chunkID) {
+void append_APNG_frame_header (struct context * context, uint64_t duration, uint8_t disposal, uint8_t previous, uint32_t * restrict chunkID,
+                               int64_t * restrict duration_remainder) {
   if (*chunkID > 0x7fffffffu) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
-  uint32_t numerator, denominator;
-  calculate_frame_duration_fraction(duration, 0xffffu, &numerator, &denominator);
-  if (!numerator)
-    denominator = 0;
-  else if (!denominator) {
-    // duration too large (calculation returned infinity), so max it out
-    numerator = 0xffffu;
-    denominator = 1;
+  uint32_t numerator = 0, denominator = 0;
+  if (duration) {
+    if (duration == 1) duration = 0;
+    duration = adjust_frame_duration(duration, duration_remainder);
+    calculate_frame_duration_fraction(duration, 0xffffu, &numerator, &denominator);
+    if (!numerator) {
+      denominator = 0;
+      update_frame_duration_remainder(duration, 0, duration_remainder);
+    } else {
+      if (!denominator) {
+        // duration too large (calculation returned infinity), so max it out
+        numerator = 0xffffu;
+        denominator = 1;
+      }
+      update_frame_duration_remainder(duration, ((uint64_t) 1000000000u * numerator + denominator / 2) / denominator, duration_remainder);
+    }
   }
   unsigned char data[26];
   write_be32_unaligned(data, (*chunkID) ++);

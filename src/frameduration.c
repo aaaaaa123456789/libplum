@@ -1,5 +1,45 @@
 #include "proto.h"
 
+uint64_t adjust_frame_duration (uint64_t duration, int64_t * restrict remainder) {
+  if (*remainder < 0)
+    if (duration < -*remainder) {
+      *remainder += duration;
+      return 0;
+    } else {
+      duration += (uint64_t) *remainder;
+      *remainder = 0;
+      return duration;
+    }
+  else {
+    duration += *remainder;
+    if (duration < *remainder) duration = UINT64_MAX;
+    *remainder = 0;
+    return duration;
+  }
+}
+
+void update_frame_duration_remainder (uint64_t actual, uint64_t computed, int64_t * restrict remainder) {
+  if (actual < computed) {
+    uint64_t difference = computed - actual;
+    if (difference > INT64_MAX) difference = INT64_MAX;
+    if (*remainder >= 0)
+      *remainder -= (int64_t) difference;
+    else if (difference + -*remainder > -(uint64_t) INT64_MIN)
+      *remainder = INT64_MIN;
+    else
+      *remainder -= (int64_t) difference;
+  } else {
+    uint64_t difference = actual - computed;
+    if (difference > INT64_MAX) difference = INT64_MAX;
+    if (*remainder < 0)
+      *remainder += (int64_t) difference;
+    else if (difference + *remainder > INT64_MAX)
+      *remainder = INT64_MAX;
+    else
+      *remainder += (int64_t) difference;
+  }
+}
+
 void calculate_frame_duration_fraction (uint64_t duration, uint32_t limit, uint32_t * restrict numerator, uint32_t * restrict denominator) {
   // if the number is too big to be represented at all, just fail early and return infinity
   if (duration >= 1000000000u * ((uint64_t) limit + 1)) {

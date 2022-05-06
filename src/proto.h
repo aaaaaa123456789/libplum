@@ -73,6 +73,8 @@ internal size_t rotate_right_flip_coordinate(size_t, size_t, size_t, size_t);
 internal size_t rotate_both_flip_coordinate(size_t, size_t, size_t, size_t);
 
 // frameduration.c
+internal uint64_t adjust_frame_duration(uint64_t, int64_t * restrict);
+internal void update_frame_duration_remainder(uint64_t, uint64_t, int64_t * restrict);
 internal void calculate_frame_duration_fraction(uint64_t, uint32_t, uint32_t * restrict, uint32_t * restrict);
 
 // gifcompress.c
@@ -96,12 +98,12 @@ internal void generate_GIF_data(struct context *);
 internal void generate_GIF_data_with_palette(struct context *, unsigned char *);
 internal void generate_GIF_data_from_raw(struct context *, unsigned char *);
 internal void generate_GIF_frame_data(struct context *, uint32_t * restrict, unsigned char * restrict, uint32_t, const struct plum_metadata *,
-                                      const struct plum_metadata *);
+                                      const struct plum_metadata *, int64_t * restrict);
 internal int_fast32_t get_GIF_background_color(struct context *);
 internal void write_GIF_palette(struct context *, const uint32_t *, unsigned);
 internal void write_GIF_loop_info(struct context *);
 internal void write_GIF_frame(struct context *, const unsigned char * restrict, const uint32_t *, unsigned, int, uint32_t, unsigned, unsigned, unsigned,
-                              unsigned, const struct plum_metadata *, const struct plum_metadata *);
+                              unsigned, const struct plum_metadata *, const struct plum_metadata *, int64_t * restrict);
 internal void write_GIF_data_blocks(struct context *, const unsigned char * restrict, size_t);
 
 // huffman.c
@@ -299,7 +301,7 @@ internal void append_PNG_header_chunks(struct context *, unsigned, uint32_t);
 internal void append_PNG_palette_data(struct context *, int);
 internal void append_PNG_background_chunk(struct context *, const void * restrict, unsigned);
 internal void append_PNG_image_data(struct context *, const void * restrict, unsigned, uint32_t * restrict);
-internal void append_APNG_frame_header(struct context *, uint64_t, uint8_t, uint8_t, uint32_t * restrict);
+internal void append_APNG_frame_header(struct context *, uint64_t, uint8_t, uint8_t, uint32_t * restrict, int64_t * restrict);
 internal void output_PNG_chunk(struct context *, uint32_t, uint32_t, const void * restrict);
 internal unsigned char * generate_PNG_frame_data(struct context *, const void * restrict, unsigned, size_t * restrict);
 internal void generate_PNG_row_data(struct context *, const void * restrict, unsigned char * restrict, unsigned);

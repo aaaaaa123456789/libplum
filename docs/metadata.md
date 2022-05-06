@@ -115,7 +115,8 @@ To explicitly indicate that a frame is part of the animation, but must be skippe
 nanosecond; [`plum_load_image`][load] follows this convention when loading frame durations.)
 
 Note that frame durations may be rounded or clamped by [`plum_store_image`][store] to fit the limitations of the
-chosen image format.
+chosen image format; rounding errors will be added to the durations of subsequent frames with non-zero durations, so
+that the average frame rate of the animation is preserved.
 
 This node contains an array of `uint64_t` values; it may contain any number of them.
 (The [`plum_load_image`][load] function will load exactly as many as the image has frames.)

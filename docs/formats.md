@@ -106,6 +106,7 @@ When loading a file, a frame with a duration of 0 will be loaded as 1 nanosecond
 ignore it in this aspect.
 The library's behavior is consistent with common viewers' behavior of displaying the frame as briefly as possible.)
 When generating a file, a frame duration of 0 has no special meaning and is just converted like any other value.
+(However, a duration of 0 will never be adjusted to compensate for cumulative rounding errors in previous frames.)
 
 The common loop count extension is supported, and will be loaded as a [`PLUM_METADATA_LOOP_COUNT`][metadata-constants]
 metadata node.
@@ -180,7 +181,8 @@ have their durations set to 0, will be loaded with a duration of 1 nanosecond in
 (This is consistent with the APNG specification requiring engines to "render the next frame as quickly as possible".)
 Likewise, when generating a file, if the first frame's duration is 0, it will be excluded from the animation.
 (Since other frames cannot be excluded from the animation, a duration of 0 has no special meaning for other frames and
-will be converted like any other value.)
+will be converted like any other value.
+However, a duration of 0 will never be adjusted to compensate for cumulative rounding errors in previous frames.)
 
 The maximum loop count supported in a [`PLUM_METADATA_LOOP_COUNT`][metadata-constants] metadata node is `0x7fffffff`;
 higher values will be treated as 0 (i.e., infinity) when generating a file.

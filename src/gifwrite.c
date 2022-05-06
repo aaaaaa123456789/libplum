@@ -59,6 +59,7 @@ void generate_GIF_data_with_palette (struct context * context, unsigned char * h
   unsigned char * framebuffer = ctxmalloc(context, framesize);
   const struct plum_metadata * durations = plum_find_metadata(context -> source, PLUM_METADATA_FRAME_DURATION);
   const struct plum_metadata * disposals = plum_find_metadata(context -> source, PLUM_METADATA_FRAME_DISPOSAL);
+  int64_t duration_remainder = 0;
   for (uint_fast32_t frame = 0; frame < context -> source -> frames; frame ++) {
     if (mapping)
       for (size_t pixel = 0; pixel < framesize; pixel ++) framebuffer[pixel] = mapping[context -> source -> data8[frame * framesize + pixel]];
@@ -92,7 +93,7 @@ void generate_GIF_data_with_palette (struct context * context, unsigned char * h
           memmove(framebuffer, framebuffer + context -> source -> width * top, context -> source -> width * height);
       }
     }
-    write_GIF_frame(context, framebuffer, NULL, colorcount, transparent, frame, left, top, width, height, durations, disposals);
+    write_GIF_frame(context, framebuffer, NULL, colorcount, transparent, frame, left, top, width, height, durations, disposals, &duration_remainder);
   }
   if (mapping) ctxfree(context, mapping);
   ctxfree(context, framebuffer);
@@ -111,16 +112,17 @@ void generate_GIF_data_from_raw (struct context * context, unsigned char * heade
   const struct plum_metadata * durations = plum_find_metadata(context -> source, PLUM_METADATA_FRAME_DURATION);
   const struct plum_metadata * disposals = plum_find_metadata(context -> source, PLUM_METADATA_FRAME_DISPOSAL);
   size_t offset = plum_color_buffer_size(framesize, context -> source -> color_format);
+  int64_t duration_remainder = 0;
   for (uint_fast32_t frame = 0; frame < context -> source -> frames; frame ++) {
     plum_convert_colors(colorbuffer, context -> source -> data8 + offset * frame, framesize, PLUM_COLOR_32, context -> source -> color_format);
-    generate_GIF_frame_data(context, colorbuffer, framebuffer, frame, durations, disposals);
+    generate_GIF_frame_data(context, colorbuffer, framebuffer, frame, durations, disposals, &duration_remainder);
   }
   ctxfree(context, framebuffer);
   ctxfree(context, colorbuffer);
 }
 
 void generate_GIF_frame_data (struct context * context, uint32_t * restrict pixels, unsigned char * restrict framebuffer, uint32_t frame,
-                              const struct plum_metadata * durations, const struct plum_metadata * disposals) {
+                              const struct plum_metadata * durations, const struct plum_metadata * disposals, int64_t * restrict duration_remainder) {
   size_t framesize = (size_t) context -> source -> height * context -> source -> width;
   uint32_t transparent = 0;
   for (size_t index = 0; index < framesize; index ++)
@@ -166,7 +168,7 @@ void generate_GIF_frame_data (struct context * context, uint32_t * restrict pixe
       transparent_index = index;
       break;
     }
-  write_GIF_frame(context, framebuffer, palette, colorcount + 1, transparent_index, frame, left, top, width, height, durations, disposals);
+  write_GIF_frame(context, framebuffer, palette, colorcount + 1, transparent_index, frame, left, top, width, height, durations, disposals, duration_remainder);
   ctxfree(context, palette);
 }
 
@@ -194,13 +196,18 @@ void write_GIF_loop_info (struct context * context) {
 
 void write_GIF_frame (struct context * context, const unsigned char * restrict data, const uint32_t * palette, unsigned colors, int transparent,
                       uint32_t frame, unsigned left, unsigned top, unsigned width, unsigned height, const struct plum_metadata * durations,
-                      const struct plum_metadata * disposals) {
+                      const struct plum_metadata * disposals, int64_t * restrict duration_remainder) {
   uint64_t duration = 0;
   uint8_t disposal = 0;
   if (durations && durations -> size > sizeof(uint64_t) * frame) {
     duration = frame[(const uint64_t *) durations -> data];
-    duration = (duration / 5000000u + 1) >> 1;
-    if (duration > 0xffffu) duration = 0xffffu; // maxed out
+    if (duration) {
+      if (duration == 1) duration = 0;
+      uint64_t true_duration = adjust_frame_duration(duration, duration_remainder);
+      duration = (true_duration / 5000000u + 1) >> 1;
+      if (duration > 0xffffu) duration = 0xffffu; // maxed out
+      update_frame_duration_remainder(true_duration, duration * 10000000u, duration_remainder);
+    }
   }
   if (disposals && disposals -> size > frame) {
     disposal = frame[(const uint8_t *) disposals -> data];
