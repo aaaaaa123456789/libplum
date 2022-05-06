@@ -54,9 +54,6 @@ internal uint32_t compute_Adler32_checksum(const unsigned char *, size_t);
 internal int image_has_transparency(const struct plum_image *);
 internal uint32_t get_true_color_depth(const struct plum_image *);
 
-// fractions.c
-internal void calculate_frame_duration_fraction(uint64_t, uint32_t, uint32_t * restrict, uint32_t * restrict);
-
 // framebuffer.c
 internal void validate_image_size(struct context *, size_t);
 internal void allocate_framebuffers(struct context *, unsigned, int);
@@ -74,6 +71,9 @@ internal size_t flip_coordinate(size_t, size_t, size_t, size_t);
 internal size_t rotate_left_flip_coordinate(size_t, size_t, size_t, size_t);
 internal size_t rotate_right_flip_coordinate(size_t, size_t, size_t, size_t);
 internal size_t rotate_both_flip_coordinate(size_t, size_t, size_t, size_t);
+
+// frameduration.c
+internal void calculate_frame_duration_fraction(uint64_t, uint32_t, uint32_t * restrict, uint32_t * restrict);
 
 // gifcompress.c
 internal unsigned char * compress_GIF_data(struct context *, const unsigned char * restrict, size_t, size_t *, unsigned);
