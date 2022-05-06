@@ -94,41 +94,41 @@ unsigned plum_reduce_palette (struct plum_image * image) {
 }
 
 void reduce_palette (struct plum_image * image) {
-  uint8_t map[0x100];
+  // convert all colors to 64-bit for consistent handling: converting up to 64-bit and later back to the original format is lossless
+  uint64_t colors[0x100];
+  plum_convert_colors(colors, image -> palette, image -> max_palette_index + 1, PLUM_COLOR_64, image -> color_format);
+  // expand from an array of colors to an interleaved array of indexes and colors (for sorting)
+  uint64_t sorted[0x200];
+  for (uint_fast16_t p = 0; p <= image -> max_palette_index; p ++) {
+    sorted[2 * p] = p;
+    sorted[2 * p + 1] = colors[p];
+  }
+  // mark all colors in the image as in use
   uint8_t used[0x100] = {0};
   size_t size = (size_t) image -> width * image -> height * image -> frames;
-  // mark all colors in the image as in use
   for (size_t p = 0; p < size; p ++) used[image -> data8[p]] = 1;
-  uint64_t colors[0x200];
-  // converting up to 64-bit and later back to the original format is lossless
-  plum_convert_colors(colors, image -> palette, image -> max_palette_index + 1, PLUM_COLOR_64, image -> color_format);
-  memcpy(colors + 0x100, colors, sizeof(uint64_t) * (image -> max_palette_index + 1));
-  // expand in place from an array of colors to an interleaved array of indexes and colors; this requires looping backwards
-  for (int_fast16_t p = image -> max_palette_index; p >= 0; p --) {
-    colors[2 * p + 1] = colors[p];
-    colors[2 * p] = p;
-  }
   // sort the colors and check for duplicates; if duplicates are found, mark the duplicates as unused and the originals as in use
-  qsort(colors, image -> max_palette_index + 1, 2 * sizeof *colors, &compare_index_value_pairs);
-  for (uint_fast8_t p = image -> max_palette_index; p; p --) if (colors[2 * p + 1] == colors[2 * p - 1]) {
-    used[colors[2 * p - 2]] |= used[colors[2 * p]];
-    used[colors[2 * p]] = 0;
+  qsort(sorted, image -> max_palette_index + 1, 2 * sizeof *sorted, &compare_index_value_pairs);
+  for (uint_fast8_t p = image -> max_palette_index; p; p --) if (sorted[2 * p + 1] == sorted[2 * p - 1]) {
+    used[sorted[2 * p - 2]] |= used[sorted[2 * p]];
+    used[sorted[2 * p]] = 0;
   }
   // create a mapping of colors (in the colors array) to indexes; colors in use (after duplicates were marked unused) get their own index
   // colors marked unused point to the previous color in use; this will deduplicate the colors, as duplicates come right after the originals
   // actually unused colors will get mapped to nonsensical indexes, but they don't matter, since they don't appear in the image
+  uint8_t map[0x100];
   uint_fast8_t ref = 0; // initialize it to avoid reading an uninitialized variable in the loop (even though the copied value will never be used)
   for (uint_fast16_t p = 0; p <= image -> max_palette_index; p ++)
-    if (used[colors[2 * p]])
-      ref = map[colors[2 * p]] = colors[2 * p];
+    if (used[sorted[2 * p]])
+      ref = map[sorted[2 * p]] = sorted[2 * p];
     else
-      map[colors[2 * p]] = ref;
-  // update the mapping table to preserve the order of the colors in the original palette, and generate the reduced palette
+      map[sorted[2 * p]] = ref;
+  // update the mapping table to preserve the order of the colors in the original palette, and generate the reduced palette (in the colors array)
   ref = 0;
   for (uint_fast16_t p = 0; p <= image -> max_palette_index; p ++)
     if (used[p]) {
       map[p] = ref;
-      colors[ref ++] = colors[0x100 + p];
+      colors[ref ++] = colors[p];
     } else
       map[p] = map[map[p]];
   // update the image's palette (including the max_palette_index member) and data

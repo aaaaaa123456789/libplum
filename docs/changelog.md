@@ -4,6 +4,7 @@ Note: releases are listed from latest to oldest.
 
 ## Version 1.1 (in development)
 
+- Fixed palette reduction for palettes with more than 128 colors
 - Fixed invalid memory accesses in PNG file generation that could occur if `uint_fast8_t` was as wide as (or wider
   than) `ptrdiff_t`
 - Fixed and improved the shell script that generates the `libplum.c` and `libplum.h` files, making it more resilient
