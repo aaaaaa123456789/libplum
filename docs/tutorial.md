@@ -330,6 +330,7 @@ possible bit width.
 For the 32-bit data example, the corresponding macro is [`PLUM_PIXEL_32`][pixel-index], or `PIXEL32` if
 [unprefixed macros][unprefixed] are enabled.
 This macro is good for both reading from a pixel and assigning a new value to it.
+(It's also possible to take its address to obtain a pointer to a pixel, as in `&PIXEL32(image, col, row, frame)`.)
 For example, the following snippet will invert all the colors along an image's main diagonal:
 
 ``` c

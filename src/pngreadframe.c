@@ -102,13 +102,13 @@ uint64_t * load_PNG_raw_frame (struct context * context, const void * compressed
     unsigned char * current = decompressed;
     for (uint_fast8_t pass = 0; pass < 7; pass ++) if (widths[pass] && heights[pass]) {
       load_PNG_raw_frame_pass(context, current, result, heights[pass], widths[pass], width, imagetype, bitdepth, coordsH[pass], coordsV[pass],
-                              offsetsH[pass], offsetsV[pass]);
+                              offsetsH[pass], offsetsV[pass], rowsizes[pass]);
       current += rowsizes[pass] * heights[pass];
     }
   } else {
     size_t rowsize = pixelsize ? pixelsize * width + 1 : (((size_t) width * bitdepth + 7) / 8 + 1);
     decompressed = decompress_PNG_data(context, compressed, compressed_size, rowsize * height);
-    load_PNG_raw_frame_pass(context, decompressed, result, height, width, width, imagetype, bitdepth, 0, 0, 1, 1);
+    load_PNG_raw_frame_pass(context, decompressed, result, height, width, width, imagetype, bitdepth, 0, 0, 1, 1, rowsize);
   }
   ctxfree(context, decompressed);
   return result;
@@ -116,10 +116,7 @@ uint64_t * load_PNG_raw_frame (struct context * context, const void * compressed
 
 void load_PNG_raw_frame_pass (struct context * context, unsigned char * restrict data, uint64_t * restrict output, uint32_t height, uint32_t width,
                               uint32_t fullwidth, uint8_t imagetype, uint8_t bitdepth, unsigned char coordH, unsigned char coordV, unsigned char offsetH,
-                              unsigned char offsetV) {
-  size_t pixelsize = bitdepth / 8; // 0 will be treated as a special value
-  pixelsize *= (imagetype >> 1)[(unsigned char []) {1, 3, 2, 4}];
-  size_t rowsize = pixelsize ? pixelsize * width + 1 : (((size_t) width * bitdepth + 7) / 8 + 1);
+                              unsigned char offsetV, size_t rowsize) {
   remove_PNG_filter(context, data, width, height, imagetype, bitdepth);
   for (size_t row = 0; row < height; row ++) {
     uint64_t * rowoutput = output + (row * offsetV + coordV) * fullwidth;
