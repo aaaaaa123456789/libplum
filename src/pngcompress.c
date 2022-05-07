@@ -167,14 +167,11 @@ void emit_PNG_code (struct context * context, struct compressed_PNG_code ** code
   else {
     code = -code;
     // one extra entry to make looking codes up easier
-    static const uint_fast16_t lengths[] = {3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258, 259};
-    static const uint_fast16_t distances[] = {1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145,
-                                              8193, 12289, 16385, 24577, 32769};
-    for (result.datacode = 0; lengths[result.datacode + 1] <= code; result.datacode ++);
-    result.dataextra = code - lengths[result.datacode];
+    for (result.datacode = 0; compressed_PNG_base_lengths[result.datacode + 1] <= code; result.datacode ++);
+    result.dataextra = code - compressed_PNG_base_lengths[result.datacode];
     result.datacode += 0x101;
-    for (result.distcode = 0; distances[result.distcode + 1] <= ref; result.distcode ++);
-    result.distextra = ref - distances[result.distcode];
+    for (result.distcode = 0; compressed_PNG_base_distances[result.distcode + 1] <= ref; result.distcode ++);
+    result.distextra = ref - compressed_PNG_base_distances[result.distcode];
   }
   (*codes)[(*count) ++] = result;
 }
@@ -191,28 +188,17 @@ unsigned char * emit_PNG_compressed_block (struct context * context, const struc
     codecounts[codes[p].datacode] ++;
     if (codes[p].datacode > 0x100) distcounts[codes[p].distcode] ++;
   }
-  unsigned char codelengths[0x120];
-  unsigned char distlengths[0x20];
   unsigned char * output = NULL;
   *blocksize = 0;
   // ensure that we have the proper tree: use the documented tree if fixed, or generate (and output) a custom tree if custom
-  if (custom_tree)
-    output = generate_PNG_Huffman_trees(context, dataword, bits, blocksize, codecounts, distcounts, codelengths, distlengths);
-  else {
-    bytewrite(codelengths,
-             //         00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f
-             /* 0x000 */ 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-             /* 0x020 */ 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-             /* 0x040 */ 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-             /* 0x060 */ 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-             /* 0x080 */ 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-             /* 0x0a0 */ 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-             /* 0x0c0 */ 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-             /* 0x0e0 */ 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-             /* 0x100 */ 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8
-    );
-    memset(distlengths, 5, sizeof distlengths);
-  }
+  unsigned char lengthbuffer[0x140];
+  const unsigned char * codelengths;
+  if (custom_tree) {
+    output = generate_PNG_Huffman_trees(context, dataword, bits, blocksize, codecounts, distcounts, lengthbuffer, lengthbuffer + 0x120);
+    codelengths = lengthbuffer;
+  } else
+    codelengths = default_PNG_Huffman_table_lengths;
+  const unsigned char * distlengths = codelengths + 0x120;
   // precalculate the output size and allocate enough space for the output (and a little extra); this must account for parameter size too
   size_t outsize = 7; // for rounding up
   for (uint_fast16_t p = 0; p < 0x11e; p ++) {
@@ -309,8 +295,7 @@ unsigned char * generate_PNG_Huffman_trees (struct context * context, uint32_t *
   }
   generate_Huffman_tree(context, encodedcounts, lengths, 19, 7);
   unsigned short codes[19];
-  static const unsigned char codeorder[] = {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
-  for (repcount = 18; repcount > 3 && !lengths[codeorder[repcount]]; repcount --);
+  for (repcount = 18; repcount > 3 && !lengths[compressed_PNG_code_table_order[repcount]]; repcount --);
   generate_Huffman_codes(codes, 19, lengths, 1);
   *dataword |= (maxcode & 0x1f) << *bits;
   *bits += 5;
@@ -323,7 +308,7 @@ unsigned char * generate_PNG_Huffman_trees (struct context * context, uint32_t *
   #define flush while (*bits >= 8) *(current ++) = *dataword, *dataword >>= 8, *bits -= 8
   flush;
   for (uint_fast8_t p = 0; p <= repcount; p ++) {
-    *dataword |= lengths[codeorder[p]] << *bits;
+    *dataword |= lengths[compressed_PNG_code_table_order[p]] << *bits;
     *bits += 3;
     flush;
   }
@@ -333,7 +318,7 @@ unsigned char * generate_PNG_Huffman_trees (struct context * context, uint32_t *
     if (encoded[p] >= 16) {
       uint_fast8_t repeattype = encoded[p] - 16;
       *dataword |= encoded[++ p] << *bits;
-      *bits += repeattype[(const unsigned char []) {2, 3, 7}];
+      *bits += (2 << repeattype) - !!repeattype; // 0, 1, 2 maps to 2, 3, 7
     }
     flush;
   }

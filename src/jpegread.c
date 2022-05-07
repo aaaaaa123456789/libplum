@@ -206,8 +206,9 @@ unsigned get_JPEG_rotation (struct context * context, size_t offset) {
   uint_fast32_t datasize = endianness ? read_be32_unaligned(data + pos + 4) : read_le32_unaligned(data + pos + 4);
   if (tag != 3 || datasize != 1) return 0;
   tag = endianness ? read_be16_unaligned(data + pos + 8) : read_le16_unaligned(data + pos + 8);
-  if (-- tag >= 8) return 0;
-  return tag[(const unsigned []) {0, 6, 2, 4, 7, 1, 5, 3}];
+  static const unsigned rotations[] = {0, 6, 2, 4, 7, 1, 5, 3};
+  if (-- tag >= sizeof rotations / sizeof *rotations) tag = 0;
+  return rotations[tag];
 }
 
 unsigned load_single_frame_JPEG (struct context * context, const struct JPEG_marker_layout * layout, uint32_t components, double ** output) {

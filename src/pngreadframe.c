@@ -44,10 +44,6 @@ uint8_t * load_PNG_palette_frame (struct context * context, const void * compres
   if (interlaced) {
     size_t widths[] = {(width + 7) / 8, (width + 3) / 8, (width + 3) / 4, (width + 1) / 4, (width + 1) / 2, width / 2, width};
     size_t heights[] = {(height + 7) / 8, (height + 7) / 8, (height + 3) / 8, (height + 3) / 4, (height + 1) / 4, (height + 1) / 2, height / 2};
-    const unsigned char coordsH[] = {0, 4, 0, 2, 0, 1, 0};
-    const unsigned char coordsV[] = {0, 0, 4, 0, 2, 0, 1};
-    const unsigned char offsetsH[] = {8, 8, 4, 4, 2, 2, 1};
-    const unsigned char offsetsV[] = {8, 8, 8, 4, 4, 2, 2};
     size_t rowsizes[7];
     size_t cumulative_size = 0;
     for (uint_fast8_t pass = 0; pass < 7; pass ++) if (widths[pass] && heights[pass]) {
@@ -63,7 +59,8 @@ uint8_t * load_PNG_palette_frame (struct context * context, const void * compres
         expand_bitpacked_PNG_data(rowdata, current + 1, widths[pass], bitdepth);
         current += rowsizes[pass];
         for (size_t col = 0; col < widths[pass]; col ++)
-          result[(row * offsetsV[pass] + coordsV[pass]) * width + col * offsetsH[pass] + coordsH[pass]] = rowdata[col];
+          result[(row * interlaced_PNG_pass_step[pass] + interlaced_PNG_pass_start[pass]) * width +
+                 col * interlaced_PNG_pass_step[pass + 1] + interlaced_PNG_pass_start[pass + 1]] = rowdata[col];
       }
     }
     ctxfree(context, rowdata);
@@ -83,15 +80,10 @@ uint64_t * load_PNG_raw_frame (struct context * context, const void * compressed
   // imagetype is not 3 here
   uint64_t * result = ctxmalloc(context, sizeof *result * width * height);
   unsigned char * decompressed;
-  size_t pixelsize = bitdepth / 8; // 0 will be treated as a special value
-  pixelsize *= (imagetype >> 1)[(unsigned char []) {1, 3, 2, 4}];
+  size_t pixelsize = bitdepth / 8 * channels_per_pixel_PNG[imagetype]; // 0 will be treated as a special value
   if (interlaced) {
     size_t widths[] = {(width + 7) / 8, (width + 3) / 8, (width + 3) / 4, (width + 1) / 4, (width + 1) / 2, width / 2, width};
     size_t heights[] = {(height + 7) / 8, (height + 7) / 8, (height + 3) / 8, (height + 3) / 4, (height + 1) / 4, (height + 1) / 2, height / 2};
-    const unsigned char coordsH[] = {0, 4, 0, 2, 0, 1, 0};
-    const unsigned char coordsV[] = {0, 0, 4, 0, 2, 0, 1};
-    const unsigned char offsetsH[] = {8, 8, 4, 4, 2, 2, 1};
-    const unsigned char offsetsV[] = {8, 8, 8, 4, 4, 2, 2};
     size_t rowsizes[7];
     size_t cumulative_size = 0;
     for (uint_fast8_t pass = 0; pass < 7; pass ++) if (widths[pass] && heights[pass]) {
@@ -101,8 +93,8 @@ uint64_t * load_PNG_raw_frame (struct context * context, const void * compressed
     decompressed = decompress_PNG_data(context, compressed, compressed_size, cumulative_size);
     unsigned char * current = decompressed;
     for (uint_fast8_t pass = 0; pass < 7; pass ++) if (widths[pass] && heights[pass]) {
-      load_PNG_raw_frame_pass(context, current, result, heights[pass], widths[pass], width, imagetype, bitdepth, coordsH[pass], coordsV[pass],
-                              offsetsH[pass], offsetsV[pass], rowsizes[pass]);
+      load_PNG_raw_frame_pass(context, current, result, heights[pass], widths[pass], width, imagetype, bitdepth, interlaced_PNG_pass_start[pass + 1],
+                              interlaced_PNG_pass_start[pass], interlaced_PNG_pass_step[pass + 1], interlaced_PNG_pass_step[pass], rowsizes[pass]);
       current += rowsizes[pass] * heights[pass];
     }
   } else {
@@ -206,8 +198,7 @@ void expand_bitpacked_PNG_data (unsigned char * restrict result, const unsigned 
 }
 
 void remove_PNG_filter (struct context * context, unsigned char * restrict data, uint32_t width, uint32_t height, uint8_t imagetype, uint8_t bitdepth) {
-  ptrdiff_t pixelsize = bitdepth / 8;
-  if (imagetype != 3) pixelsize *= (imagetype >> 1)[(unsigned char []) {1, 3, 2, 4}];
+  ptrdiff_t pixelsize = bitdepth / 8 * channels_per_pixel_PNG[imagetype];
   if (!pixelsize) {
     pixelsize = 1;
     width = ((size_t) width * bitdepth + 7) / 8;

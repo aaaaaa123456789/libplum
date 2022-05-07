@@ -28,19 +28,7 @@ void * decompress_PNG_data (struct context * context, const unsigned char * comp
         size -= literalcount;
       } break;
       case 1:
-        decompress_PNG_block(context, &compressed, decompressed, &size, &current, expected, &dataword, &bits, (const unsigned char []) {
-          //         00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f 10 11 12 13 14 15 16 17 18 19 1a 1b 1c 1d 1e 1f
-          /* 0x000 */ 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-          /* 0x020 */ 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-          /* 0x040 */ 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-          /* 0x060 */ 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-          /* 0x080 */ 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-          /* 0x0a0 */ 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-          /* 0x0c0 */ 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-          /* 0x0e0 */ 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-          /* 0x100 */ 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8,
-          /* 0x120 */ 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5
-        });
+        decompress_PNG_block(context, &compressed, decompressed, &size, &current, expected, &dataword, &bits, default_PNG_Huffman_table_lengths);
         break;
       case 2: {
         unsigned char codesizes[0x140];
@@ -63,8 +51,7 @@ void extract_PNG_code_table (struct context * context, const unsigned char ** co
   unsigned distances = 1 + ((header >> 5) & 0x1f);
   unsigned lengths = 4 + (header >> 10);
   unsigned char internal_sizes[19] = {0};
-  for (uint_fast8_t p = 0; p < lengths; p ++) internal_sizes[p[(const unsigned char []) {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15}]] =
-    shift_in_left(context, 3, dataword, bits, compressed, size);
+  for (uint_fast8_t p = 0; p < lengths; p ++) internal_sizes[compressed_PNG_code_table_order[p]] = shift_in_left(context, 3, dataword, bits, compressed, size);
   short * tree = decode_PNG_Huffman_tree(context, internal_sizes, sizeof internal_sizes);
   if (!tree) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   uint_fast16_t index = 0;
@@ -110,15 +97,13 @@ void decompress_PNG_block (struct context * context, const unsigned char ** comp
     }
     if (!disttree) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     code -= 0x101;
-    uint_fast16_t length = code[(const uint_fast16_t []) {3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195,
-                                                          227, 258}];
-    uint_fast8_t lengthbits = code[(const uint_fast8_t []) {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0}];
+    uint_fast16_t length = compressed_PNG_base_lengths[code];
+    uint_fast8_t lengthbits = compressed_PNG_length_bits[code];
     if (lengthbits) length += shift_in_left(context, lengthbits, dataword, bits, compressed, size);
     uint_fast8_t distcode = next_PNG_Huffman_code(context, disttree, compressed, size, dataword, bits);
     if (distcode > 29) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-    uint_fast16_t distance = distcode[(const uint_fast16_t []) {1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049,
-                                                                3073, 4097, 6145, 8193, 12289, 16385, 24577}];
-    uint_fast8_t distbits = distcode[(const uint_fast16_t []) {0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13}];
+    uint_fast16_t distance = compressed_PNG_base_distances[distcode];
+    uint_fast8_t distbits = compressed_PNG_distance_bits[distcode];
     if (distbits) distance += shift_in_left(context, distbits, dataword, bits, compressed, size);
     if (distance > *current) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     if (*current + length > expected || *current + length < *current) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);

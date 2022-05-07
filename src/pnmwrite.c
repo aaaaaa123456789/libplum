@@ -29,8 +29,7 @@ void generate_PNM_data (struct context * context) {
 uint32_t * get_true_PNM_frame_sizes (struct context * context) {
   // returns width, height pairs for each frame if the only transparency in those frames is an empty border on the bottom and right edges
   unsigned char format = context -> source -> color_format & PLUM_COLOR_MASK;
-  uint64_t mask = format[(const uint64_t []) {0xff000000u, 0xffff000000000000u, 0x8000u, 0xc0000000u}];
-  uint64_t check = 0, color = get_background_color(context -> source, 0) & ~mask;
+  uint64_t mask = alpha_component_masks[format], check = 0, color = get_background_color(context -> source, 0) & ~mask;
   if (context -> source -> color_format & PLUM_ALPHA_INVERT)
     check = mask;
   else

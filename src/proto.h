@@ -9,6 +9,7 @@
 #include "../header/libplum.h"
 #include "struct.h"
 
+#include "data.h"
 #include "multibyte.h"
 
 // allocator.c

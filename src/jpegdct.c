@@ -30,11 +30,6 @@ double apply_JPEG_DCT (int16_t output[restrict static 64], const double input[re
     0.5, HR2, HR2, HR2, 1.0, HR2, HR2, 1.0, 1.0, HR2, HR2, 1.0, 1.0, 1.0, HR2, HR2, 1.0, 1.0, 1.0, 1.0, HR2, HR2, 1.0, 1.0, 1.0, 1.0, 1.0, HR2, HR2, 1.0, 1.0, 1.0,
     1.0, 1.0, 1.0, HR2, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
   };
-  // row and column of each coefficient, in zigzag order
-  static const unsigned char rows[] = {0, 0, 1, 2, 1, 0, 0, 1, 2, 3, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3,
-                                       4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 4, 5, 6, 7, 7, 6, 5, 6, 7, 7};
-  static const unsigned char cols[] = {0, 1, 0, 0, 1, 2, 3, 2, 1, 0, 0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4,
-                                       3, 2, 1, 0, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 5, 6, 7, 7, 6, 7};
   // zero-flushing threshold: for later coefficients, round some values slightly larger than 0.5 to 0 instead of +/- 1 for better compression
   static const double zeroflush[] = {
     0x0.80p+0, 0x0.80p+0, 0x0.80p+0, 0x0.80p+0, 0x0.81p+0, 0x0.80p+0, 0x0.84p+0, 0x0.85p+0, 0x0.85p+0, 0x0.84p+0,
@@ -49,7 +44,7 @@ double apply_JPEG_DCT (int16_t output[restrict static 64], const double input[re
     uint_fast8_t p = 0;
     double converted = 0.0;
     for (uint_fast8_t row = 0; row < 8; row ++) for (uint_fast8_t col = 0; col < 8; col ++)
-      converted += input[p ++] * coefficients[col][cols[index]] * coefficients[row][rows[index]];
+      converted += input[p ++] * coefficients[col][JPEG_zigzag_columns[index]] * coefficients[row][JPEG_zigzag_rows[index]];
     converted = converted * factors[index] / quantization[index];
     if (index)
       if (converted >= -zeroflush[index] && converted <= zeroflush[index])
@@ -89,17 +84,13 @@ void apply_JPEG_inverse_DCT (double output[restrict static 64], const int16_t in
     {C4, -C3,  C6,  C7, -C4,  C1, -C2,  C5},
     {C4, -C1,  C2, -C3,  C4, -C5,  C6, -C7}
   };
-  // row and column of each coefficient, in zigzag order
-  static const unsigned char rows[] = {0, 0, 1, 2, 1, 0, 0, 1, 2, 3, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3,
-                                       4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 4, 5, 6, 7, 7, 6, 5, 6, 7, 7};
-  static const unsigned char cols[] = {0, 1, 0, 0, 1, 2, 3, 2, 1, 0, 0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4,
-                                       3, 2, 1, 0, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 5, 6, 7, 7, 6, 7};
   double dequantized[64];
   for (uint_fast8_t index = 0; index < 64; index ++) dequantized[index] = (double) input[index] * quantization[index];
   uint_fast8_t p = 0;
   for (uint_fast8_t row = 0; row < 8; row ++) for (uint_fast8_t col = 0; col < 8; col ++) {
     output[p] = 0;
-    for (uint_fast8_t index = 0; index < 64; index ++) output[p] += coefficients[col][cols[index]] * coefficients[row][rows[index]] * dequantized[index];
+    for (uint_fast8_t index = 0; index < 64; index ++)
+      output[p] += coefficients[col][JPEG_zigzag_columns[index]] * coefficients[row][JPEG_zigzag_rows[index]] * dequantized[index];
     p ++;
   }
 }

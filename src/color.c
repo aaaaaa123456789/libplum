@@ -78,8 +78,7 @@ uint64_t plum_convert_color (uint64_t color, unsigned from, unsigned to) {
     case 14: // 32x to 16
       result = ((color >> 5) & 0x1f) | ((color >> 10) & 0x3e0) | ((color >> 15) & 0x7c00) | ((color >> 16) & 0x8000u);
   }
-  if ((to ^ from) & PLUM_ALPHA_INVERT)
-    result ^= (to & PLUM_COLOR_MASK)[(const uint64_t []) {0xff000000u, 0xffff000000000000u, 0x8000u, 0xc0000000u}];
+  if ((to ^ from) & PLUM_ALPHA_INVERT) result ^= alpha_component_masks[to & PLUM_COLOR_MASK];
   return result;
 }
 

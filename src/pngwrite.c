@@ -207,7 +207,7 @@ void output_PNG_chunk (struct context * context, uint32_t type, uint32_t size, c
 }
 
 unsigned char * generate_PNG_frame_data (struct context * context, const void * restrict data, unsigned type, size_t * restrict size) {
-  size_t rowsize, pixelsize = type[(const size_t []) {0, 0, 0, 1, 3, 4, 6, 8}];
+  size_t rowsize, pixelsize = bytes_per_channel_PNG[type];
   if (pixelsize)
     rowsize = context -> source -> width * pixelsize + 1;
   else
@@ -272,8 +272,14 @@ void generate_PNG_row_data (struct context * context, const void * restrict data
 }
 
 void filter_PNG_rows (unsigned char * restrict rowdata, const unsigned char * restrict previous, size_t count, unsigned type) {
-  if (type < 3) count = ((count << type) + 7) >> 3;
-  ptrdiff_t pixelsize = type[(const unsigned char []) {1, 1, 1, 1, 3, 4, 6, 8}], rowsize = count * pixelsize; // not including the filter type byte
+  ptrdiff_t rowsize, pixelsize = bytes_per_channel_PNG[type];
+  // rowsize doesn't include the filter type byte
+  if (pixelsize)
+    rowsize = count * pixelsize;
+  else {
+    rowsize = ((count << type) + 7) / 8;
+    pixelsize = 1; // treat packed bits as a single pixel
+  }
   rowdata ++;
   previous ++;
   unsigned char * output = rowdata + rowsize;
