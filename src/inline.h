@@ -47,7 +47,7 @@ static inline void * append_output_node (struct context * context, size_t size) 
   return node -> data;
 }
 
-static inline int bit_depth_less_than (uint32_t depth, uint32_t target) {
+static inline bool bit_depth_less_than (uint32_t depth, uint32_t target) {
   // formally "less than or equal to", but that would be a very long name
   return !((target - depth) & 0x80808080u);
 }
@@ -121,7 +121,7 @@ static inline unsigned bit_width (uintmax_t value) {
   return result;
 }
 
-static inline int is_whitespace (unsigned char value) {
+static inline bool is_whitespace (unsigned char value) {
   // checks if value is 0 or isspace(value), but independent of current locale and system encoding
   return !value || (value >= 9 && value <= 13) || value == 32;
 }

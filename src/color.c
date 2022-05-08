@@ -13,7 +13,7 @@ void plum_convert_colors (void * restrict destination, const void * restrict sou
       for (uint64_t * dp = destination; count; count --) *(dp ++) = plum_convert_color(*(sp ++), from, to);    \
     else                                                                                                       \
       for (uint32_t * dp = destination; count; count --) *(dp ++) = plum_convert_color(*(sp ++), from, to);    \
-  while (0)
+  while (false)
   if ((from & PLUM_COLOR_MASK) == PLUM_COLOR_16) {
     const uint16_t * sp = source;
     convert(sp);
@@ -125,7 +125,7 @@ void plum_remove_alpha (struct plum_image * image) {
   }
 }
 
-int image_has_transparency (const struct plum_image * image) {
+bool image_has_transparency (const struct plum_image * image) {
   const void * colordata;
   size_t count;
   if (image -> palette) {
@@ -139,34 +139,34 @@ int image_has_transparency (const struct plum_image * image) {
     case PLUM_COLOR_32: {
       const uint32_t * color = colordata;
       if (image -> color_format & PLUM_ALPHA_INVERT) {
-        while (count --) if (*(color ++) < 0xff000000u) return 1;
+        while (count --) if (*(color ++) < 0xff000000u) return true;
       } else
-        while (count --) if (*(color ++) >= 0x1000000u) return 1;
-      return 0;
+        while (count --) if (*(color ++) >= 0x1000000u) return true;
+      return false;
     }
     case PLUM_COLOR_64: {
       const uint64_t * color = colordata;
       if (image -> color_format & PLUM_ALPHA_INVERT) {
-        while (count --) if (*(color ++) < 0xffff000000000000u) return 1;
+        while (count --) if (*(color ++) < 0xffff000000000000u) return true;
       } else
-        while (count --) if (*(color ++) >= 0x1000000000000u) return 1;
-      return 0;
+        while (count --) if (*(color ++) >= 0x1000000000000u) return true;
+      return false;
     }
     case PLUM_COLOR_16: {
       const uint16_t * color = colordata;
       if (image -> color_format & PLUM_ALPHA_INVERT) {
-        while (count --) if (*(color ++) < 0x8000u) return 1;
+        while (count --) if (*(color ++) < 0x8000u) return true;
       } else
-        while (count --) if (*(color ++) >= 0x7fff) return 1;
-      return 0;
+        while (count --) if (*(color ++) >= 0x7fff) return true;
+      return false;
     }
     default: { // PLUM_COLOR_32X
       const uint32_t * color = colordata;
       if (image -> color_format & PLUM_ALPHA_INVERT) {
-        while (count --) if (*(color ++) < 0xc0000000u) return 1;
+        while (count --) if (*(color ++) < 0xc0000000u) return true;
       } else
-        while (count --) if (*(color ++) >= 0x40000000u) return 1;
-      return 0;
+        while (count --) if (*(color ++) >= 0x40000000u) return true;
+      return false;
     }
   }
 }

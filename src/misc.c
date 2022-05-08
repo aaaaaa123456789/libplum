@@ -5,12 +5,12 @@ unsigned plum_validate_image (const struct plum_image * image) {
   if (!(image -> width && image -> height && image -> frames && image -> data)) return PLUM_ERR_NO_DATA;
   if (!plum_check_valid_image_size(image -> width, image -> height, image -> frames)) return PLUM_ERR_IMAGE_TOO_LARGE;
   if (image -> type >= PLUM_NUM_IMAGE_TYPES) return PLUM_ERR_INVALID_FILE_FORMAT;
-  uint_fast8_t found[PLUM_NUM_METADATA_TYPES - 1] = {0};
+  bool found[PLUM_NUM_METADATA_TYPES - 1] = {0};
   for (const struct plum_metadata * metadata = image -> metadata; metadata; metadata = metadata -> next) {
     if (metadata -> size && !metadata -> data) return PLUM_ERR_INVALID_METADATA;
     if (metadata -> type <= 0) continue;
     if (metadata -> type >= PLUM_NUM_METADATA_TYPES || found[metadata -> type - 1]) return PLUM_ERR_INVALID_METADATA;
-    found[metadata -> type - 1] = 1;
+    found[metadata -> type - 1] = true;
     switch (metadata -> type) {
       case PLUM_METADATA_COLOR_DEPTH:
         if (metadata -> size < 3 || metadata -> size > 5) return PLUM_ERR_INVALID_METADATA;

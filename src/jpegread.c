@@ -183,29 +183,29 @@ unsigned get_JPEG_rotation (struct context * context, size_t offset) {
   const unsigned char * data = context -> data + offset + 8;
   size -= 8;
   uint_fast16_t tag = read_le16_unaligned(data);
-  unsigned endianness;
+  bool bigendian;
   if (tag == 0x4949)
-    endianness = 0; // little endian
+    bigendian = false; // little endian
   else if (tag == 0x4d4d)
-    endianness = 1; // big endian
+    bigendian = true;
   else
     return 0;
-  tag = endianness ? read_be16_unaligned(data + 2) : read_le16_unaligned(data + 2);
+  tag = bigendian ? read_be16_unaligned(data + 2) : read_le16_unaligned(data + 2);
   if (tag != 42) return 0;
-  uint_fast32_t pos = endianness ? read_be32_unaligned(data + 4) : read_le32_unaligned(data + 4);
+  uint_fast32_t pos = bigendian ? read_be32_unaligned(data + 4) : read_le32_unaligned(data + 4);
   if (pos > size - 2) return 0;
-  uint_fast16_t count = endianness ? read_be16_unaligned(data + pos) : read_le16_unaligned(data + pos);
+  uint_fast16_t count = bigendian ? read_be16_unaligned(data + pos) : read_le16_unaligned(data + pos);
   pos += 2;
   if (size - pos < (uint_fast32_t) count * 12) return 0;
   for (; count; pos += 12, count --) {
-    tag = endianness ? read_be16_unaligned(data + pos) : read_le16_unaligned(data + pos);
+    tag = bigendian ? read_be16_unaligned(data + pos) : read_le16_unaligned(data + pos);
     if (tag == 0x112) break; // 0x112 = orientation data
   }
   if (!count) return 0;
-  tag = endianness ? read_be16_unaligned(data + pos + 2) : read_le16_unaligned(data + pos + 2);
-  uint_fast32_t datasize = endianness ? read_be32_unaligned(data + pos + 4) : read_le32_unaligned(data + pos + 4);
+  tag = bigendian ? read_be16_unaligned(data + pos + 2) : read_le16_unaligned(data + pos + 2);
+  uint_fast32_t datasize = bigendian ? read_be32_unaligned(data + pos + 4) : read_le32_unaligned(data + pos + 4);
   if (tag != 3 || datasize != 1) return 0;
-  tag = endianness ? read_be16_unaligned(data + pos + 8) : read_le16_unaligned(data + pos + 8);
+  tag = bigendian ? read_be16_unaligned(data + pos + 8) : read_le16_unaligned(data + pos + 8);
   static const unsigned rotations[] = {0, 6, 2, 4, 7, 1, 5, 3};
   if (-- tag >= sizeof rotations / sizeof *rotations) tag = 0;
   return rotations[tag];

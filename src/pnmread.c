@@ -68,7 +68,7 @@ void load_PNM_header (struct context * context, size_t offset, struct PNM_image_
 void load_PAM_header (struct context * context, size_t offset, struct PNM_image_header * restrict header) {
   unsigned fields = 15; // bits 0-3: width, height, max, depth (bit set indicates the field hasn't been read yet)
   uint32_t value, depth;
-  while (1) {
+  while (true) {
     skip_PNM_line(context, &offset);
     skip_PNM_whitespace(context, &offset);
     unsigned length = next_PNM_token_length(context, offset);
@@ -149,10 +149,10 @@ void skip_PNM_whitespace (struct context * context, size_t * restrict offset) {
 }
 
 void skip_PNM_line (struct context * context, size_t * restrict offset) {
-  for (int comment = 0; *offset < context -> size && context -> data[*offset] != 10; ++ *offset)
+  for (bool comment = false; *offset < context -> size && context -> data[*offset] != 10; ++ *offset)
     if (!comment)
       if (context -> data[*offset] == 0x23) // '#'
-        comment = 1;
+        comment = true;
       else if (!is_whitespace(context -> data[*offset]))
         throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   if (*offset < context -> size) ++ *offset;
@@ -180,10 +180,11 @@ void read_PNM_numbers (struct context * context, size_t * restrict offset, uint3
 }
 
 void add_PNM_bit_depth_metadata (struct context * context, const struct PNM_image_header * headers) {
-  uint_fast8_t colordepth = 0, alphadepth = 0, colored = 0;
+  uint_fast8_t colordepth = 0, alphadepth = 0;
+  bool colored = false;
   for (uint_fast32_t frame = 0; frame < context -> image -> frames; frame ++) {
     uint_fast8_t depth = bit_width(headers[frame].maxvalue);
-    if (headers[frame].type == 3 || headers[frame].type == 6 || headers[frame].type == 13 || headers[frame].type == 16) colored = 1;
+    if (headers[frame].type == 3 || headers[frame].type == 6 || headers[frame].type == 13 || headers[frame].type == 16) colored = true;
     if (colordepth < depth) colordepth = depth;
     if (headers[frame].type >= 14 && alphadepth < depth) alphadepth = depth;
   }

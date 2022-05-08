@@ -47,7 +47,7 @@ unsigned plum_sort_palette_custom (struct plum_image * image, uint64_t (* callba
       sortdata[2 * p] = p;                                                                                                        \
       sortdata[2 * p + 1] = callback(argument, plum_convert_color(image -> palette ## bits[p], image -> color_format, flags));    \
     }                                                                                                                             \
-  while (0)
+  while (false)
   if ((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_64)
     filldata(64);
   else if ((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_16)
@@ -77,7 +77,7 @@ void apply_sorted_palette (struct plum_image * image, unsigned flags, const uint
     uint ## bits ## _t colors[0x100];                                                                                    \
     for (uint_fast16_t p = 0; p <= image -> max_palette_index; p ++) colors[sorted[p]] = image -> palette ## bits[p];    \
     memcpy(image -> palette ## bits, colors, (image -> max_palette_index + 1) * sizeof *colors);                         \
-  } while (0)
+  } while (false)
   if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_64)
     sortpalette(64);
   else if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_16)
@@ -104,14 +104,14 @@ void reduce_palette (struct plum_image * image) {
     sorted[2 * p + 1] = colors[p];
   }
   // mark all colors in the image as in use
-  uint8_t used[0x100] = {0};
+  bool used[0x100] = {0};
   size_t size = (size_t) image -> width * image -> height * image -> frames;
-  for (size_t p = 0; p < size; p ++) used[image -> data8[p]] = 1;
+  for (size_t p = 0; p < size; p ++) used[image -> data8[p]] = true;
   // sort the colors and check for duplicates; if duplicates are found, mark the duplicates as unused and the originals as in use
   qsort(sorted, image -> max_palette_index + 1, 2 * sizeof *sorted, &compare_index_value_pairs);
   for (uint_fast8_t p = image -> max_palette_index; p; p --) if (sorted[2 * p + 1] == sorted[2 * p - 1]) {
     used[sorted[2 * p - 2]] |= used[sorted[2 * p]];
-    used[sorted[2 * p]] = 0;
+    used[sorted[2 * p]] = false;
   }
   // create a mapping of colors (in the colors array) to indexes; colors in use (after duplicates were marked unused) get their own index
   // colors marked unused point to the previous color in use; this will deduplicate the colors, as duplicates come right after the originals
@@ -230,7 +230,7 @@ int plum_convert_colors_to_indexes (uint8_t * restrict destination, const void *
       *(pp ++) = colors[sorted[pos] & 0x7ff];      \
       colors[sorted[pos] & 0x7ff] = pos;           \
     }                                              \
-  } while (0)
+  } while (false)
   if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_64)
     copypalette(64);
   else if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_16)

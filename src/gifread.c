@@ -34,7 +34,8 @@ uint64_t ** load_GIF_palettes_and_frame_count (struct context * context, unsigne
     }
   }
   size_t scan_offset = *offset;
-  unsigned real_global_palette_size = global_palette_size, transparent_index = 256, next_transparent_index = 256, seen_extension = 0;
+  unsigned real_global_palette_size = global_palette_size, transparent_index = 256, next_transparent_index = 256;
+  bool seen_extension = false;
   uint64_t ** result = NULL;
   while (scan_offset < context -> size) switch (context -> data[scan_offset ++]) {
     case 0x21: {
@@ -42,7 +43,7 @@ uint64_t ** load_GIF_palettes_and_frame_count (struct context * context, unsigne
       uint_fast8_t exttype = context -> data[scan_offset ++];
       if (exttype == 0xf9) {
         if (seen_extension) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-        seen_extension = 1;
+        seen_extension = true;
         size_t extsize;
         unsigned char * extdata = load_GIF_data_blocks(context, &scan_offset, &extsize);
         if (extsize != 4) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
@@ -120,7 +121,7 @@ uint64_t ** load_GIF_palettes_and_frame_count (struct context * context, unsigne
       if (scan_offset >= context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
       skip_GIF_data_blocks(context, &scan_offset);
       next_transparent_index = 256;
-      seen_extension = 0;
+      seen_extension = false;
     } break;
     case 0x3b:
       if (!seen_extension) goto done;

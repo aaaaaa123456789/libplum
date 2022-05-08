@@ -112,12 +112,11 @@ void generate_BMP_palette_halfbyte_data (struct context * context, unsigned char
     return;
   }
   uint_fast32_t row = context -> source -> height - 1;
-  const uint8_t * source;
-  uint_fast8_t value, padding = 3u & ~((context -> source -> width - 1) >> ((context -> source -> max_palette_index < 2) ? 3 : 1));
+  uint_fast8_t padding = 3u & ~((context -> source -> width - 1) >> ((context -> source -> max_palette_index < 2) ? 3 : 1));
   do {
-    source = context -> source -> data8 + (size_t) row * context -> source -> width;
+    const uint8_t * source = context -> source -> data8 + (size_t) row * context -> source -> width;
     if (context -> source -> max_palette_index < 2) {
-      value = 0;
+      uint_fast8_t value = 0;
       for (uint_fast32_t p = 0; p < context -> source -> width; p ++) {
         value = (value << 1) | source[p];
         if ((p & 7) == 7) {
@@ -128,13 +127,12 @@ void generate_BMP_palette_halfbyte_data (struct context * context, unsigned char
       if (context -> source -> width & 7) *(data ++) = value << (8 - (context -> source -> width & 7));
       attributes[14] = 1;
     } else {
-      uint_fast32_t p;
-      for (p = 0; p < (context -> source -> width - 1); p += 2)
+      for (uint_fast32_t p = 0; p < (context -> source -> width - 1); p += 2)
         *(data ++) = (source[p] << 4) | source[p + 1];
       if (context -> source -> width & 1)
-        *(data ++) = source[p] << 4;
+        *(data ++) = source[context -> source -> width - 1] << 4;
     }
-    for (value = 0; value < padding; value ++) *(data ++) = 0;
+    for (uint_fast8_t value = 0; value < padding; value ++) *(data ++) = 0;
   } while (row --);
 }
 

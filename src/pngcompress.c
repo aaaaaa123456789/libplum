@@ -11,11 +11,11 @@ unsigned char * compress_PNG_data (struct context * context, const unsigned char
   for (size_t p = 0; p < (size_t) 0x8000u * PNG_MAX_LOOKBACK_COUNT; p ++) references[p] = 0xffffu;
   uint32_t dataword = 0;
   uint8_t bits = 0;
-  int force = 0;
+  bool force = false;
   while (inoffset < size) {
     size_t blocksize, count;
     struct compressed_PNG_code * compressed = generate_compressed_PNG_block(context, data, inoffset, size, references, &blocksize, &count, force);
-    force = 0;
+    force = false;
     if (compressed) {
       inoffset += blocksize;
       if (inoffset == size) dataword |= 1u << bits;
@@ -46,7 +46,7 @@ unsigned char * compress_PNG_data (struct context * context, const unsigned char
       outoffset += blocksize + 4;
       inoffset += blocksize;
     } else
-      force = 1;
+      force = true;
   }
   ctxfree(context, references);
   while (bits) {
@@ -60,7 +60,7 @@ unsigned char * compress_PNG_data (struct context * context, const unsigned char
 }
 
 struct compressed_PNG_code * generate_compressed_PNG_block (struct context * context, const unsigned char * restrict data, size_t offset, size_t size,
-                                                            uint16_t * restrict references, size_t * restrict blocksize, size_t * restrict count, int force) {
+                                                            uint16_t * restrict references, size_t * restrict blocksize, size_t * restrict count, bool force) {
   size_t backref, current_offset = offset, allocated = 256;
   struct compressed_PNG_code * codes = ctxmalloc(context, allocated * sizeof *codes);
   *count = 0;
