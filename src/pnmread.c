@@ -128,8 +128,8 @@ void load_PAM_header (struct context * context, size_t offset, struct PNM_image_
   }
   if (fields || header -> type == 7) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   if (!plum_check_valid_image_size(header -> width, header -> height, 1)) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
-  value = header -> type - 11;
-  if (depth != value[(const uint32_t []) {1, 1, 3, 2, 2, 4}]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  static const unsigned char components[] = {1, 1, 3, 2, 2, 4};
+  if (depth != components[header -> type - 11]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   if (header -> maxvalue != 1 && (header -> type == 11 || header -> type == 14)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   skip_PNM_line(context, &offset);
   header -> datastart = offset;
