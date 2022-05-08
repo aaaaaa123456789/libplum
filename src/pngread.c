@@ -43,7 +43,7 @@ void load_PNG_data (struct context * context, unsigned flags, size_t limit) {
     plum_convert_colors(context -> image -> palette, palette, max_palette_index + 1, flags, PLUM_COLOR_64);
   }
   // allocate space for the image data and load the main image; for a PNG file, we're done here
-  allocate_framebuffers(context, flags, !!context -> image -> palette);
+  allocate_framebuffers(context, flags, context -> image -> palette);
   load_PNG_frame(context, chunks -> data, 0, palette, max_palette_index, imagetype, bitdepth, interlaced, background, transparent);
   if (!chunks -> animation) return;
   // load the animation control chunk and duration and disposal metadata

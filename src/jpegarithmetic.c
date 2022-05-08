@@ -2,7 +2,7 @@
 
 void decompress_JPEG_arithmetic_scan (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_decoder_tables * tables,
                                       size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned shift, unsigned char first,
-                                      unsigned char last, int differential) {
+                                      unsigned char last, bool differential) {
   for (size_t restart_interval = 0; restart_interval <= state -> restart_count; restart_interval ++) {
     size_t units = (restart_interval == state -> restart_count) ? state -> last_size : state -> restart_size;
     if (!units) break;
@@ -237,8 +237,8 @@ void initialize_JPEG_arithmetic_counters (struct context * context, size_t * res
 }
 
 int16_t next_JPEG_arithmetic_value (struct context * context, size_t * restrict offset, size_t * restrict remaining, uint32_t * restrict current,
-                                    uint16_t * restrict accumulator, unsigned char * restrict bits, signed char * restrict indexes, int mode, unsigned reference,
-                                    unsigned char conditioning) {
+                                    uint16_t * restrict accumulator, unsigned char * restrict bits, signed char * restrict indexes, unsigned mode,
+                                    unsigned reference, unsigned char conditioning) {
   // mode = 0 for DC (reference = DC category), 1 for AC (reference = coefficient index), 2 for lossless (reference = 5 * top category + left category)
   signed char * index = (mode == 1) ? NULL : (indexes + 4 * reference + 1);
   bool negative = next_JPEG_arithmetic_bit(context, offset, remaining, index, current, accumulator, bits);

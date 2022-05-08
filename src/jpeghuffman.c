@@ -2,7 +2,7 @@
 
 void decompress_JPEG_Huffman_scan (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_decoder_tables * tables,
                                    size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned shift, unsigned char first,
-                                   unsigned char last, int differential) {
+                                   unsigned char last, bool differential) {
   for (size_t restart_interval = 0; restart_interval <= state -> restart_count; restart_interval ++) {
     size_t units = (restart_interval == state -> restart_count) ? state -> last_size : state -> restart_size;
     if (!units) break;

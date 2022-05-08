@@ -89,8 +89,8 @@ size_t generate_JPEG_Huffman_table (struct context * context, const struct JPEG_
 
 void encode_JPEG_scan (struct context * context, const struct JPEG_encoded_value * data, size_t count, const unsigned char table[restrict static 0x200]) {
   unsigned short codes[0x200]; // no need to create a dummy entry for the highest (invalid) code here: it simply won't be generated
-  generate_Huffman_codes(codes, 0x100, table, 0);
-  generate_Huffman_codes(codes + 0x100, 0x100, table + 0x100, 0);
+  generate_Huffman_codes(codes, 0x100, table, false);
+  generate_Huffman_codes(codes + 0x100, 0x100, table + 0x100, false);
   unsigned char * node = append_output_node(context, 0x4000);
   size_t size = 0;
   uint_fast32_t output = 0;

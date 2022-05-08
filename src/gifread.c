@@ -10,7 +10,7 @@ void load_GIF_data (struct context * context, unsigned flags, size_t limit) {
   // note: load_GIF_palettes also initializes context -> image -> frames (and context -> image -> palette) and validates the image's structure
   uint64_t ** palettes = load_GIF_palettes_and_frame_count(context, flags, &offset, &transparent); // will be leaked (collected at the end)
   validate_image_size(context, limit);
-  allocate_framebuffers(context, flags, !!(context -> image -> palette));
+  allocate_framebuffers(context, flags, !!context -> image -> palette);
   uint64_t * durations;
   uint8_t * disposals;
   add_animation_metadata(context, &durations, &disposals);
@@ -62,9 +62,9 @@ uint64_t ** load_GIF_palettes_and_frame_count (struct context * context, unsigne
       scan_offset += 9;
       context -> image -> frames ++;
       if (!context -> image -> frames) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
-      int smaller_size = read_le16_unaligned(context -> data + scan_offset - 9) || read_le16_unaligned(context -> data + scan_offset - 7) ||
-                         read_le16_unaligned(context -> data + scan_offset - 5) != context -> image -> width ||
-                         read_le16_unaligned(context -> data + scan_offset - 3) != context -> image -> height;
+      bool smaller_size = read_le16_unaligned(context -> data + scan_offset - 9) || read_le16_unaligned(context -> data + scan_offset - 7) ||
+                          read_le16_unaligned(context -> data + scan_offset - 5) != context -> image -> width ||
+                          read_le16_unaligned(context -> data + scan_offset - 3) != context -> image -> height;
       uint64_t * local_palette = ctxmalloc(context, 256 * sizeof *local_palette);
       unsigned local_palette_size = 2 << (context -> data[scan_offset - 1] & 7);
       if (context -> data[scan_offset - 1] & 0x80)
@@ -84,9 +84,9 @@ uint64_t ** load_GIF_palettes_and_frame_count (struct context * context, unsigne
           unsigned min = (local_palette_size < global_palette_size) ? local_palette_size : global_palette_size;
           // temporarily reset this location so it won't fail the check on that spot
           if (next_transparent_index < min) local_palette[next_transparent_index] = global_palette[next_transparent_index];
-          int palcheck = memcmp(local_palette, global_palette, min * sizeof *global_palette);
+          bool palcheck = !memcmp(local_palette, global_palette, min * sizeof *global_palette);
           if (next_transparent_index < min) local_palette[next_transparent_index] = *transparent_color;
-          if (!palcheck) {
+          if (palcheck) {
             if (local_palette_size > global_palette_size) {
               memcpy(global_palette + global_palette_size, local_palette + global_palette_size,
                      (local_palette_size - global_palette_size) * sizeof *global_palette);

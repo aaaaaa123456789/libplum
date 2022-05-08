@@ -83,7 +83,7 @@ void generate_Huffman_tree (struct context * context, const size_t * restrict co
   ctxfree(context, sorted);
 }
 
-void generate_Huffman_codes (unsigned short * restrict codes, size_t count, const unsigned char * restrict lengths, int invert) {
+void generate_Huffman_codes (unsigned short * restrict codes, size_t count, const unsigned char * restrict lengths, bool invert) {
   // generates codes in ascending order: shorter codes before longer codes, and for the same length, smaller values before larger values
   size_t remaining = 0;
   for (size_t p = 0; p < count; p ++) if (lengths[p]) remaining ++;

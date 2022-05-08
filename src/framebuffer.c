@@ -43,7 +43,7 @@ size_t plum_palette_buffer_size (const struct plum_image * image) {
   return plum_color_buffer_size(image -> max_palette_index + 1, image -> color_format);
 }
 
-void allocate_framebuffers (struct context * context, unsigned flags, int palette) {
+void allocate_framebuffers (struct context * context, unsigned flags, bool palette) {
   size_t size = (size_t) context -> image -> width * context -> image -> height * context -> image -> frames;
   if (!palette) size = plum_color_buffer_size(size, flags);
   if (!(context -> image -> data = plum_malloc(context -> image, size))) throw(context, PLUM_ERR_OUT_OF_MEMORY);

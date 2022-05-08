@@ -176,10 +176,10 @@ void emit_PNG_code (struct context * context, struct compressed_PNG_code ** code
   (*codes)[(*count) ++] = result;
 }
 
-unsigned char * emit_PNG_compressed_block (struct context * context, const struct compressed_PNG_code * restrict codes, size_t count, int custom_tree,
+unsigned char * emit_PNG_compressed_block (struct context * context, const struct compressed_PNG_code * restrict codes, size_t count, bool custom_tree,
                                            size_t * restrict blocksize, uint32_t * restrict dataword, uint8_t * restrict bits) {
   // emit the code identifying whether the block is compressed with a fixed or custom tree
-  *dataword |= (custom_tree ? 2 : 1) << *bits;
+  *dataword |= (custom_tree + 1) << *bits;
   *bits += 2;
   // count up the frequency of each code; this will be used to generate a custom tree (if needed) and to precalculate the output size
   size_t codecounts[0x120] = {[0x100] = 1}; // other entries will be zero-initialized
@@ -220,8 +220,8 @@ unsigned char * emit_PNG_compressed_block (struct context * context, const struc
   // build the actual encoded values from the tree lengths, properly sorted
   unsigned short outcodes[0x120];
   unsigned short outdists[0x20];
-  generate_Huffman_codes(outcodes, sizeof outcodes / sizeof *outcodes, codelengths, 1);
-  generate_Huffman_codes(outdists, sizeof outdists / sizeof *outdists, distlengths, 1);
+  generate_Huffman_codes(outcodes, sizeof outcodes / sizeof *outcodes, codelengths, true);
+  generate_Huffman_codes(outdists, sizeof outdists / sizeof *outdists, distlengths, true);
   // and output all of the codes in order, ending with a 0x100 code
   #define flush while (*bits >= 8) output[(*blocksize) ++] = *dataword, *dataword >>= 8, *bits -= 8
   while (count --) {
@@ -296,7 +296,7 @@ unsigned char * generate_PNG_Huffman_trees (struct context * context, uint32_t *
   generate_Huffman_tree(context, encodedcounts, lengths, 19, 7);
   unsigned short codes[19];
   for (repcount = 18; repcount > 3 && !lengths[compressed_PNG_code_table_order[repcount]]; repcount --);
-  generate_Huffman_codes(codes, 19, lengths, 1);
+  generate_Huffman_codes(codes, 19, lengths, true);
   *dataword |= (maxcode & 0x1f) << *bits;
   *bits += 5;
   *dataword |= maxdist << *bits;

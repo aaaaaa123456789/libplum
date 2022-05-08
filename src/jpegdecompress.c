@@ -63,7 +63,7 @@ void initialize_JPEG_decompressor_state_common (struct context * context, struct
   if (offsets[2 * true_restart_count]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
 }
 
-uint16_t predict_JPEG_lossless_sample (const uint16_t * next, ptrdiff_t rowsize, int leftmost, int topmost, unsigned predictor, unsigned precision) {
+uint16_t predict_JPEG_lossless_sample (const uint16_t * next, ptrdiff_t rowsize, bool leftmost, bool topmost, unsigned predictor, unsigned precision) {
   if (!predictor) return 0;
   if (topmost)
     if (leftmost)

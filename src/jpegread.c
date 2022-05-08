@@ -33,7 +33,7 @@ void load_JPEG_data (struct context * context, unsigned flags, size_t limit) {
   else
     bitdepth = load_single_frame_JPEG(context, layout, components, component_data);
   append_JPEG_color_depth_metadata(context, transfer, bitdepth);
-  allocate_framebuffers(context, flags, 0);
+  allocate_framebuffers(context, flags, false);
   unsigned maxvalue = ((uint32_t) 1 << bitdepth) - 1;
   if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_64) {
     transfer(context -> image -> data64, count, maxvalue, (const double **) component_data);

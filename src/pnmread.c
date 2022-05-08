@@ -17,7 +17,7 @@ void load_PNM_data (struct context * context, unsigned flags, size_t limit) {
     offset = header -> datastart + header -> datalength;
     skip_PNM_whitespace(context, &offset);
   } while (offset < context -> size);
-  allocate_framebuffers(context, flags, 0);
+  allocate_framebuffers(context, flags, false);
   add_PNM_bit_depth_metadata(context, headers);
   uint64_t * buffer = ctxmalloc(context, sizeof *buffer * context -> image -> width * context -> image -> height);
   offset = plum_color_buffer_size((size_t) context -> image -> width * context -> image -> height, flags);
