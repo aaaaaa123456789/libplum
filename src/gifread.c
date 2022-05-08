@@ -228,7 +228,17 @@ void load_GIF_frame (struct context * context, size_t * offset, unsigned flags, 
   unsigned char * buffer = ctxmalloc(context, (size_t) width * height);
   decompress_GIF_data(context, buffer, compressed, width * height, length, codesize);
   ctxfree(context, compressed);
-  if (frameflags & 0x40) deinterlace_GIF_frame(context, buffer, width, height);
+  if (frameflags & 0x40) {
+    // interlaced frame
+    unsigned char * temp = ctxmalloc(context, (size_t) width * height);
+    uint_fast32_t target = 0;
+    for (uint_fast32_t row = 0; row < height; row += 8) memcpy(temp + row * width, buffer + (target ++) * width, width);
+    for (uint_fast32_t row = 4; row < height; row += 8) memcpy(temp + row * width, buffer + (target ++) * width, width);
+    for (uint_fast32_t row = 2; row < height; row += 4) memcpy(temp + row * width, buffer + (target ++) * width, width);
+    for (uint_fast32_t row = 1; row < height; row += 2) memcpy(temp + row * width, buffer + (target ++) * width, width);
+    ctxfree(context, buffer);
+    buffer = temp;
+  }
   for (size_t p = 0; p < width * height; p ++) if (buffer[p] > max_palette_index) throw(context, PLUM_ERR_INVALID_COLOR_INDEX);
   if (width == context -> image -> width && height == context -> image -> height)
     write_palette_framebuffer_to_image(context, buffer, palette, frame, flags, 0xff);
@@ -256,15 +266,4 @@ void load_GIF_frame (struct context * context, size_t * offset, unsigned flags, 
     ctxfree(context, fullframe);
   }
   ctxfree(context, buffer);
-}
-
-void deinterlace_GIF_frame (struct context * context, unsigned char * restrict buffer, uint16_t width, uint16_t height) {
-  unsigned char * temp = ctxmalloc(context, (size_t) width * height);
-  uint_fast32_t target = 0;
-  for (uint_fast32_t row = 0; row < height; row += 8) memcpy(temp + row * width, buffer + (target ++) * width, width);
-  for (uint_fast32_t row = 4; row < height; row += 8) memcpy(temp + row * width, buffer + (target ++) * width, width);
-  for (uint_fast32_t row = 2; row < height; row += 4) memcpy(temp + row * width, buffer + (target ++) * width, width);
-  for (uint_fast32_t row = 1; row < height; row += 2) memcpy(temp + row * width, buffer + (target ++) * width, width);
-  memcpy(buffer, temp, (size_t) width * height);
-  ctxfree(context, temp);
 }
