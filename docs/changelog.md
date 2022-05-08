@@ -10,6 +10,7 @@ Note: releases are listed from latest to oldest.
 - Fixed and improved the shell script that generates the `libplum.c` and `libplum.h` files, making it more resilient
   to unusual environments (such as paths with spaces in them)
 - Allowed loading PNG and APNG files with invalid background or transparent colors (which are now ignored)
+- Allowed loading JPEG files containing extraneous data after the end marker
 - Added support for JPEG files without explicit Huffman tables (using the recommended tables from the standard),
   following the behavior of many common JPEG viewers
 - Prevented bitmasked BMP files with completely empty bitmasks from loading (erroring out with `PLUM_ERR_NO_DATA`)

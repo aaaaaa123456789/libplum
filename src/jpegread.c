@@ -82,11 +82,7 @@ struct JPEG_marker_layout * load_JPEG_marker_layout (struct context * context) {
       layout -> framedata[frame][scan][restart_interval ++] = restart_offset;
       layout -> framedata[frame][scan][restart_interval ++] = prev - restart_offset;
     }
-    if (marker == 0xd9)
-      if (offset == context -> size)
-        break;
-      else
-        throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    if (marker == 0xd9) break;
     if (marker == next_restart_marker) {
       if (++ next_restart_marker == 0xd8) next_restart_marker = 0xd0;
       restart_offset = offset;
