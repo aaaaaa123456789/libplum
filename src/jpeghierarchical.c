@@ -35,7 +35,7 @@ unsigned load_hierarchical_JPEG (struct context * context, const struct JPEG_mar
         // round all components to integers, since hierarchical progressions expect to compute differences against integers
         size_t limit = (size_t) component_size[frameIDs[p]] * component_size[frameIDs[p] + 4];
         double * data = output[frameIDs[p]];
-        for (size_t index = 0; index < limit; index ++) data[index] = (uint16_t) ((long) (data[index] + 65536.5)); // avoid UB and round negative values correctly
+        for (size_t index = 0; index < limit; index ++) data[index] = (uint16_t) (long) (data[index] + 65536.5); // avoid UB and round negative values correctly
       }
       if (expand) {
         double * buffer = ctxmalloc(context, sizeof *buffer * framewidth * frameheight);

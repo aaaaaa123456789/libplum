@@ -123,5 +123,5 @@ static inline unsigned bit_width (uintmax_t value) {
 
 static inline int is_whitespace (unsigned char value) {
   // checks if value is 0 or isspace(value), but independent of current locale and system encoding
-  return !value || ((value >= 9) && (value <= 13)) || (value == 32);
+  return !value || (value >= 9 && value <= 13) || value == 32;
 }

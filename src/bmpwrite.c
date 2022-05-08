@@ -169,10 +169,10 @@ void generate_BMP_palette_byte_data (struct context * context, unsigned char * o
 size_t try_compress_BMP (struct context * context, size_t size, size_t (* rowhandler) (uint8_t *, const uint8_t *, size_t)) {
   uint8_t * rowdata = ctxmalloc(context, size * ((context -> source -> max_palette_index < 2) ? 8 : 2) + 2);
   uint8_t * output = context -> output -> data;
-  size_t rowsize, cumulative = 0;
+  size_t cumulative = 0;
   uint_fast32_t row = context -> source -> height - 1;
   do {
-    rowsize = rowhandler(rowdata, context -> source -> data8 + (size_t) row * context -> source -> width, context -> source -> width);
+    size_t rowsize = rowhandler(rowdata, context -> source -> data8 + (size_t) row * context -> source -> width, context -> source -> width);
     cumulative += rowsize;
     if (cumulative >= size) {
       ctxfree(context, rowdata);
