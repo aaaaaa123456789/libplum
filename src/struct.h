@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <setjmp.h>
 
 #include "../header/libplum.h"
@@ -122,7 +123,7 @@ enum JPEG_MCU_control_codes {
 
 struct JPEG_arithmetic_decoder_state {
   unsigned probability: 15;
-  unsigned switch_MPS:   1;
+  bool switch_MPS:       1;
   unsigned next_MPS:     8;
   unsigned next_LPS:     8;
 };

@@ -127,10 +127,8 @@ void generate_BMP_palette_halfbyte_data (struct context * context, unsigned char
       if (context -> source -> width & 7) *(data ++) = value << (8 - (context -> source -> width & 7));
       attributes[14] = 1;
     } else {
-      for (uint_fast32_t p = 0; p < (context -> source -> width - 1); p += 2)
-        *(data ++) = (source[p] << 4) | source[p + 1];
-      if (context -> source -> width & 1)
-        *(data ++) = source[context -> source -> width - 1] << 4;
+      for (uint_fast32_t p = 0; p < context -> source -> width - 1; p += 2) *(data ++) = (source[p] << 4) | source[p + 1];
+      if (context -> source -> width & 1) *(data ++) = source[context -> source -> width - 1] << 4;
     }
     for (uint_fast8_t value = 0; value < padding; value ++) *(data ++) = 0;
   } while (row --);

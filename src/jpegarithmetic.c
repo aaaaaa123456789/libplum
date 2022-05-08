@@ -280,29 +280,29 @@ bool next_JPEG_arithmetic_bit (struct context * context, size_t * restrict offse
   // negative state index: MPS = 1; null state: use 0 and don't update
   // index 0 implies MPS = 0; there's no way to encode index = 0 and MPS = 1 (because that'd be state = -0), but that state cannot happen
   static const struct JPEG_arithmetic_decoder_state states[] = {
-    /*   0 */ {0x5a1d, 1,   1,   1}, {0x2586, 0,   2,  14}, {0x1114, 0,   3,  16}, {0x080b, 0,   4,  18}, {0x03d8, 0,   5,  20},
-    /*   5 */ {0x01da, 0,   6,  23}, {0x00e5, 0,   7,  25}, {0x006f, 0,   8,  28}, {0x0036, 0,   9,  30}, {0x001a, 0,  10,  33},
-    /*  10 */ {0x000d, 0,  11,  35}, {0x0006, 0,  12,   9}, {0x0003, 0,  13,  10}, {0x0001, 0,  13,  12}, {0x5a7f, 1,  15,  15},
-    /*  15 */ {0x3f25, 0,  16,  36}, {0x2cf2, 0,  17,  38}, {0x207c, 0,  18,  39}, {0x17b9, 0,  19,  40}, {0x1182, 0,  20,  42},
-    /*  20 */ {0x0cef, 0,  21,  43}, {0x09a1, 0,  22,  45}, {0x072f, 0,  23,  46}, {0x055c, 0,  24,  48}, {0x0406, 0,  25,  49},
-    /*  25 */ {0x0303, 0,  26,  51}, {0x0240, 0,  27,  52}, {0x01b1, 0,  28,  54}, {0x0144, 0,  29,  56}, {0x00f5, 0,  30,  57},
-    /*  30 */ {0x00b7, 0,  31,  59}, {0x008a, 0,  32,  60}, {0x0068, 0,  33,  62}, {0x004e, 0,  34,  63}, {0x003b, 0,  35,  32},
-    /*  35 */ {0x002c, 0,   9,  33}, {0x5ae1, 1,  37,  37}, {0x484c, 0,  38,  64}, {0x3a0d, 0,  39,  65}, {0x2ef1, 0,  40,  67},
-    /*  40 */ {0x261f, 0,  41,  68}, {0x1f33, 0,  42,  69}, {0x19a8, 0,  43,  70}, {0x1518, 0,  44,  72}, {0x1177, 0,  45,  73},
-    /*  45 */ {0x0e74, 0,  46,  74}, {0x0bfb, 0,  47,  75}, {0x09f8, 0,  48,  77}, {0x0861, 0,  49,  78}, {0x0706, 0,  50,  79},
-    /*  50 */ {0x05cd, 0,  51,  48}, {0x04de, 0,  52,  50}, {0x040f, 0,  53,  50}, {0x0363, 0,  54,  51}, {0x02d4, 0,  55,  52},
-    /*  55 */ {0x025c, 0,  56,  53}, {0x01f8, 0,  57,  54}, {0x01a4, 0,  58,  55}, {0x0160, 0,  59,  56}, {0x0125, 0,  60,  57},
-    /*  60 */ {0x00f6, 0,  61,  58}, {0x00cb, 0,  62,  59}, {0x00ab, 0,  63,  61}, {0x008f, 0,  32,  61}, {0x5b12, 1,  65,  65},
-    /*  65 */ {0x4d04, 0,  66,  80}, {0x412c, 0,  67,  81}, {0x37d8, 0,  68,  82}, {0x2fe8, 0,  69,  83}, {0x293c, 0,  70,  84},
-    /*  70 */ {0x2379, 0,  71,  86}, {0x1edf, 0,  72,  87}, {0x1aa9, 0,  73,  87}, {0x174e, 0,  74,  72}, {0x1424, 0,  75,  72},
-    /*  75 */ {0x119c, 0,  76,  74}, {0x0f6b, 0,  77,  74}, {0x0d51, 0,  78,  75}, {0x0bb6, 0,  79,  77}, {0x0a40, 0,  48,  77},
-    /*  80 */ {0x5832, 1,  81,  80}, {0x4d1c, 0,  82,  88}, {0x438e, 0,  83,  89}, {0x3bdd, 0,  84,  90}, {0x34ee, 0,  85,  91},
-    /*  85 */ {0x2eae, 0,  86,  92}, {0x299a, 0,  87,  93}, {0x2516, 0,  71,  86}, {0x5570, 1,  89,  88}, {0x4ca9, 0,  90,  95},
-    /*  90 */ {0x44d9, 0,  91,  96}, {0x3e22, 0,  92,  97}, {0x3824, 0,  93,  99}, {0x32b4, 0,  94,  99}, {0x2e17, 0,  86,  93},
-    /*  95 */ {0x56a8, 1,  96,  95}, {0x4f46, 0,  97, 101}, {0x47e5, 0,  98, 102}, {0x41cf, 0,  99, 103}, {0x3c3d, 0, 100, 104},
-    /* 100 */ {0x375e, 0,  93,  99}, {0x5231, 0, 102, 105}, {0x4c0f, 0, 103, 106}, {0x4639, 0, 104, 107}, {0x415e, 0,  99, 103},
-    /* 105 */ {0x5627, 1, 106, 105}, {0x50e7, 0, 107, 108}, {0x4b85, 0, 103, 109}, {0x5597, 0, 109, 110}, {0x504f, 0, 107, 111},
-    /* 110 */ {0x5a10, 1, 111, 110}, {0x5522, 0, 109, 112}, {0x59eb, 1, 111, 112}
+    /*   0 */ {0x5a1d,  true,   1,   1}, {0x2586, false,   2,  14}, {0x1114, false,   3,  16}, {0x080b, false,   4,  18}, {0x03d8, false,   5,  20},
+    /*   5 */ {0x01da, false,   6,  23}, {0x00e5, false,   7,  25}, {0x006f, false,   8,  28}, {0x0036, false,   9,  30}, {0x001a, false,  10,  33},
+    /*  10 */ {0x000d, false,  11,  35}, {0x0006, false,  12,   9}, {0x0003, false,  13,  10}, {0x0001, false,  13,  12}, {0x5a7f,  true,  15,  15},
+    /*  15 */ {0x3f25, false,  16,  36}, {0x2cf2, false,  17,  38}, {0x207c, false,  18,  39}, {0x17b9, false,  19,  40}, {0x1182, false,  20,  42},
+    /*  20 */ {0x0cef, false,  21,  43}, {0x09a1, false,  22,  45}, {0x072f, false,  23,  46}, {0x055c, false,  24,  48}, {0x0406, false,  25,  49},
+    /*  25 */ {0x0303, false,  26,  51}, {0x0240, false,  27,  52}, {0x01b1, false,  28,  54}, {0x0144, false,  29,  56}, {0x00f5, false,  30,  57},
+    /*  30 */ {0x00b7, false,  31,  59}, {0x008a, false,  32,  60}, {0x0068, false,  33,  62}, {0x004e, false,  34,  63}, {0x003b, false,  35,  32},
+    /*  35 */ {0x002c, false,   9,  33}, {0x5ae1,  true,  37,  37}, {0x484c, false,  38,  64}, {0x3a0d, false,  39,  65}, {0x2ef1, false,  40,  67},
+    /*  40 */ {0x261f, false,  41,  68}, {0x1f33, false,  42,  69}, {0x19a8, false,  43,  70}, {0x1518, false,  44,  72}, {0x1177, false,  45,  73},
+    /*  45 */ {0x0e74, false,  46,  74}, {0x0bfb, false,  47,  75}, {0x09f8, false,  48,  77}, {0x0861, false,  49,  78}, {0x0706, false,  50,  79},
+    /*  50 */ {0x05cd, false,  51,  48}, {0x04de, false,  52,  50}, {0x040f, false,  53,  50}, {0x0363, false,  54,  51}, {0x02d4, false,  55,  52},
+    /*  55 */ {0x025c, false,  56,  53}, {0x01f8, false,  57,  54}, {0x01a4, false,  58,  55}, {0x0160, false,  59,  56}, {0x0125, false,  60,  57},
+    /*  60 */ {0x00f6, false,  61,  58}, {0x00cb, false,  62,  59}, {0x00ab, false,  63,  61}, {0x008f, false,  32,  61}, {0x5b12,  true,  65,  65},
+    /*  65 */ {0x4d04, false,  66,  80}, {0x412c, false,  67,  81}, {0x37d8, false,  68,  82}, {0x2fe8, false,  69,  83}, {0x293c, false,  70,  84},
+    /*  70 */ {0x2379, false,  71,  86}, {0x1edf, false,  72,  87}, {0x1aa9, false,  73,  87}, {0x174e, false,  74,  72}, {0x1424, false,  75,  72},
+    /*  75 */ {0x119c, false,  76,  74}, {0x0f6b, false,  77,  74}, {0x0d51, false,  78,  75}, {0x0bb6, false,  79,  77}, {0x0a40, false,  48,  77},
+    /*  80 */ {0x5832,  true,  81,  80}, {0x4d1c, false,  82,  88}, {0x438e, false,  83,  89}, {0x3bdd, false,  84,  90}, {0x34ee, false,  85,  91},
+    /*  85 */ {0x2eae, false,  86,  92}, {0x299a, false,  87,  93}, {0x2516, false,  71,  86}, {0x5570,  true,  89,  88}, {0x4ca9, false,  90,  95},
+    /*  90 */ {0x44d9, false,  91,  96}, {0x3e22, false,  92,  97}, {0x3824, false,  93,  99}, {0x32b4, false,  94,  99}, {0x2e17, false,  86,  93},
+    /*  95 */ {0x56a8,  true,  96,  95}, {0x4f46, false,  97, 101}, {0x47e5, false,  98, 102}, {0x41cf, false,  99, 103}, {0x3c3d, false, 100, 104},
+    /* 100 */ {0x375e, false,  93,  99}, {0x5231, false, 102, 105}, {0x4c0f, false, 103, 106}, {0x4639, false, 104, 107}, {0x415e, false,  99, 103},
+    /* 105 */ {0x5627,  true, 106, 105}, {0x50e7, false, 107, 108}, {0x4b85, false, 103, 109}, {0x5597, false, 109, 110}, {0x504f, false, 107, 111},
+    /* 110 */ {0x5a10,  true, 111, 110}, {0x5522, false, 109, 112}, {0x59eb,  true, 111, 112}
   };
   const struct JPEG_arithmetic_decoder_state * state = states + (index ? absolute_value(*index) : 0);
   bool decoded, predicted = index && *index < 0; // predict the MPS; decode a 1 if the prediction is false
@@ -317,7 +317,7 @@ bool next_JPEG_arithmetic_bit (struct context * context, size_t * restrict offse
   }
   if (index)
     if (decoded)
-      *index = (predicted ^ state -> switch_MPS) ? -state -> next_LPS : state -> next_LPS;
+      *index = (predicted != state -> switch_MPS) ? -state -> next_LPS : state -> next_LPS;
     else
       *index = predicted ? -state -> next_MPS : state -> next_MPS;
   // normalize the counters, consuming new data if needed
