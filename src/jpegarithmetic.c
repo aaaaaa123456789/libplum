@@ -222,8 +222,7 @@ void decompress_JPEG_arithmetic_lossless_scan (struct context * context, struct 
 }
 
 void initialize_JPEG_arithmetic_counters (struct context * context, size_t * restrict offset, size_t * restrict remaining, uint32_t * restrict current) {
-  unsigned char loopcount = 2;
-  while (loopcount --) {
+  for (uint_fast8_t loopcount = 0; loopcount < 2; loopcount ++) {
     unsigned char data = 0;
     if (*remaining) {
       data = context -> data[(*offset) ++];
@@ -306,7 +305,7 @@ bool next_JPEG_arithmetic_bit (struct context * context, size_t * restrict offse
     /* 110 */ {0x5a10, 1, 111, 110}, {0x5522, 0, 109, 112}, {0x59eb, 1, 111, 112}
   };
   const struct JPEG_arithmetic_decoder_state * state = states + (index ? absolute_value(*index) : 0);
-  bool decoded, predicted = index && (*index < 0); // predict the MPS; decode a 1 if the prediction is false
+  bool decoded, predicted = index && *index < 0; // predict the MPS; decode a 1 if the prediction is false
   *accumulator -= state -> probability;
   if (*accumulator > (*current >> 8)) {
     if (*accumulator >= 0x8000u) return predicted;

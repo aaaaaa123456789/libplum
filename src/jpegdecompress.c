@@ -58,10 +58,9 @@ void initialize_JPEG_decompressor_state_common (struct context * context, struct
     state -> last_size %= state -> restart_size;
   } else
     state -> restart_count = 0;
-  size_t index;
-  for (index = 0; index < state -> restart_count; index ++) if (!offsets[2 * index]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  if (state -> last_size && !offsets[2 * (index ++)]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  if (offsets[2 * index]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  size_t true_restart_count = state -> restart_count + !!state -> last_size; // including the final restart interval
+  for (size_t index = 0; index < true_restart_count; index ++) if (!offsets[2 * index]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  if (offsets[2 * true_restart_count]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
 }
 
 uint16_t predict_JPEG_lossless_sample (const uint16_t * next, ptrdiff_t rowsize, int leftmost, int topmost, unsigned predictor, unsigned precision) {
