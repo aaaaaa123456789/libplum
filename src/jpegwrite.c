@@ -107,13 +107,13 @@ void convert_JPEG_components_to_YCbCr (struct context * context, double (* restr
       for (uint_fast8_t row = 0; row < (rows); row ++, index += rowoffset)                                                                                     \
         convert_JPEG_colors_to_YCbCr(data + index, cols, context -> source -> color_format, *luminance + 8 * row, *blue + 8 * row, *red + 8 * row, buffer);    \
     }                                                                                                                                                          \
-  while (0)
+  while (false)
   #define copyvalues(index, offset) do {                     \
     uint_fast8_t coord = (index), ref = coord - (offset);    \
     coord[*luminance] = ref[*luminance];                     \
     coord[*blue] = ref[*blue];                               \
     coord[*red] = ref[*red];                                 \
-  } while (0)
+  } while (false)
   // actually do the conversion
   if (context -> source -> palette)
     convert_JPEG_colors_to_YCbCr(context -> source -> palette, context -> source -> max_palette_index + 1, context -> source -> color_format, palette_luminance,
@@ -165,7 +165,7 @@ void subsample_JPEG_component (double (* restrict component)[64], double (* rest
     uint_fast8_t index = (y) * 8 + (x);                                                 \
     const double * ref = component[(offset) * unitsH] + (index * 2 - 64 * (offset));    \
     (*output)[index + (shift)] = (*ref + ref[1] + ref[8] + ref[9]) * 0.25;              \
-  } while (0)
+  } while (false)
   for (size_t unitrow = 0; unitrow < (unitsV >> 1); unitrow ++) {
     for (size_t unitcol = 0; unitcol < (unitsH >> 1); unitcol ++) {
       for (uint_fast8_t p = 0; p < 8; p += 4) {

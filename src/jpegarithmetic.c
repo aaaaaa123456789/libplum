@@ -27,7 +27,7 @@ void decompress_JPEG_arithmetic_scan (struct context * context, struct JPEG_deco
           outputunit += state -> row_offset[decodepos[1]];
           break;
         default: {
-          int prevzero = 0; // was the previous coefficient zero?
+          bool prevzero = false; // was the previous coefficient zero?
           for (uint_fast8_t p = first; p <= last; p ++) {
             if (skipunits)
               p[*outputunit] = 0;
@@ -40,10 +40,10 @@ void decompress_JPEG_arithmetic_scan (struct context * context, struct JPEG_deco
               } else if (next_JPEG_arithmetic_bit(context, &offset, &remaining, index + 1, &current, &accumulator, &bits)) {
                 p[*outputunit] = next_JPEG_arithmetic_value(context, &offset, &remaining, &current, &accumulator, &bits, indexesAC[components[*decodepos].tableAC],
                                                             1, p, conditioning);
-                prevzero = 0;
+                prevzero = false;
               } else {
                 p[*outputunit] = 0;
-                prevzero = 1;
+                prevzero = true;
               }
             } else {
               unsigned char conditioning = tables -> arithmetic[components[*decodepos].tableDC];
@@ -110,23 +110,23 @@ void decompress_JPEG_arithmetic_bit_scan (struct context * context, struct JPEG_
           else if (first) {
             unsigned char lastnonzero; // last non-zero coefficient up to the previous scan (for the same component)
             for (lastnonzero = 63; lastnonzero; lastnonzero --) if (lastnonzero[*outputunit]) break;
-            int prevzero = 0; // was the previous coefficient zero?
+            bool prevzero = false; // was the previous coefficient zero?
             for (uint_fast8_t p = first; p <= last; p ++) {
               signed char * index = indexes[components[*decodepos].tableAC] + 3 * (p - 1);
               if (!prevzero && p > lastnonzero && next_JPEG_arithmetic_bit(context, &offset, &remaining, index, &current, &accumulator, &bits)) break;
               if (p[*outputunit]) {
-                prevzero = 0;
+                prevzero = false;
                 if (next_JPEG_arithmetic_bit(context, &offset, &remaining, index + 2, &current, &accumulator, &bits))
                   if (p[*outputunit] < 0)
                     p[*outputunit] -= 1 << shift;
                   else
                     p[*outputunit] += 1 << shift;
               } else if (next_JPEG_arithmetic_bit(context, &offset, &remaining, index + 1, &current, &accumulator, &bits)) {
-                prevzero = 0;
+                prevzero = false;
                 p[*outputunit] = next_JPEG_arithmetic_bit(context, &offset, &remaining, NULL, &current, &accumulator, &bits) ?
                                  make_signed_16(0xffffu << shift) : (1 << shift);
               } else
-                prevzero = 1;
+                prevzero = true;
             }
           } else if (next_JPEG_arithmetic_bit(context, &offset, &remaining, NULL, &current, &accumulator, &bits))
             **outputunit += 1 << shift;
@@ -150,8 +150,8 @@ void decompress_JPEG_arithmetic_bit_scan (struct context * context, struct JPEG_
 void decompress_JPEG_arithmetic_lossless_scan (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_decoder_tables * tables,
                                                size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned char predictor,
                                                unsigned precision) {
-  uint8_t scancomponents[4] = {0};
-  for (uint_fast8_t p = 0; state -> MCU[p] != MCU_END_LIST; p ++) if (state -> MCU[p] < 4) scancomponents[state -> MCU[p]] = 1;
+  bool scancomponents[4] = {0};
+  for (uint_fast8_t p = 0; state -> MCU[p] != MCU_END_LIST; p ++) if (state -> MCU[p] < 4) scancomponents[state -> MCU[p]] = true;
   uint16_t * rowdifferences[4] = {0};
   for (uint_fast8_t p = 0; p < 4; p ++) if (scancomponents[p])
     rowdifferences[p] = ctxmalloc(context, sizeof **rowdifferences * rowunits * ((state -> component_count > 1) ? components[p].scaleH : 1));
@@ -242,7 +242,7 @@ int16_t next_JPEG_arithmetic_value (struct context * context, size_t * restrict 
                                     unsigned char conditioning) {
   // mode = 0 for DC (reference = DC category), 1 for AC (reference = coefficient index), 2 for lossless (reference = 5 * top category + left category)
   signed char * index = (mode == 1) ? NULL : (indexes + 4 * reference + 1);
-  int negative = next_JPEG_arithmetic_bit(context, offset, remaining, index, current, accumulator, bits);
+  bool negative = next_JPEG_arithmetic_bit(context, offset, remaining, index, current, accumulator, bits);
   index = (mode == 1) ? indexes + 3 * reference - 1 : (index + 1 + negative);
   uint_fast8_t size = next_JPEG_arithmetic_bit(context, offset, remaining, index, current, accumulator, bits);
   uint16_t result = 0;
@@ -276,8 +276,8 @@ unsigned char classify_JPEG_arithmetic_value (uint16_t value, unsigned char cond
   return ((value >= 0x8000u) ? 2 : 1) + 2 * (absolute > high);
 }
 
-unsigned next_JPEG_arithmetic_bit (struct context * context, size_t * restrict offset, size_t * restrict remaining, signed char * restrict index,
-                                   uint32_t * restrict current, uint16_t * restrict accumulator, unsigned char * restrict bits) {
+bool next_JPEG_arithmetic_bit (struct context * context, size_t * restrict offset, size_t * restrict remaining, signed char * restrict index,
+                               uint32_t * restrict current, uint16_t * restrict accumulator, unsigned char * restrict bits) {
   // negative state index: MPS = 1; null state: use 0 and don't update
   // index 0 implies MPS = 0; there's no way to encode index = 0 and MPS = 1 (because that'd be state = -0), but that state cannot happen
   static const struct JPEG_arithmetic_decoder_state states[] = {
@@ -306,7 +306,7 @@ unsigned next_JPEG_arithmetic_bit (struct context * context, size_t * restrict o
     /* 110 */ {0x5a10, 1, 111, 110}, {0x5522, 0, 109, 112}, {0x59eb, 1, 111, 112}
   };
   const struct JPEG_arithmetic_decoder_state * state = states + (index ? absolute_value(*index) : 0);
-  unsigned decoded, predicted = index && (*index < 0); // predict the MPS; decode a 1 if the prediction is false
+  bool decoded, predicted = index && (*index < 0); // predict the MPS; decode a 1 if the prediction is false
   *accumulator -= state -> probability;
   if (*accumulator > (*current >> 8)) {
     if (*accumulator >= 0x8000u) return predicted;
@@ -340,5 +340,5 @@ unsigned next_JPEG_arithmetic_bit (struct context * context, size_t * restrict o
     *current = (*current << 1) & 0xffffffu;
     -- *bits;
   } while (*accumulator < 0x8000u);
-  return predicted ^ decoded;
+  return predicted != decoded;
 }

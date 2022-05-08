@@ -1,7 +1,7 @@
 #include "proto.h"
 
 void load_PNG_frame (struct context * context, const size_t * chunks, uint32_t frame, const uint64_t * palette, uint8_t max_palette_index,
-                     uint8_t imagetype, uint8_t bitdepth, int interlaced, uint64_t background, uint64_t transparent) {
+                     uint8_t imagetype, uint8_t bitdepth, bool interlaced, uint64_t background, uint64_t transparent) {
   void * data = load_PNG_frame_part(context, chunks, palette ? max_palette_index : -1, imagetype, bitdepth, interlaced,
                                     context -> image -> width, context -> image -> height, frame ? 4 : 0);
   if (palette)
@@ -16,7 +16,7 @@ void load_PNG_frame (struct context * context, const size_t * chunks, uint32_t f
   ctxfree(context, data);
 }
 
-void * load_PNG_frame_part (struct context * context, const size_t * chunks, int max_palette_index, uint8_t imagetype, uint8_t bitdepth, int interlaced,
+void * load_PNG_frame_part (struct context * context, const size_t * chunks, int max_palette_index, uint8_t imagetype, uint8_t bitdepth, bool interlaced,
                             uint32_t width, uint32_t height, size_t chunkoffset) {
   // max_palette_index < 0: no palette (return uint64_t *); otherwise, use a palette (return uint8_t *)
   size_t p = 0, total_compressed_size = 0;
@@ -37,7 +37,7 @@ void * load_PNG_frame_part (struct context * context, const size_t * chunks, int
 }
 
 uint8_t * load_PNG_palette_frame (struct context * context, const void * compressed, size_t compressed_size, uint32_t width, uint32_t height, uint8_t bitdepth,
-                                  uint8_t max_palette_index, int interlaced) {
+                                  uint8_t max_palette_index, bool interlaced) {
   // imagetype must be 3 here
   uint8_t * result = ctxmalloc(context, (size_t) width * height);
   unsigned char * decompressed;
@@ -76,7 +76,7 @@ uint8_t * load_PNG_palette_frame (struct context * context, const void * compres
 }
 
 uint64_t * load_PNG_raw_frame (struct context * context, const void * compressed, size_t compressed_size, uint32_t width, uint32_t height, uint8_t imagetype,
-                               uint8_t bitdepth, int interlaced) {
+                               uint8_t bitdepth, bool interlaced) {
   // imagetype is not 3 here
   uint64_t * result = ctxmalloc(context, sizeof *result * width * height);
   unsigned char * decompressed;

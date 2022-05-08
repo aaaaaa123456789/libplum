@@ -68,7 +68,7 @@ void decompress_GIF_data (struct context * context, unsigned char * restrict res
   int lastcode = -1;
   unsigned char * current = result;
   unsigned char * limit = result + expected_length;
-  while (1) {
+  while (true) {
     while (bits < current_codesize) {
       if (!(length --)) {
         // handle images that are so broken that they never emit a stop code

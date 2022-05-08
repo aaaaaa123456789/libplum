@@ -56,7 +56,7 @@ void load_PNG_data (struct context * context, unsigned flags, size_t limit) {
   const size_t * frameinfo = chunks -> frameinfo;
   const size_t * const * framedata = (const size_t * const *) chunks -> framedata;
   // handle the first frame's metadata, which is special and may or may not be part of the animation (the frame data will have already been loaded)
-  int replace_last = 0;
+  bool replace_last = false;
   if (!*frameinfo) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   if (*frameinfo < *chunks -> data) {
     if (
@@ -75,7 +75,7 @@ void load_PNG_data (struct context * context, unsigned flags, size_t limit) {
   // actually load animation frames
   if (*frameinfo && *frameinfo < *chunks -> data) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   for (uint_fast32_t frame = 1; frame < context -> image -> frames; frame ++) {
-    int replace = load_PNG_animation_frame_metadata(context, *frameinfo, durations + frame, disposals + frame);
+    bool replace = load_PNG_animation_frame_metadata(context, *frameinfo, durations + frame, disposals + frame);
     if (replace) disposals[frame - 1] += PLUM_DISPOSAL_REPLACE;
     uint_fast32_t width = read_be32_unaligned(context -> data + *frameinfo + 4);
     uint_fast32_t height = read_be32_unaligned(context -> data + *frameinfo + 8);
@@ -129,7 +129,7 @@ struct PNG_chunk_locations * load_PNG_chunk_locations (struct context * context)
   *result = (struct PNG_chunk_locations) {0}; // ensure that integers and pointers are properly zero-initialized
   size_t data_count = 0, frameinfo_count = 0, framedata_count = 0;
   size_t * framedata = NULL;
-  int invalid_animation = 0;
+  bool invalid_animation = false;
   while (offset <= context -> size - 12) {
     uint32_t length = read_be32_unaligned(context -> data + offset);
     chunk_type = read_be32_unaligned(context -> data + offset + 4);
@@ -169,7 +169,7 @@ struct PNG_chunk_locations * load_PNG_chunk_locations (struct context * context)
       case 0x6163544cu: // acTL
         if (!invalid_animation)
           if (result -> data || result -> animation || length != 8)
-            invalid_animation = 1;
+            invalid_animation = true;
           else
             result -> animation = offset;
         break;
@@ -178,14 +178,14 @@ struct PNG_chunk_locations * load_PNG_chunk_locations (struct context * context)
           if (length == 26)
             append_PNG_chunk_location(context, &result -> frameinfo, offset, &frameinfo_count);
           else
-            invalid_animation = 1;
+            invalid_animation = true;
         break;
       case 0x66644154u: // fdAT
         if (!invalid_animation)
           if (length >= 4)
             append_PNG_chunk_location(context, &framedata, offset, &framedata_count);
           else
-            invalid_animation = 1;
+            invalid_animation = true;
         break;
       default:
         if ((chunk_type & 0xe0c0c0c0u) != 0x60404040u) throw(context, PLUM_ERR_INVALID_FILE_FORMAT); // invalid or critical
@@ -386,18 +386,18 @@ uint64_t load_PNG_transparent_color (struct context * context, size_t offset, ui
     return (uint64_t) read_be16_unaligned(data) | ((uint64_t) read_be16_unaligned(data + 2) << 16) | ((uint64_t) read_be16_unaligned(data + 4) << 32);
 }
 
-int check_PNG_reduced_frames (struct context * context, const struct PNG_chunk_locations * chunks) {
+bool check_PNG_reduced_frames (struct context * context, const struct PNG_chunk_locations * chunks) {
   for (const size_t * frameinfo = chunks -> frameinfo; *frameinfo; frameinfo ++) {
     uint_fast32_t width = read_be32_unaligned(context -> data + *frameinfo + 4);
     uint_fast32_t height = read_be32_unaligned(context -> data + *frameinfo + 8);
     uint_fast32_t left = read_be32_unaligned(context -> data + *frameinfo + 12);
     uint_fast32_t top = read_be32_unaligned(context -> data + *frameinfo + 16);
-    if (top || left || width != context -> image -> width || height != context -> image -> height) return 1;
+    if (top || left || width != context -> image -> width || height != context -> image -> height) return true;
   }
-  return 0;
+  return false;
 }
 
-int load_PNG_animation_frame_metadata (struct context * context, size_t offset, uint64_t * restrict duration, uint8_t * restrict disposal) {
+bool load_PNG_animation_frame_metadata (struct context * context, size_t offset, uint64_t * restrict duration, uint8_t * restrict disposal) {
   // returns if the previous frame should be replaced
   uint_fast16_t numerator = read_be16_unaligned(context -> data + offset + 20), denominator = read_be16_unaligned(context -> data + offset + 22);
   if ((*disposal = context -> data[offset + 24]) > 2) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);

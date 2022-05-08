@@ -98,7 +98,7 @@ void append_PNG_header_chunks (struct context * context, unsigned type, uint32_t
   output_PNG_chunk(context, 0x73424954u, 3 + ((type & 5) == 5), depthdata); // sBIT
 }
 
-void append_PNG_palette_data (struct context * context, int use_alpha) {
+void append_PNG_palette_data (struct context * context, bool use_alpha) {
   uint32_t color_buffer[256];
   plum_convert_colors(color_buffer, context -> source -> palette, context -> source -> max_palette_index + 1, PLUM_COLOR_32 | PLUM_ALPHA_INVERT,
                       context -> source -> color_format);

@@ -66,7 +66,7 @@ void calculate_frame_duration_fraction (uint64_t duration, uint32_t limit, uint3
   uint64_t cumulative_numerator = duration / *denominator, cumulative_denominator = 1, previous_numerator = 1, previous_denominator = 0;
   uint32_t coefficient, original_denominator = *denominator;
   *numerator = duration % *denominator;
-  while (1) {
+  while (true) {
     coefficient = *denominator / *numerator;
     uint64_t partial_numerator = *denominator % *numerator;
     *denominator = *numerator;

@@ -160,16 +160,16 @@ void decompress_JPEG_Huffman_lossless_scan (struct context * context, struct JPE
     uint8_t bits = 0;
     while (units --) {
       uint16_t * outputpos;
-      int leftmost, topmost;
+      bool leftmost, topmost;
       for (const unsigned char * decodepos = state -> MCU; *decodepos != MCU_END_LIST; decodepos ++) switch (*decodepos) {
         case MCU_ZERO_COORD:
           outputpos = state -> current_value[decodepos[1]];
-          leftmost = topmost = 1;
+          leftmost = topmost = true;
           break;
         case MCU_NEXT_ROW:
           outputpos += state -> row_offset[decodepos[1]];
-          leftmost = 1;
-          topmost = 0;
+          leftmost = true;
+          topmost = false;
           break;
         default:
           if (skipunits) {
@@ -193,7 +193,7 @@ void decompress_JPEG_Huffman_lossless_scan (struct context * context, struct JPE
             }
             *(outputpos ++) = predicted + difference;
           }
-          leftmost = 0;
+          leftmost = false;
       }
       if (++ colcount == rowunits) {
         colcount = 0;
@@ -213,7 +213,7 @@ void decompress_JPEG_Huffman_lossless_scan (struct context * context, struct JPE
 unsigned char next_JPEG_Huffman_value (struct context * context, const unsigned char ** data, size_t * restrict count, uint32_t * restrict dataword,
                                        uint8_t * restrict bits, const short * table) {
   unsigned short index = 0;
-  while (1) {
+  while (true) {
     index += shift_in_right_JPEG(context, 1, dataword, bits, data, count);
     if (table[index] >= 0) return table[index];
     if (table[index] == -1) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);

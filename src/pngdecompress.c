@@ -8,7 +8,7 @@ void * decompress_PNG_data (struct context * context, const unsigned char * comp
   size -= 6; // pretend the checksum is not part of the data
   unsigned char * decompressed = ctxmalloc(context, expected);
   size_t current = 0;
-  int last_block;
+  bool last_block;
   uint32_t dataword = 0;
   uint8_t bits = 0;
   do {
@@ -86,7 +86,7 @@ void decompress_PNG_block (struct context * context, const unsigned char ** comp
   short * codetree = decode_PNG_Huffman_tree(context, codesizes, 0x120);
   if (!codetree) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   short * disttree = decode_PNG_Huffman_tree(context, codesizes + 0x120, 0x20);
-  while (1) {
+  while (true) {
     uint_fast16_t code = next_PNG_Huffman_code(context, codetree, compressed, size, dataword, bits);
     if (code >= 0x11e) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     if (code == 0x100) break;
@@ -154,7 +154,7 @@ short * decode_PNG_Huffman_tree (struct context * context, const unsigned char *
 uint16_t next_PNG_Huffman_code (struct context * context, const short * tree, const unsigned char ** compressed, size_t * restrict size,
                                 uint32_t * restrict dataword, uint8_t * restrict bits) {
   short index = 0;
-  while (1) {
+  while (true) {
     index += shift_in_left(context, 1, dataword, bits, compressed, size);
     if (tree[index] >= 0) return tree[index];
     index = -tree[index];

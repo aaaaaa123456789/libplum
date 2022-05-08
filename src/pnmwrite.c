@@ -46,7 +46,7 @@ uint32_t * get_true_PNM_frame_sizes (struct context * context) {
           colorclass[p] = 0;                                                          \
         else                                                                          \
           colorclass[p] = 2;                                                          \
-    while (0)
+    while (false)
     if (format == PLUM_COLOR_16)
       checkclasses(16);
     else if (format == PLUM_COLOR_64)
@@ -79,7 +79,7 @@ uint32_t * get_true_PNM_frame_sizes (struct context * context) {
         result[frame * 2] = width;                                                                                                          \
         result[frame * 2 + 1] = height;                                                                                                     \
       }                                                                                                                                     \
-    while (0)
+    while (false)
     if (format == PLUM_COLOR_16)
       checkframe(16);
     else if (format == PLUM_COLOR_64)
@@ -107,11 +107,11 @@ void generate_PPM_data (struct context * context, const uint32_t * sizes, unsign
     size_t height = sizes ? sizes[frame * 2 + 1] : context -> source -> height;
     generate_PPM_header(context, width, height, bitdepth);
     if (context -> source -> palette)
-      generate_PNM_frame_data_from_palette(context, context -> source -> data8 + offset * frame, buffer, width, height, bitdepth, 0);
+      generate_PNM_frame_data_from_palette(context, context -> source -> data8 + offset * frame, buffer, width, height, bitdepth, false);
     else {
       plum_convert_colors(buffer, context -> source -> data8 + offset * frame, height * context -> source -> width, PLUM_COLOR_64 | PLUM_ALPHA_INVERT,
                           context -> source -> color_format);
-      generate_PNM_frame_data(context, buffer, width, height, bitdepth, 0);
+      generate_PNM_frame_data(context, buffer, width, height, bitdepth, false);
     }
   }
 }
@@ -134,10 +134,10 @@ void generate_PAM_data (struct context * context, unsigned bitdepth, uint64_t * 
     generate_PAM_header(context, bitdepth);
     if (context -> source -> palette)
       generate_PNM_frame_data_from_palette(context, context -> source -> data8 + size * frame, buffer, context -> source -> width, context -> source -> height,
-                                           bitdepth, 1);
+                                           bitdepth, true);
     else {
       plum_convert_colors(buffer, context -> source -> data8 + offset * frame, size, PLUM_COLOR_64 | PLUM_ALPHA_INVERT, context -> source -> color_format);
-      generate_PNM_frame_data(context, buffer, context -> source -> width, context -> source -> height, bitdepth, 1);
+      generate_PNM_frame_data(context, buffer, context -> source -> width, context -> source -> height, bitdepth, true);
     }
   }
 }
@@ -175,10 +175,10 @@ size_t write_PNM_number (unsigned char * buffer, uint32_t number) {
   return size;
 }
 
-void generate_PNM_frame_data (struct context * context, const uint64_t * data, uint32_t width, uint32_t height, unsigned bitdepth, int alpha) {
+void generate_PNM_frame_data (struct context * context, const uint64_t * data, uint32_t width, uint32_t height, unsigned bitdepth, bool alpha) {
   uint_fast8_t shift = 16 - bitdepth, mask = (1 << ((bitdepth > 8) ? bitdepth - 8 : bitdepth)) - 1;
   const uint64_t * rowdata = data;
-  unsigned char * output = append_output_node(context, (size_t) (3 + !!alpha) * ((bitdepth + 7) / 8) * width * height);
+  unsigned char * output = append_output_node(context, (size_t) (3 + alpha) * ((bitdepth + 7) / 8) * width * height);
   if (shift >= 8)
     for (uint_fast32_t row = 0; row < height; row ++, rowdata += context -> source -> width) for (uint_fast32_t col = 0; col < width; col ++) {
       output += byteappend(output, (rowdata[col] >> shift) & mask, (rowdata[col] >> (shift + 16)) & mask, (rowdata[col] >> (shift + 32)) & mask);
@@ -193,11 +193,11 @@ void generate_PNM_frame_data (struct context * context, const uint64_t * data, u
 }
 
 void generate_PNM_frame_data_from_palette (struct context * context, const uint8_t * data, const uint64_t * palette, uint32_t width, uint32_t height,
-                                           unsigned bitdepth, int alpha) {
+                                           unsigned bitdepth, bool alpha) {
   // very similar to the previous function, but adjusted to use the color from the palette and to read 8-bit data
   uint_fast8_t shift = 16 - bitdepth, mask = (1 << ((bitdepth > 8) ? bitdepth - 8 : bitdepth)) - 1;
   const uint8_t * rowdata = data;
-  unsigned char * output = append_output_node(context, (size_t) (3 + !!alpha) * ((bitdepth + 7) / 8) * width * height);
+  unsigned char * output = append_output_node(context, (size_t) (3 + alpha) * ((bitdepth + 7) / 8) * width * height);
   if (shift >= 8)
     for (uint_fast32_t row = 0; row < height; row ++, rowdata += context -> source -> width) for (uint_fast32_t col = 0; col < width; col ++) {
       uint64_t color = palette[rowdata[col]];
