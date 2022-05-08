@@ -351,18 +351,18 @@ uint64_t add_PNG_background_metadata (struct context * context, const struct PNG
     case 0: case 4:
       if (read_be32_unaligned(data - 8) != 2) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
       color = read_le16_unaligned(data);
-      if (color >> bitdepth) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+      if (color >> bitdepth) return 0;
       color = 0x100010001u * (uint64_t) bitextend16(color, bitdepth);
       break;
     case 3:
       if (read_be32_unaligned(data - 8) != 1) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-      if (*data > max_palette_index) return 0; // allow (and ignore) invalid background colors
+      if (*data > max_palette_index) return 0;
       color = palette[*data];
       break;
     default:
       if (read_be32_unaligned(data - 8) != 6) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
       if (bitdepth == 8) {
-        if (*data || data[2] || data[4]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+        if (*data || data[2] || data[4]) return 0;
         color = ((uint64_t) data[1] | ((uint64_t) data[3] << 16) | ((uint64_t) data[5] << 32)) * 0x101;
       } else
         color = read_be16_unaligned(data) | ((uint64_t) read_be16_unaligned(data + 2) << 16) | ((uint64_t) read_be16_unaligned(data + 4) << 32);
@@ -377,10 +377,10 @@ uint64_t load_PNG_transparent_color (struct context * context, size_t offset, ui
   if (read_be32_unaligned(data - 8) != (imagetype ? 6 : 2)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   if (!imagetype) {
     uint_fast32_t color = read_be16_unaligned(data); // cannot be 16-bit because of the potential >> 16 in the next line
-    if (color >> bitdepth) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    if (color >> bitdepth) return 0xffffffffffffffffu;
     return 0x100010001u * (uint64_t) bitextend16(color, bitdepth);
   } else if (bitdepth == 8) {
-    if (*data || data[2] || data[4]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    if (*data || data[2] || data[4]) return 0xffffffffffffffffu;
     return ((uint64_t) data[1] | ((uint64_t) data[3] << 16) | ((uint64_t) data[5] << 32)) * 0x101;
   } else
     return (uint64_t) read_be16_unaligned(data) | ((uint64_t) read_be16_unaligned(data + 2) << 16) | ((uint64_t) read_be16_unaligned(data + 4) << 32);
