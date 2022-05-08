@@ -64,7 +64,7 @@ void write_palette_framebuffer_to_image (struct context * context, const uint8_t
     memcpy(context -> image -> data8 + framesize * frame, framebuffer, framesize);
     return;
   }
-  void * converted = ctxmalloc(context, (max_palette_index + 1) * sizeof(uint64_t));
+  void * converted = ctxmalloc(context, plum_color_buffer_size(max_palette_index + 1, flags));
   plum_convert_colors(converted, palette, max_palette_index + 1, flags, PLUM_COLOR_64);
   plum_convert_indexes_to_colors(context -> image -> data8 + plum_color_buffer_size(framesize, flags) * frame, framebuffer, converted, framesize, flags);
   ctxfree(context, converted);
