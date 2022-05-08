@@ -3,12 +3,15 @@
 uint32_t determine_JPEG_components (struct context * context, size_t offset) {
   uint_fast16_t size = read_be16_unaligned(context -> data + offset);
   if (size < 8) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  uint_fast8_t p, count = context -> data[offset + 7];
+  uint_fast8_t count = context -> data[offset + 7];
   if (!count || count > 4) throw(context, PLUM_ERR_INVALID_FILE_FORMAT); // only recognize up to four components
   if (size != 8 + 3 * count) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   unsigned char components[4] = {0};
-  for (p = 0; p < count; p ++) components[p] = context -> data[offset + 8 + 3 * p];
-  #define swap(first, second) p = first, first = second, second = p
+  for (uint_fast8_t p = 0; p < count; p ++) components[p] = context -> data[offset + 8 + 3 * p];
+  #define swap(first, second) do {    \
+    uint_fast8_t temp = first;        \
+    first = second, second = temp;    \
+  } while (false)
   switch (count) {
     // since there's at most four components, a simple swap-based sort is the best implementation
     case 4:
@@ -22,7 +25,7 @@ uint32_t determine_JPEG_components (struct context * context, size_t offset) {
       if (components[1] < *components) swap(*components, components[1]);
   }
   #undef swap
-  for (p = 1; p < count; p ++) if (components[p - 1] == components[p]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  for (uint_fast8_t p = 1; p < count; p ++) if (components[p - 1] == components[p]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   return read_le32_unaligned(components);
 }
 
