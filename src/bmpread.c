@@ -89,21 +89,18 @@ void load_BMP_data (struct context * context, unsigned flags, size_t limit) {
   ctxfree(context, frame);
 }
 
-uint8_t load_BMP_palette (struct context * context, size_t offset, unsigned max_count, uint64_t * palette) {
+uint8_t load_BMP_palette (struct context * context, size_t offset, unsigned max_count, uint64_t * restrict palette) {
   uint_fast32_t count = read_le32_unaligned(context -> data + 46);
   if (!count || count > max_count) count = max_count;
   size_t end = offset + count * 4;
   if (end < offset || end > context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  for (unsigned p = 0; p < count; p ++) {
-    palette[p] = ((uint64_t) context -> data[offset] << 32) | ((uint64_t) context -> data[offset + 1] << 16) | (uint64_t) context -> data[offset + 2];
-    palette[p] *= 0x101;
-    offset += 4;
-  }
+  for (unsigned p = 0; p < count; p ++, offset += 4)
+    palette[p] = (((uint64_t) context -> data[offset] << 32) | ((uint64_t) context -> data[offset + 1] << 16) | (uint64_t) context -> data[offset + 2]) * 0x101;
   add_color_depth_metadata(context, 8, 8, 8, 0, 0);
   return count - 1;
 }
 
-void load_BMP_bitmasks (struct context * context, size_t headersize, uint8_t * bitmasks, unsigned maxbits) {
+void load_BMP_bitmasks (struct context * context, size_t headersize, uint8_t * restrict bitmasks, unsigned maxbits) {
   bool valid = false;
   const uint8_t * bp;
   unsigned count;

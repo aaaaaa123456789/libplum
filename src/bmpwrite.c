@@ -162,7 +162,7 @@ void generate_BMP_palette_byte_data (struct context * context, unsigned char * o
   } while (row --);
 }
 
-size_t try_compress_BMP (struct context * context, size_t size, size_t (* rowhandler) (uint8_t *, const uint8_t *, size_t)) {
+size_t try_compress_BMP (struct context * context, size_t size, size_t (* rowhandler) (uint8_t * restrict, const uint8_t * restrict, size_t)) {
   uint8_t * rowdata = ctxmalloc(context, size * ((context -> source -> max_palette_index < 2) ? 8 : 2) + 2);
   uint8_t * output = context -> output -> data;
   size_t cumulative = 0;
@@ -182,7 +182,7 @@ size_t try_compress_BMP (struct context * context, size_t size, size_t (* rowhan
   return cumulative;
 }
 
-size_t compress_BMP_halfbyte_row (uint8_t * result, const uint8_t * data, size_t count) {
+size_t compress_BMP_halfbyte_row (uint8_t * restrict result, const uint8_t * restrict data, size_t count) {
   size_t size = 2; // account for the terminator
   while (count > 3)
     if (*data == data[2] && data[1] == data[3]) {
@@ -234,7 +234,7 @@ size_t compress_BMP_halfbyte_row (uint8_t * result, const uint8_t * data, size_t
   return size + count;
 }
 
-unsigned emit_BMP_compressed_halfbyte_remainder (uint8_t * result, const uint8_t * data, unsigned count) {
+unsigned emit_BMP_compressed_halfbyte_remainder (uint8_t * restrict result, const uint8_t * restrict data, unsigned count) {
   switch (count) {
     case 1:
       bytewrite(result, 1, *data << 4);
@@ -252,7 +252,7 @@ unsigned emit_BMP_compressed_halfbyte_remainder (uint8_t * result, const uint8_t
   }
 }
 
-size_t compress_BMP_byte_row (uint8_t * result, const uint8_t * data, size_t count) {
+size_t compress_BMP_byte_row (uint8_t * restrict result, const uint8_t * restrict data, size_t count) {
   size_t size = 2; // account for the terminator
   while (count > 1)
     if (*data == data[1]) {

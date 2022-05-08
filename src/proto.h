@@ -23,8 +23,8 @@ internal void destroy_allocator_list(union allocator_node *);
 
 // bmpread.c
 internal void load_BMP_data(struct context *, unsigned, size_t);
-internal uint8_t load_BMP_palette(struct context *, size_t, unsigned, uint64_t *);
-internal void load_BMP_bitmasks(struct context *, size_t, uint8_t *, unsigned);
+internal uint8_t load_BMP_palette(struct context *, size_t, unsigned, uint64_t * restrict);
+internal void load_BMP_bitmasks(struct context *, size_t, uint8_t * restrict, unsigned);
 internal uint8_t * load_monochrome_BMP(struct context *, size_t, bool);
 internal uint8_t * load_halfbyte_BMP(struct context *, size_t, bool);
 internal uint8_t * load_byte_BMP(struct context *, size_t, bool);
@@ -41,10 +41,10 @@ internal void generate_BMP_data(struct context *);
 internal void generate_BMP_bitmasked_data(struct context *, uint32_t, unsigned char *);
 internal void generate_BMP_palette_halfbyte_data(struct context *, unsigned char *);
 internal void generate_BMP_palette_byte_data(struct context *, unsigned char *);
-internal size_t try_compress_BMP(struct context *, size_t, size_t (*) (uint8_t *, const uint8_t *, size_t));
-internal size_t compress_BMP_halfbyte_row(uint8_t *, const uint8_t *, size_t);
-internal unsigned emit_BMP_compressed_halfbyte_remainder(uint8_t *, const uint8_t *, unsigned);
-internal size_t compress_BMP_byte_row(uint8_t *, const uint8_t *, size_t);
+internal size_t try_compress_BMP(struct context *, size_t, size_t (*) (uint8_t * restrict, const uint8_t * restrict, size_t));
+internal size_t compress_BMP_halfbyte_row(uint8_t * restrict, const uint8_t * restrict, size_t);
+internal unsigned emit_BMP_compressed_halfbyte_remainder(uint8_t * restrict, const uint8_t * restrict, unsigned);
+internal size_t compress_BMP_byte_row(uint8_t * restrict, const uint8_t * restrict, size_t);
 internal void append_BMP_palette(struct context *);
 internal void generate_BMP_RGB_data(struct context *, unsigned char *);
 
@@ -59,9 +59,9 @@ internal uint32_t get_true_color_depth(const struct plum_image *);
 // framebuffer.c
 internal void validate_image_size(struct context *, size_t);
 internal void allocate_framebuffers(struct context *, unsigned, bool);
-internal void write_framebuffer_to_image(struct plum_image *, const uint64_t *, uint32_t, unsigned);
-internal void write_palette_framebuffer_to_image(struct context *, const uint8_t *, const uint64_t *, uint32_t, unsigned, uint8_t);
-internal void write_palette_to_image(struct context *, const uint64_t *, unsigned);
+internal void write_framebuffer_to_image(struct plum_image *, const uint64_t * restrict, uint32_t, unsigned);
+internal void write_palette_framebuffer_to_image(struct context *, const uint8_t * restrict, const uint64_t * restrict, uint32_t, unsigned, uint8_t);
+internal void write_palette_to_image(struct context *, const uint64_t * restrict, unsigned);
 internal void rotate_frame_8(uint8_t * restrict, uint8_t * restrict, size_t, size_t, size_t (*) (size_t, size_t, size_t, size_t));
 internal void rotate_frame_16(uint16_t * restrict, uint16_t * restrict, size_t, size_t, size_t (*) (size_t, size_t, size_t, size_t));
 internal void rotate_frame_32(uint32_t * restrict, uint32_t * restrict, size_t, size_t, size_t (*) (size_t, size_t, size_t, size_t));
