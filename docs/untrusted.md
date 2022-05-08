@@ -133,6 +133,6 @@ Up: [README](README.md)
 [image]: structs.md#plum_image
 [indexed]: colors.md#indexed-color-mode
 [load]: functions.md#plum_load_image
-[load-limited]: functions.md##plum_load_image_limited
+[load-limited]: functions.md#plum_load_image_limited
 [validate]: functions.md#plum_validate_image
 [validate-indexes]: functions.md#plum_validate_palette_indexes
