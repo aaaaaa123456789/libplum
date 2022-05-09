@@ -2,7 +2,7 @@
 
 Note: releases are listed from latest to oldest.
 
-## Version 1.1 (in development)
+## Version 1.1 (9 May 2022)
 
 - Fixed palette reduction for palettes with more than 128 colors
 - Fixed invalid memory accesses in PNG file generation that could occur if `uint_fast8_t` was as wide as (or wider
