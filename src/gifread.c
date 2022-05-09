@@ -19,7 +19,7 @@ void load_GIF_data (struct context * context, unsigned flags, size_t limit) {
   if (!plum_find_metadata(context -> image, PLUM_METADATA_LOOP_COUNT)) add_loop_count_metadata(context, 1);
 }
 
-uint64_t ** load_GIF_palettes_and_frame_count (struct context * context, unsigned flags, size_t * offset, uint64_t * transparent_color) {
+uint64_t ** load_GIF_palettes_and_frame_count (struct context * context, unsigned flags, size_t * restrict offset, uint64_t * restrict transparent_color) {
   // will also validate block order
   unsigned char depth = 1 + ((context -> data[10] >> 4) & 7);
   add_color_depth_metadata(context, depth, depth, depth, 1, 0);
@@ -142,7 +142,7 @@ uint64_t ** load_GIF_palettes_and_frame_count (struct context * context, unsigne
   return result;
 }
 
-void load_GIF_palette (struct context * context, uint64_t * palette, size_t * offset, unsigned size) {
+void load_GIF_palette (struct context * context, uint64_t * restrict palette, size_t * restrict offset, unsigned size) {
   if (3 * size > context -> size - *offset) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   while (size --) {
     uint_fast64_t color = context -> data[(*offset) ++];
@@ -170,7 +170,7 @@ void * load_GIF_data_blocks (struct context * context, size_t * restrict offset,
   return result;
 }
 
-void skip_GIF_data_blocks (struct context * context, size_t * offset) {
+void skip_GIF_data_blocks (struct context * context, size_t * restrict offset) {
   uint_fast8_t skip;
   do {
     if (*offset >= context -> size) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
@@ -180,7 +180,7 @@ void skip_GIF_data_blocks (struct context * context, size_t * offset) {
   } while (skip);
 }
 
-void load_GIF_frame (struct context * context, size_t * offset, unsigned flags, uint32_t frame, const uint64_t * palette,
+void load_GIF_frame (struct context * context, size_t * restrict offset, unsigned flags, uint32_t frame, const uint64_t * restrict palette,
                      uint64_t transparent_color, uint64_t * restrict duration, uint8_t * restrict disposal) {
   *duration = *disposal = 0;
   int transparent_index = -1;

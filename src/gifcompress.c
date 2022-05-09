@@ -59,7 +59,7 @@ unsigned char * compress_GIF_data (struct context * context, const unsigned char
   return output;
 }
 
-void decompress_GIF_data (struct context * context, unsigned char * restrict result, const unsigned char * source, size_t expected_length,
+void decompress_GIF_data (struct context * context, unsigned char * restrict result, const unsigned char * restrict source, size_t expected_length,
                           size_t length, unsigned codesize) {
   struct compressed_GIF_code * codes = ctxmalloc(context, sizeof *codes * 4097);
   initialize_GIF_compression_codes(codes, codesize);
@@ -113,7 +113,7 @@ void decompress_GIF_data (struct context * context, unsigned char * restrict res
   }
 }
 
-void initialize_GIF_compression_codes (struct compressed_GIF_code * codes, unsigned codesize) {
+void initialize_GIF_compression_codes (struct compressed_GIF_code * restrict codes, unsigned codesize) {
   unsigned code;
   for (code = 0; code < (1 << codesize); code ++) codes[code] = (struct compressed_GIF_code) {.reference = -1, .value = code, .type = 0};
   codes[code ++] = (struct compressed_GIF_code) {.type = 1, .reference = -1};
@@ -121,11 +121,11 @@ void initialize_GIF_compression_codes (struct compressed_GIF_code * codes, unsig
   for (; code < 4096; code ++) codes[code] = (struct compressed_GIF_code) {.type = 3, .reference = -1};
 }
 
-uint8_t find_leading_GIF_code (const struct compressed_GIF_code * codes, unsigned code) {
+uint8_t find_leading_GIF_code (const struct compressed_GIF_code * restrict codes, unsigned code) {
   return (codes[code].reference < 0) ? codes[code].value : find_leading_GIF_code(codes, codes[code].reference);
 }
 
-void emit_GIF_data (struct context * context, const struct compressed_GIF_code * codes, unsigned code, unsigned char ** result, unsigned char * limit) {
+void emit_GIF_data (struct context * context, const struct compressed_GIF_code * restrict codes, unsigned code, unsigned char ** result, unsigned char * limit) {
   if (codes[code].reference >= 0) emit_GIF_data(context, codes, codes[code].reference, result, limit);
   if (*result >= limit) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   *((*result) ++) = codes[code].value;

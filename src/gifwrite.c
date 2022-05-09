@@ -180,7 +180,7 @@ int_fast32_t get_GIF_background_color (struct context * context) {
   return converted & 0xffffffu;
 }
 
-void write_GIF_palette (struct context * context, const uint32_t * palette, unsigned count) {
+void write_GIF_palette (struct context * context, const uint32_t * restrict palette, unsigned count) {
   for (unsigned char * data = append_output_node(context, 3 * count); count; count --, palette ++)
     data += byteappend(data, *palette, *palette >> 8, *palette >> 16);
 }
@@ -194,7 +194,7 @@ void write_GIF_loop_info (struct context * context) {
   byteoutput(context, 0x21, 0xff, 0x0b, 0x4e, 0x45, 0x54, 0x53, 0x43, 0x41, 0x50, 0x45, 0x32, 0x2e, 0x30, 0x03, 0x01, count, count >> 8, 0x00);
 }
 
-void write_GIF_frame (struct context * context, const unsigned char * restrict data, const uint32_t * palette, unsigned colors, int transparent,
+void write_GIF_frame (struct context * context, const unsigned char * restrict data, const uint32_t * restrict palette, unsigned colors, int transparent,
                       uint32_t frame, unsigned left, unsigned top, unsigned width, unsigned height, const struct plum_metadata * durations,
                       const struct plum_metadata * disposals, int64_t * restrict duration_remainder) {
   uint64_t duration = 0;
