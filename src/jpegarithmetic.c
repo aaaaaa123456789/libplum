@@ -1,8 +1,8 @@
 #include "proto.h"
 
 void decompress_JPEG_arithmetic_scan (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_decoder_tables * tables,
-                                      size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned shift, unsigned char first,
-                                      unsigned char last, bool differential) {
+                                      size_t rowunits, const struct JPEG_component_info * components, const size_t * restrict offsets, unsigned shift,
+                                      unsigned char first, unsigned char last, bool differential) {
   for (size_t restart_interval = 0; restart_interval <= state -> restart_count; restart_interval ++) {
     size_t units = (restart_interval == state -> restart_count) ? state -> last_size : state -> restart_size;
     if (!units) break;
@@ -80,7 +80,7 @@ void decompress_JPEG_arithmetic_scan (struct context * context, struct JPEG_deco
 }
 
 void decompress_JPEG_arithmetic_bit_scan (struct context * context, struct JPEG_decompressor_state * restrict state, size_t rowunits,
-                                          const struct JPEG_component_info * components, const size_t * offsets, unsigned shift, unsigned char first,
+                                          const struct JPEG_component_info * components, const size_t * restrict offsets, unsigned shift, unsigned char first,
                                           unsigned char last) {
   // this function is very similar to decompress_JPEG_arithmetic_scan, but it only decodes the next bit for already-initialized data
   if (last && !first) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
@@ -148,8 +148,8 @@ void decompress_JPEG_arithmetic_bit_scan (struct context * context, struct JPEG_
 }
 
 void decompress_JPEG_arithmetic_lossless_scan (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_decoder_tables * tables,
-                                               size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned char predictor,
-                                               unsigned precision) {
+                                               size_t rowunits, const struct JPEG_component_info * components, const size_t * restrict offsets,
+                                               unsigned char predictor, unsigned precision) {
   bool scancomponents[4] = {0};
   for (uint_fast8_t p = 0; state -> MCU[p] != MCU_END_LIST; p ++) if (state -> MCU[p] < 4) scancomponents[state -> MCU[p]] = true;
   uint16_t * rowdifferences[4] = {0};

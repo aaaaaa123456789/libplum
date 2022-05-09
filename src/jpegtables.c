@@ -47,7 +47,7 @@ short * process_JPEG_Huffman_table (struct context * context, const unsigned cha
   return ctxrealloc(context, result, next * sizeof *result);
 }
 
-void load_default_JPEG_Huffman_tables (struct context * context, struct JPEG_decoder_tables * tables) {
+void load_default_JPEG_Huffman_tables (struct context * context, struct JPEG_decoder_tables * restrict tables) {
   /* default tables from the JPEG specification, already preprocessed into a tree, in the same format as other trees:
      two values per node, non-negative values are leaves, negative values are array indexes where the next node is
      found (always even, because each node takes up two entries), -1 is an empty branch; index 0 is the root node */

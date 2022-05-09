@@ -151,7 +151,7 @@ short * decode_PNG_Huffman_tree (struct context * context, const unsigned char *
   return ctxrealloc(context, result, last * sizeof *result);
 }
 
-uint16_t next_PNG_Huffman_code (struct context * context, const short * tree, const unsigned char ** compressed, size_t * restrict size,
+uint16_t next_PNG_Huffman_code (struct context * context, const short * restrict tree, const unsigned char ** compressed, size_t * restrict size,
                                 uint32_t * restrict dataword, uint8_t * restrict bits) {
   short index = 0;
   while (true) {

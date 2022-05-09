@@ -116,7 +116,8 @@ size_t compute_uncompressed_PNG_block_size (const unsigned char * restrict data,
   return current_offset - offset;
 }
 
-unsigned find_PNG_reference (const unsigned char * data, const uint16_t * references, size_t current_offset, size_t size, size_t * restrict reference_offset) {
+unsigned find_PNG_reference (const unsigned char * restrict data, const uint16_t * restrict references, size_t current_offset, size_t size,
+                             size_t * restrict reference_offset) {
   uint_fast32_t search = compute_PNG_reference_key(data + current_offset) * (uint_fast32_t) PNG_MAX_LOOKBACK_COUNT;
   unsigned best = 0;
   for (uint_fast8_t p = 0; p < PNG_MAX_LOOKBACK_COUNT && references[search + p] != 0xffffu; p ++) {

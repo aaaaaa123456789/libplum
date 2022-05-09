@@ -16,18 +16,18 @@ static inline uint32_t read_be32_unaligned (const unsigned char * data) {
   return (uint32_t) data[3] | ((uint32_t) data[2] << 8) | ((uint32_t) data[1] << 16) | ((uint32_t) *data << 24);
 }
 
-static inline void write_le16_unaligned (unsigned char * buffer, uint16_t value) {
+static inline void write_le16_unaligned (unsigned char * restrict buffer, uint16_t value) {
   bytewrite(buffer, value, value >> 8);
 }
 
-static inline void write_le32_unaligned (unsigned char * buffer, uint32_t value) {
+static inline void write_le32_unaligned (unsigned char * restrict buffer, uint32_t value) {
   bytewrite(buffer, value, value >> 8, value >> 16, value >> 24);
 }
 
-static inline void write_be16_unaligned (unsigned char * buffer, uint32_t value) {
+static inline void write_be16_unaligned (unsigned char * restrict buffer, uint32_t value) {
   bytewrite(buffer, value >> 8, value);
 }
 
-static inline void write_be32_unaligned (unsigned char * buffer, uint32_t value) {
+static inline void write_be32_unaligned (unsigned char * restrict buffer, uint32_t value) {
   bytewrite(buffer, value >> 24, value >> 16, value >> 8, value);
 }

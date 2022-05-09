@@ -1,8 +1,8 @@
 #include "proto.h"
 
 void decompress_JPEG_Huffman_scan (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_decoder_tables * tables,
-                                   size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned shift, unsigned char first,
-                                   unsigned char last, bool differential) {
+                                   size_t rowunits, const struct JPEG_component_info * components, const size_t * restrict offsets, unsigned shift,
+                                   unsigned char first, unsigned char last, bool differential) {
   for (size_t restart_interval = 0; restart_interval <= state -> restart_count; restart_interval ++) {
     size_t units = (restart_interval == state -> restart_count) ? state -> last_size : state -> restart_size;
     if (!units) break;
@@ -73,8 +73,8 @@ void decompress_JPEG_Huffman_scan (struct context * context, struct JPEG_decompr
 }
 
 void decompress_JPEG_Huffman_bit_scan (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_decoder_tables * tables,
-                                       size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned shift, unsigned char first,
-                                       unsigned char last) {
+                                       size_t rowunits, const struct JPEG_component_info * components, const size_t * restrict offsets, unsigned shift,
+                                       unsigned char first, unsigned char last) {
   // this function is essentially the same as decompress_JPEG_Huffman_scan, but it uses already-initialized component data, and it decodes one bit at a time
   if (last && !first) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   for (size_t restart_interval = 0; restart_interval <= state -> restart_count; restart_interval ++) {
@@ -148,8 +148,8 @@ void decompress_JPEG_Huffman_bit_scan (struct context * context, struct JPEG_dec
 }
 
 void decompress_JPEG_Huffman_lossless_scan (struct context * context, struct JPEG_decompressor_state * restrict state, const struct JPEG_decoder_tables * tables,
-                                            size_t rowunits, const struct JPEG_component_info * components, const size_t * offsets, unsigned char predictor,
-                                            unsigned precision) {
+                                            size_t rowunits, const struct JPEG_component_info * components, const size_t * restrict offsets,
+                                            unsigned char predictor, unsigned precision) {
   for (size_t restart_interval = 0; restart_interval <= state -> restart_count; restart_interval ++) {
     size_t units = (restart_interval == state -> restart_count) ? state -> last_size : state -> restart_size;
     if (!units) break;
@@ -211,7 +211,7 @@ void decompress_JPEG_Huffman_lossless_scan (struct context * context, struct JPE
 }
 
 unsigned char next_JPEG_Huffman_value (struct context * context, const unsigned char ** data, size_t * restrict count, uint32_t * restrict dataword,
-                                       uint8_t * restrict bits, const short * table) {
+                                       uint8_t * restrict bits, const short * restrict table) {
   unsigned short index = 0;
   while (true) {
     index += shift_in_right_JPEG(context, 1, dataword, bits, data, count);

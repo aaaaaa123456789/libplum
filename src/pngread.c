@@ -216,13 +216,13 @@ struct PNG_chunk_locations * load_PNG_chunk_locations (struct context * context)
   return result;
 }
 
-void append_PNG_chunk_location (struct context * context, size_t ** locations, size_t location, size_t * count) {
+void append_PNG_chunk_location (struct context * context, size_t ** locations, size_t location, size_t * restrict count) {
   *locations = ctxrealloc(context, *locations, sizeof **locations * (*count + 1));
   (*locations)[(*count) ++] = location;
 }
 
-void sort_PNG_animation_chunks (struct context * context, struct PNG_chunk_locations * locations, const size_t * framedata, size_t frameinfo_count,
-                                size_t framedata_count) {
+void sort_PNG_animation_chunks (struct context * context, struct PNG_chunk_locations * restrict locations, const size_t * restrict framedata,
+                                size_t frameinfo_count, size_t framedata_count) {
   if ((frameinfo_count + framedata_count) > 0x80000000u) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   if (!frameinfo_count || (frameinfo_count > 1 && !framedata_count)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   uint64_t * indexes = ctxmalloc(context, sizeof *indexes * (frameinfo_count + framedata_count));
@@ -257,7 +257,7 @@ void sort_PNG_animation_chunks (struct context * context, struct PNG_chunk_locat
   ctxfree(context, indexes);
 }
 
-uint8_t load_PNG_palette (struct context * context, const struct PNG_chunk_locations * chunks, uint8_t bitdepth, uint64_t * restrict palette) {
+uint8_t load_PNG_palette (struct context * context, const struct PNG_chunk_locations * restrict chunks, uint8_t bitdepth, uint64_t * restrict palette) {
   if (!chunks -> palette) throw(context, PLUM_ERR_UNDEFINED_PALETTE);
   uint_fast32_t count = read_be32_unaligned(context -> data + chunks -> palette - 8) / 3;
   if (count > (1 << bitdepth)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);

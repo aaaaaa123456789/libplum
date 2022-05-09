@@ -1,7 +1,8 @@
 #include "proto.h"
 
 void load_JPEG_DCT_frame (struct context * context, const struct JPEG_marker_layout * layout, uint32_t components, size_t frameindex,
-                          struct JPEG_decoder_tables * tables, size_t * metadata_index, double ** output, unsigned precision, size_t width, size_t height) {
+                          struct JPEG_decoder_tables * tables, size_t * restrict metadata_index, double ** output, unsigned precision, size_t width,
+                          size_t height) {
   const size_t * scans = layout -> framescans[frameindex];
   const size_t ** offsets = (const size_t **) layout -> framedata[frameindex];
   // obtain this frame's components' parameters and compute the number of (non-subsampled) blocks per MCU (maximum scale factor for each dimension)
@@ -87,7 +88,8 @@ void load_JPEG_DCT_frame (struct context * context, const struct JPEG_marker_lay
 }
 
 void load_JPEG_lossless_frame (struct context * context, const struct JPEG_marker_layout * layout, uint32_t components, size_t frameindex,
-                               struct JPEG_decoder_tables * tables, size_t * metadata_index, double ** output, unsigned precision, size_t width, size_t height) {
+                               struct JPEG_decoder_tables * tables, size_t * restrict metadata_index, double ** output, unsigned precision, size_t width,
+                               size_t height) {
   const size_t * scans = layout -> framescans[frameindex];
   const size_t ** offsets = (const size_t **) layout -> framedata[frameindex];
   // obtain this frame's components' parameters and compute the number of pixels per MCU (maximum scale factor for each dimension)

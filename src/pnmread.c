@@ -194,7 +194,7 @@ void add_PNM_bit_depth_metadata (struct context * context, const struct PNM_imag
     add_color_depth_metadata(context, 0, 0, 0, alphadepth, colordepth);
 }
 
-void load_PNM_frame (struct context * context, const struct PNM_image_header * header, uint64_t * restrict buffer) {
+void load_PNM_frame (struct context * context, const struct PNM_image_header * restrict header, uint64_t * restrict buffer) {
   size_t offset = header -> datastart, imagewidth = context -> image -> width, imageheight = context -> image -> height;
   if (header -> width < imagewidth)
     for (uint_fast32_t row = 0; row < header -> height; row ++)

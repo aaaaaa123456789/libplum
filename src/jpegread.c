@@ -222,7 +222,7 @@ unsigned load_single_frame_JPEG (struct context * context, const struct JPEG_mar
 }
 
 unsigned char process_JPEG_metadata_until_offset (struct context * context, const struct JPEG_marker_layout * layout, struct JPEG_decoder_tables * tables,
-                                                  size_t * index, size_t limit) {
+                                                  size_t * restrict index, size_t limit) {
   unsigned char expansion = 0;
   for (; layout -> markers[*index] && layout -> markers[*index] < limit; ++ *index) {
     const unsigned char * markerdata = context -> data + layout -> markers[*index];

@@ -99,7 +99,7 @@ uint32_t * get_true_PNM_frame_sizes (struct context * context) {
   return NULL;
 }
 
-void generate_PPM_data (struct context * context, const uint32_t * sizes, unsigned bitdepth, uint64_t * restrict buffer) {
+void generate_PPM_data (struct context * context, const uint32_t * restrict sizes, unsigned bitdepth, uint64_t * restrict buffer) {
   size_t offset = (size_t) context -> source -> width * context -> source -> height;
   if (!context -> source -> palette) offset = plum_color_buffer_size(offset, context -> source -> color_format);
   for (size_t frame = 0; frame < context -> source -> frames; frame ++) {
@@ -163,7 +163,7 @@ void generate_PAM_header (struct context * context, unsigned bitdepth) {
   context -> output -> size = offset;
 }
 
-size_t write_PNM_number (unsigned char * buffer, uint32_t number) {
+size_t write_PNM_number (unsigned char * restrict buffer, uint32_t number) {
   // won't work for 0, but there's no need to write a 0 anywhere
   unsigned char data[10];
   uint_fast8_t size = 0;

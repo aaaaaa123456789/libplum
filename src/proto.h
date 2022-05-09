@@ -113,11 +113,11 @@ internal void generate_Huffman_codes(unsigned short * restrict, size_t, const un
 
 // jpegarithmetic.c
 internal void decompress_JPEG_arithmetic_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
-                                              const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char, bool);
+                                              const struct JPEG_component_info *, const size_t * restrict, unsigned, unsigned char, unsigned char, bool);
 internal void decompress_JPEG_arithmetic_bit_scan(struct context *, struct JPEG_decompressor_state * restrict, size_t, const struct JPEG_component_info *,
-                                                  const size_t *, unsigned, unsigned char, unsigned char);
+                                                  const size_t * restrict, unsigned, unsigned char, unsigned char);
 internal void decompress_JPEG_arithmetic_lossless_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
-                                                       const struct JPEG_component_info *, const size_t *, unsigned char, unsigned);
+                                                       const struct JPEG_component_info *, const size_t * restrict, unsigned char, unsigned);
 internal void initialize_JPEG_arithmetic_counters(struct context *, size_t * restrict, size_t * restrict, uint32_t * restrict);
 internal int16_t next_JPEG_arithmetic_value(struct context *, size_t * restrict, size_t * restrict, uint32_t * restrict, uint16_t * restrict,
                                             unsigned char * restrict, signed char * restrict, unsigned, unsigned, unsigned char);
@@ -163,13 +163,13 @@ internal void apply_JPEG_inverse_DCT(double [restrict static 64], const int16_t 
 // jpegdecompress.c
 internal void initialize_JPEG_decompressor_state(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_component_info *,
                                                  const unsigned char *, size_t * restrict, size_t, size_t, size_t, unsigned char, unsigned char,
-                                                 const struct JPEG_decoder_tables *, const size_t *, int16_t (* restrict *)[64]);
+                                                 const struct JPEG_decoder_tables *, const size_t * restrict, int16_t (* restrict *)[64]);
 internal void initialize_JPEG_decompressor_state_lossless(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_component_info *,
                                                           const unsigned char *, size_t * restrict, size_t, size_t, size_t, unsigned char, unsigned char,
-                                                          const struct JPEG_decoder_tables *, const size_t *, uint16_t * restrict *);
+                                                          const struct JPEG_decoder_tables *, const size_t * restrict, uint16_t * restrict *);
 internal void initialize_JPEG_decompressor_state_common(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_component_info *,
                                                         const unsigned char *, size_t * restrict, size_t, size_t, size_t, unsigned char, unsigned char,
-                                                        const struct JPEG_decoder_tables *, const size_t *, unsigned char);
+                                                        const struct JPEG_decoder_tables *, const size_t * restrict, unsigned char);
 internal uint16_t predict_JPEG_lossless_sample(const uint16_t *, ptrdiff_t, bool, bool, unsigned, unsigned);
 
 // jpeghierarchical.c
@@ -180,25 +180,27 @@ internal void normalize_JPEG_component(double * restrict, size_t, double);
 
 // jpeghuffman.c
 internal void decompress_JPEG_Huffman_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
-                                           const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char, bool);
+                                           const struct JPEG_component_info *, const size_t * restrict, unsigned, unsigned char, unsigned char, bool);
 internal void decompress_JPEG_Huffman_bit_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
-                                               const struct JPEG_component_info *, const size_t *, unsigned, unsigned char, unsigned char);
+                                               const struct JPEG_component_info *, const size_t * restrict, unsigned, unsigned char, unsigned char);
 internal void decompress_JPEG_Huffman_lossless_scan(struct context *, struct JPEG_decompressor_state * restrict, const struct JPEG_decoder_tables *, size_t,
-                                                    const struct JPEG_component_info *, const size_t *, unsigned char, unsigned);
-internal unsigned char next_JPEG_Huffman_value(struct context *, const unsigned char **, size_t * restrict, uint32_t * restrict, uint8_t * restrict, const short *);
+                                                    const struct JPEG_component_info *, const size_t * restrict, unsigned char, unsigned);
+internal unsigned char next_JPEG_Huffman_value(struct context *, const unsigned char **, size_t * restrict, uint32_t * restrict, uint8_t * restrict,
+                                               const short * restrict);
 
 // jpegread.c
 internal void load_JPEG_data(struct context *, unsigned, size_t);
 internal struct JPEG_marker_layout * load_JPEG_marker_layout(struct context *);
 internal unsigned get_JPEG_rotation(struct context *, size_t);
 internal unsigned load_single_frame_JPEG(struct context *, const struct JPEG_marker_layout *, uint32_t, double **);
-internal unsigned char process_JPEG_metadata_until_offset(struct context *, const struct JPEG_marker_layout *, struct JPEG_decoder_tables *, size_t *, size_t);
+internal unsigned char process_JPEG_metadata_until_offset(struct context *, const struct JPEG_marker_layout *, struct JPEG_decoder_tables *, size_t * restrict,
+                                                          size_t);
 
 // jpegreadframe.c
-internal void load_JPEG_DCT_frame(struct context *, const struct JPEG_marker_layout *, uint32_t, size_t, struct JPEG_decoder_tables *, size_t *, double **,
-                                  unsigned, size_t, size_t);
-internal void load_JPEG_lossless_frame(struct context *, const struct JPEG_marker_layout *, uint32_t, size_t, struct JPEG_decoder_tables *, size_t *, double **,
-                                       unsigned, size_t, size_t);
+internal void load_JPEG_DCT_frame(struct context *, const struct JPEG_marker_layout *, uint32_t, size_t, struct JPEG_decoder_tables *, size_t * restrict,
+                                  double **, unsigned, size_t, size_t);
+internal void load_JPEG_lossless_frame(struct context *, const struct JPEG_marker_layout *, uint32_t, size_t, struct JPEG_decoder_tables *, size_t * restrict,
+                                       double **, unsigned, size_t, size_t);
 internal unsigned get_JPEG_component_info(struct context *, const unsigned char *, struct JPEG_component_info * restrict, uint32_t);
 internal const unsigned char * get_JPEG_scan_components(struct context *, size_t, struct JPEG_component_info * restrict, unsigned, unsigned char * restrict);
 internal void unpack_JPEG_component(double * restrict, double * restrict, size_t, size_t, size_t, size_t, unsigned char, unsigned char, unsigned char,
@@ -207,7 +209,7 @@ internal void unpack_JPEG_component(double * restrict, double * restrict, size_t
 // jpegtables.c
 internal void initialize_JPEG_decoder_tables(struct context *, struct JPEG_decoder_tables *, const struct JPEG_marker_layout *);
 internal short * process_JPEG_Huffman_table(struct context *, const unsigned char ** restrict, uint16_t * restrict);
-internal void load_default_JPEG_Huffman_tables(struct context *, struct JPEG_decoder_tables *);
+internal void load_default_JPEG_Huffman_tables(struct context *, struct JPEG_decoder_tables * restrict);
 
 // jpegwrite.c
 internal void generate_JPEG_data(struct context *);
@@ -253,7 +255,7 @@ internal unsigned char * compress_PNG_data(struct context *, const unsigned char
 internal struct compressed_PNG_code * generate_compressed_PNG_block(struct context *, const unsigned char * restrict, size_t, size_t, uint16_t * restrict,
                                                                     size_t * restrict, size_t * restrict, bool);
 internal size_t compute_uncompressed_PNG_block_size(const unsigned char * restrict, size_t, size_t, uint16_t * restrict);
-internal unsigned find_PNG_reference(const unsigned char *, const uint16_t *, size_t, size_t, size_t * restrict);
+internal unsigned find_PNG_reference(const unsigned char * restrict, const uint16_t * restrict, size_t, size_t, size_t * restrict);
 internal void append_PNG_reference(const unsigned char * restrict, size_t, uint16_t * restrict);
 internal uint16_t compute_PNG_reference_key(const unsigned char * data);
 internal void emit_PNG_code(struct context *, struct compressed_PNG_code **, size_t * restrict, size_t * restrict, int, unsigned);
@@ -270,14 +272,15 @@ internal void extract_PNG_code_table(struct context *, const unsigned char **, s
 internal void decompress_PNG_block(struct context *, const unsigned char **, unsigned char * restrict, size_t * restrict, size_t * restrict, size_t,
                                    uint32_t * restrict, uint8_t * restrict, const unsigned char [restrict static 0x140]);
 internal short * decode_PNG_Huffman_tree(struct context *, const unsigned char *, unsigned);
-internal uint16_t next_PNG_Huffman_code(struct context *, const short *, const unsigned char **, size_t * restrict, uint32_t * restrict, uint8_t * restrict);
+internal uint16_t next_PNG_Huffman_code(struct context *, const short * restrict, const unsigned char **, size_t * restrict, uint32_t * restrict,
+                                        uint8_t * restrict);
 
 // pngread.c
 internal void load_PNG_data(struct context *, unsigned, size_t);
 internal struct PNG_chunk_locations * load_PNG_chunk_locations(struct context *);
-internal void append_PNG_chunk_location(struct context *, size_t **, size_t, size_t *);
-internal void sort_PNG_animation_chunks(struct context *, struct PNG_chunk_locations *, const size_t *, size_t, size_t);
-internal uint8_t load_PNG_palette(struct context *, const struct PNG_chunk_locations *, uint8_t, uint64_t * restrict);
+internal void append_PNG_chunk_location(struct context *, size_t **, size_t, size_t * restrict);
+internal void sort_PNG_animation_chunks(struct context *, struct PNG_chunk_locations * restrict, const size_t * restrict, size_t, size_t);
+internal uint8_t load_PNG_palette(struct context *, const struct PNG_chunk_locations * restrict, uint8_t, uint64_t * restrict);
 internal void add_PNG_bit_depth_metadata(struct context *, const struct PNG_chunk_locations *, uint8_t, uint8_t);
 internal uint64_t add_PNG_background_metadata(struct context *, const struct PNG_chunk_locations *, const uint64_t *, uint8_t, uint8_t, uint8_t, unsigned);
 internal uint64_t load_PNG_transparent_color(struct context *, size_t, uint8_t, uint8_t);
@@ -318,17 +321,17 @@ internal void skip_PNM_line(struct context *, size_t * restrict);
 internal unsigned next_PNM_token_length(struct context *, size_t);
 internal void read_PNM_numbers(struct context *, size_t * restrict, uint32_t * restrict, size_t);
 internal void add_PNM_bit_depth_metadata(struct context *, const struct PNM_image_header *);
-internal void load_PNM_frame(struct context *, const struct PNM_image_header *, uint64_t * restrict);
+internal void load_PNM_frame(struct context *, const struct PNM_image_header * restrict, uint64_t * restrict);
 internal void load_PNM_bit_frame(struct context *, size_t, size_t, size_t, uint64_t * restrict);
 
 // pnmwrite.c
 internal void generate_PNM_data(struct context *);
 internal uint32_t * get_true_PNM_frame_sizes(struct context *);
-internal void generate_PPM_data(struct context *, const uint32_t *, unsigned, uint64_t * restrict);
+internal void generate_PPM_data(struct context *, const uint32_t * restrict, unsigned, uint64_t * restrict);
 internal void generate_PPM_header(struct context *, uint32_t, uint32_t, unsigned);
 internal void generate_PAM_data(struct context *, unsigned, uint64_t * restrict);
 internal void generate_PAM_header(struct context *, unsigned);
-internal size_t write_PNM_number(unsigned char *, uint32_t);
+internal size_t write_PNM_number(unsigned char * restrict, uint32_t);
 internal void generate_PNM_frame_data(struct context *, const uint64_t *, uint32_t, uint32_t, unsigned, bool);
 internal void generate_PNM_frame_data_from_palette(struct context *, const uint8_t *, const uint64_t *, uint32_t, uint32_t, unsigned, bool);
 
