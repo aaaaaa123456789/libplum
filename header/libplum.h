@@ -2,7 +2,7 @@
 
 #define PLUM_HEADER
 
-#define PLUM_VERSION 10019
+#define PLUM_VERSION 10020
 
 #include <stddef.h>
 #ifndef PLUM_NO_STDINT
