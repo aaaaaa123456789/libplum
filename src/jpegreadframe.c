@@ -199,13 +199,15 @@ void unpack_JPEG_component (double * restrict result, double * restrict source, 
     source[(p + 1) * scaled_width - 1] = source[(p + 1) * scaled_width - 2];
   }
   // if the scaling parameters form a reducible fraction, reduce it
-  if (scaleH == maxH) scaleH = maxH = 1;
-  if (scaleV == maxV) scaleV = maxV = 1;
-  if ((maxH == 4) && (scaleH == 2)) {
+  if (scaleH == maxH)
+    scaleH = maxH = 1;
+  else if (maxH == 4 && scaleH == 2) {
     maxH = 2;
     scaleH = 1;
   }
-  if ((maxV == 4) && (scaleV == 2)) {
+  if (scaleV == maxV)
+    scaleV = maxV = 1;
+  else if (maxV == 4 && scaleV == 2) {
     maxV = 2;
     scaleV = 1;
   }
