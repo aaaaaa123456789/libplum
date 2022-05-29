@@ -1,7 +1,7 @@
 #include "proto.h"
 
 struct plum_image * plum_new_image (void) {
-  union allocator_node * allocator = NULL;
+  struct allocator_node * allocator = NULL;
   struct plum_image * image = allocate(&allocator, sizeof *image);
   if (image) *image = (struct plum_image) {.allocator = allocator}; // zero-initialize all other members
   return image;
@@ -57,13 +57,13 @@ struct plum_image * plum_copy_image (const struct plum_image * image) {
 
 void plum_destroy_image (struct plum_image * image) {
   if (!image) return;
-  union allocator_node * allocator = image -> allocator;
+  struct allocator_node * allocator = image -> allocator;
   image -> allocator = NULL;
   destroy_allocator_list(allocator);
 }
 
 struct context * create_context (void) {
-  union allocator_node * allocator = NULL;
+  struct allocator_node * allocator = NULL;
   struct context * context = allocate(&allocator, sizeof *context);
   if (context) *context = (struct context) {.allocator = allocator};
   return context;

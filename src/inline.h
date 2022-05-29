@@ -3,6 +3,10 @@ static inline noreturn throw (struct context * context, unsigned error) {
   longjmp(context -> target, 1);
 }
 
+static inline struct allocator_node * get_allocator_node (void * buffer) {
+  return (struct allocator_node *) ((char *) buffer - offsetof(struct allocator_node, data));
+}
+
 static inline void * ctxmalloc (struct context * context, size_t size) {
   void * result = allocate(&(context -> allocator), size);
   if (!result) throw(context, PLUM_ERR_OUT_OF_MEMORY);

@@ -6,12 +6,10 @@
 
 #include "../header/libplum.h"
 
-union allocator_node {
-  max_align_t alignment;
-  struct {
-    union allocator_node * previous;
-    union allocator_node * next;
-  };
+struct allocator_node {
+  struct allocator_node * previous;
+  struct allocator_node * next;
+  max_align_t data[];
 };
 
 struct data_node {
@@ -33,7 +31,7 @@ struct context {
     const unsigned char * data;
     struct data_node * output; // reverse order: top of the list is the LAST node
   };
-  union allocator_node * allocator;
+  struct allocator_node * allocator;
   union {
     struct plum_image * image;
     const struct plum_image * source;

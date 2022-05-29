@@ -14,12 +14,12 @@
 #include "multibyte.h"
 
 // allocator.c
-internal void * attach_allocator_node(union allocator_node **, union allocator_node *);
-internal void * allocate(union allocator_node **, size_t);
-internal void * clear_allocate(union allocator_node **, size_t);
-internal void deallocate(union allocator_node **, void *);
-internal void * reallocate(union allocator_node **, void *, size_t);
-internal void destroy_allocator_list(union allocator_node *);
+internal void * attach_allocator_node(struct allocator_node **, struct allocator_node *);
+internal void * allocate(struct allocator_node **, size_t);
+internal void * clear_allocate(struct allocator_node **, size_t);
+internal void deallocate(struct allocator_node **, void *);
+internal void * reallocate(struct allocator_node **, void *, size_t);
+internal void destroy_allocator_list(struct allocator_node *);
 
 // bmpread.c
 internal void load_BMP_data(struct context *, unsigned, size_t);
