@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdalign.h>
 #include <setjmp.h>
 
 #include "../header/libplum.h"
@@ -9,7 +10,7 @@
 struct allocator_node {
   struct allocator_node * previous;
   struct allocator_node * next;
-  max_align_t data[];
+  alignas(max_align_t) unsigned char data[];
 };
 
 struct data_node {

@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdalign.h>
 #include <setjmp.h>
 
 #include "defs.h"

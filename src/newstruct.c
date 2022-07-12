@@ -64,7 +64,19 @@ void plum_destroy_image (struct plum_image * image) {
 
 struct context * create_context (void) {
   struct allocator_node * allocator = NULL;
-  struct context * context = allocate(&allocator, sizeof *context);
+  struct context * context = NULL;
+  if (alignof(jmp_buf) > alignof(max_align_t)) {
+    // this is the odd case where jmp_buf requires a stricter alignment than malloc is guaranteed to enforce
+    size_t skip = (alignof(jmp_buf) - 1) / sizeof *allocator + 1;
+    allocator = aligned_alloc(alignof(jmp_buf), skip * sizeof *allocator + sizeof *context);
+    if (allocator) {
+      allocator -> next = allocator -> previous = NULL;
+      // due to the special offset, the context itself cannot be ctxrealloc'd or ctxfree'd, but that never happens
+      context = (struct context *) (allocator -> data + (skip - 1) * sizeof *allocator);
+    }
+  } else
+    // normal case: malloc already returns a suitably-aligned pointer
+    context = allocate(&allocator, sizeof *context);
   if (context) *context = (struct context) {.allocator = allocator};
   return context;
 }

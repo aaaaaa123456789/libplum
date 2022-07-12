@@ -19,10 +19,6 @@
 #endif
 #define noreturn _Noreturn void
 
-#ifndef alignas
-  #define alignas _Alignas
-#endif
-
 #ifdef PLUM_DEBUG
   #define internal
 #else
