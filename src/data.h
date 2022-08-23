@@ -4,11 +4,11 @@
 #include "defs.h"
 
 // JPEG block coordinates in zig-zag order (mapping cell indexes to (x, y) coordinates)
-static const alignas(max_align_t) uint8_t JPEG_zigzag_rows[] = {
+static const alignto(64) uint8_t JPEG_zigzag_rows[] = {
   0, 0, 1, 2, 1, 0, 0, 1, 2, 3, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3,
   4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 4, 5, 6, 7, 7, 6, 5, 6, 7, 7
 };
-static const alignas(max_align_t) uint8_t JPEG_zigzag_columns[] = {
+static const alignto(64) uint8_t JPEG_zigzag_columns[] = {
   0, 1, 0, 0, 1, 2, 3, 2, 1, 0, 0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0, 0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4,
   3, 2, 1, 0, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 5, 6, 7, 7, 6, 7
 };

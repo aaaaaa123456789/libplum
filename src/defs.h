@@ -3,6 +3,7 @@
 #define PLUM_DEFS
 
 #include <stdint.h>
+#include <stdalign.h>
 
 #if defined(PLUM_NO_STDINT) || defined(PLUM_NO_ANON_MEMBERS) || defined(PLUM_NO_VLA)
   #error libplum feature-test macros must not be defined when compiling the library.
@@ -24,6 +25,8 @@
 #else
   #define internal static
 #endif
+
+#define alignto(amount) alignas(((amount) < alignof(max_align_t)) ? (amount) : alignof(max_align_t))
 
 #define bytematch(address, ...) (!memcmp((address), (unsigned char []) {__VA_ARGS__}, sizeof (unsigned char []) {__VA_ARGS__}))
 #define bytewrite(address, ...) (memcpy(address, (unsigned char []) {__VA_ARGS__}, sizeof (unsigned char []) {__VA_ARGS__}))
