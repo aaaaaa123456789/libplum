@@ -37,7 +37,6 @@ int main (int argc, char ** argv) {
   output.data32 = calloc((size_t) output.width * output.height * output.frames, sizeof *output.data32);
   uint32_t PIXARRAY(outpixels, &output) = (void *) output.data32;
   // generate the output image's metadata: loop count, frame durations and disposals, and background color
-  uint32_t frame, row, col, zero = 0; // define a zero variable so that &zero points to a uint32_t 0
   uint64_t * frame_durations = malloc(output.frames * sizeof *frame_durations);
   uint8_t * frame_disposals = malloc(output.frames * sizeof *frame_disposals);
   if (!(output.data32 && frame_durations && frame_disposals)) {
@@ -45,15 +44,15 @@ int main (int argc, char ** argv) {
     fputs("error: out of memory\n", stderr);
     return 3;
   }
-  for (frame = 0; frame < output.frames; frame ++) {
+  for (uint32_t frame = 0; frame < output.frames; frame ++) {
     frame_durations[frame] = 750000000; // 3/4 of a second per frame
     frame_disposals[frame] = PLUM_DISPOSAL_BACKGROUND; // restore the background to avoid blending frames
   }
   struct plum_metadata metadata[] = {
     [0] = {
       .type = PLUM_METADATA_BACKGROUND,
-      .size = sizeof zero,
-      .data = &zero, // 0 = transparent black
+      .size = sizeof(uint32_t),
+      .data = &(uint32_t) {COLOR32(0, 0, 0, 0)}, // transparent black
       .next = metadata + 1 // manually link each node to the next, since the library expects a linked list
     },
     [1] = {
@@ -70,18 +69,18 @@ int main (int argc, char ** argv) {
     },
     [3] = {
       .type = PLUM_METADATA_LOOP_COUNT,
-      .size = sizeof zero,
-      .data = &zero, // 0 = loop forever
+      .size = sizeof(uint32_t),
+      .data = &(uint32_t) {0}, // 0 = loop forever
       .next = NULL
     }
   };
   output.metadata = metadata;
   // copy the loaded frame and load the next frame
-  for (frame = 0; frame < output.frames; frame ++) {
+  for (uint32_t frame = 0; frame < output.frames; frame ++) {
     uint32_t PIXARRAY(inpixels, input) = input -> data;
     uint32_t width = (input -> width < output.width) ? input -> width : output.width;
     uint32_t height = (input -> height < output.height) ? input -> height : output.height;
-    for (row = 0; row < height; row ++) for (col = 0; col < width; col ++)
+    for (uint32_t row = 0; row < height; row ++) for (uint32_t col = 0; col < width; col ++)
       outpixels[frame][row][col] = inpixels[0][row][col];
     plum_destroy_image(input);
     if (argv[frame + 3]) {

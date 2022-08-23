@@ -254,9 +254,8 @@ int main (int argc, char ** argv) {
     fprintf(stderr, "load error: %s\n", plum_get_error_text(error));
     return 1;
   }
-  size_t index;
   size_t size = (size_t) image -> width * image -> height * image -> frames;
-  for (index = 0; index < size; index ++)
+  for (size_t index = 0; index < size; index ++)
     image -> data64[index] = COLOR64(
       (RED64(image -> data64[index]) * COEF + 50) / 100,
       (GREEN64(image -> data64[index]) * COEF + 50) / 100,
@@ -336,12 +335,11 @@ For example, the following snippet will invert all the colors along an image's m
 ``` c
 void invert_diagonal (struct plum_image * image) {
   assert((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_32);
-  uint32_t p, frame, limit = (image -> width < image -> height) ?
-                               image -> width : image -> height;
+  uint32_t limit = (image -> width < image -> height) ?
+                     image -> width : image -> height;
   uint32_t mask = PLUM_RED_MASK_32 | PLUM_GREEN_MASK_32 | PLUM_BLUE_MASK_32;
-  for (frame = 0; frame < image -> frames; frame ++)
-    for (p = 0; p < limit; p ++)
-      PIXEL32(image, p, p, frame) ^= mask;
+  for (uint32_t frame = 0; frame < image -> frames; frame ++)
+    for (uint32_t p = 0; p < limit; p ++) PIXEL32(image, p, p, frame) ^= mask;
 }
 ```
 
@@ -378,12 +376,12 @@ uint32_t get_color_at_coordinates (const struct plum_image * image,
 
 void invert_diagonal (struct plum_image * image) {
   assert((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_32);
-  uint32_t p, frame, limit = (image -> width < image -> height) ?
-                               image -> width : image -> height;
+  uint32_t limit = (image -> width < image -> height) ?
+                     image -> width : image -> height;
   uint32_t mask = PLUM_RED_MASK_32 | PLUM_GREEN_MASK_32 | PLUM_BLUE_MASK_32;
   uint32_t PIXARRAY(data, image) = image -> data;
-  for (frame = 0; frame < image -> frames; frame ++)
-    for (p = 0; p < limit; p ++) data[frame][p][p] ^= mask;
+  for (uint32_t frame = 0; frame < image -> frames; frame ++)
+    for (uint32_t p = 0; p < limit; p ++) data[frame][p][p] ^= mask;
 }
 ```
 
@@ -405,11 +403,12 @@ uint32_t get_color_at_coordinates (const struct plum_image * image,
 
 void invert_diagonal (struct plum_image * image) {
   assert((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_32);
-  uint32_t p, frame, limit = (image -> width < image -> height) ?
-                               image -> width : image -> height;
+  uint32_t limit = (image -> width < image -> height) ?
+                     image -> width : image -> height;
   uint32_t mask = PLUM_RED_MASK_32 | PLUM_GREEN_MASK_32 | PLUM_BLUE_MASK_32;
-  for (frame = 0; frame < image -> frames; frame ++)
-    for (p = 0; p < limit; p ++) image -> pixel32(p, p, frame) ^= mask;
+  for (uint32_t frame = 0; frame < image -> frames; frame ++)
+    for (uint32_t p = 0; p < limit; p ++)
+      image -> pixel32(p, p, frame) ^= mask;
 }
 ```
 
@@ -451,7 +450,8 @@ The most important flags are the ones that control whether palettes will be load
 
 - [`PLUM_PALETTE_NONE`][loading-flags] (default): never load a palette.
   This is the default because most programs don't expect to deal with palettes.
-  If the image has a palette, it will be removed on load.
+  If the image has a palette, it will be removed on load, and the image will be converted to direct-color mode (i.e.,
+  the usual mode).
 - [`PLUM_PALETTE_LOAD`][loading-flags]: load a palette if the image has one.
   This mode will faithfully reproduce the image's contents.
 - [`PLUM_PALETTE_GENERATE`][loading-flags]: load a palette if the image has one, or try to generate one otherwise.
@@ -512,19 +512,15 @@ int main (int argc, char ** argv) {
   }
   size_t pixels = (size_t) image -> width * image -> height * image -> frames;
   size_t counts[256] = {0};
-  size_t current, max, maxcount;
-  for (current = 0; current < pixels; current ++)
+  for (size_t current = 0; current < pixels; current ++)
     counts[image -> data8[current]] ++;
-  max = 0;
-  maxcount = *counts; // assume the maximum is the first
-  for (current = 1; current <= image -> max_palette_index; current ++)
-    if (counts[current] >= maxcount) {
-      if (counts[current] == maxcount)
-        max = TIE;
-      else
-        max = current;
+  size_t max = 0, maxcount = *counts; // assume the maximum is the first
+  for (size_t current = 1; current <= image -> max_palette_index; current ++)
+    if (counts[current] > maxcount) {
+      max = current;
       maxcount = counts[current];
-    }
+    } else if (counts[current] == maxcount)
+      max = TIE;
   if (max == TIE)
     printf("Most common color: tied (%zu pixels)\n", maxcount);
   else
@@ -574,7 +570,7 @@ Metadata nodes defined by the library are:
   instead.)
 - [`PLUM_METADATA_BACKGROUND`][metadata-constants]: contains a single color value indicating the image's background
   color, i.e., the color against which it should be presented.
-  (Note that this node will always contain a color, even for [indexed-color mode][indexed] images.)
+  (Note that this node, if present, will always contain a color, even for [indexed-color mode][indexed] images.)
 - [`PLUM_METADATA_LOOP_COUNT`][metadata-constants]: indicates how many times an animation will loop; defaults to 1 if
   not present.
 - [`PLUM_METADATA_FRAME_DURATION`][metadata-constants]: indicates the duration of each frame in an animation, in
@@ -615,7 +611,7 @@ size_t store_yellow_image (struct plum_image * image, void * buffer,
   // create a new metadata node, to be inserted at the head of the list
   uint32_t yellow = 0xffff; // color value for yellow
   struct plum_metadata new_metadata = {
-    .next = image -> metadata,
+    .next = image -> metadata, // link to existing metadata nodes
     .type = PLUM_METADATA_BACKGROUND,
     .size = sizeof yellow,
     .data = &yellow
@@ -627,7 +623,7 @@ size_t store_yellow_image (struct plum_image * image, void * buffer,
   image -> metadata = &new_metadata;
   size_t result = plum_store_image(image, buffer, size_mode, error);
   // restore the old metadata, and restore the old background if needed
-  image -> metadata = new_metadata.next;
+  image -> metadata = new_metadata.next; // restore the old metadata list
   if (old_metadata) old_metadata -> type = PLUM_METADATA_BACKGROUND;
   return result;
 }
@@ -641,8 +637,8 @@ load and generate such files.
 
 Animations are represented as multi-frame images, using [metadata nodes][metadata] to contain the animation
 parameters.
-If a file format supports animations, whenever an image contains animation metadata, it will be used to generate the
-corresponding animation when generating the image file; otherwise, defaults will be used.
+If a file format supports animations, whenever an image contains animation metadata, that metadata will be used to
+generate the corresponding animation when generating the image file; otherwise, defaults will be used.
 
 The [metadata nodes][metadata] containing animation parameters are:
 
@@ -820,12 +816,12 @@ int main (int argc, char ** argv) {
     .color_format = PLUM_COLOR_32,
     .data32 = (uint32_t *) pixeldata
   };
-  uint32_t row, col;
-  for (row = 0; row < 256; row ++) for (col = 0; col < 256; col ++) {
-    unsigned red = (row < col) ? 255 + row - col : 255;
-    unsigned blue = ((row + col) < 255) ? row + col : 255;
-    pixeldata[row][col] = COLOR32(red, row, blue, 0);
-  }
+  for (uint32_t row = 0; row < 256; row ++)
+    for (uint32_t col = 0; col < 256; col ++) {
+      unsigned red = (row < col) ? 255 + row - col : 255;
+      unsigned blue = ((row + col) < 255) ? row + col : 255;
+      pixeldata[row][col] = COLOR32(red, row, blue, 0);
+    }
   unsigned error;
   plum_store_image(&image, argv[1], PLUM_MODE_FILENAME, &error);
   if (error) fprintf(stderr, "error: %s\n", plum_get_error_text(error));
@@ -882,7 +878,7 @@ Doing so requires redimensioning the image, and thus it requires allocating a ne
 
 ``` c
 void scale_up (struct plum_image * image, unsigned factor) {
-  if (factor < 2) return;
+  if (factor < 2) return; // 1 needs no scaling; 0 is erroneous
   assert((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_32);
   assert(!image -> palette);
   uint32_t PIXARRAY(in, image) = image -> data;
@@ -893,10 +889,9 @@ void scale_up (struct plum_image * image, unsigned factor) {
   uint32_t PIXARRAY(out, image) =
     plum_malloc(image, plum_pixel_buffer_size(image));
   if (!out) abort();
-  uint32_t frame, row, col;
-  for (frame = 0; frame < image -> frames; frame ++)
-    for (row = 0; row < image -> height; row ++)
-      for (col = 0; col < image -> width; col ++)
+  for (uint32_t frame = 0; frame < image -> frames; frame ++)
+    for (uint32_t row = 0; row < image -> height; row ++)
+      for (uint32_t col = 0; col < image -> width; col ++)
         out[frame][row][col] = in[frame][row / factor][col / factor];
   // assume that the previous image data was allocated with plum_malloc
   // (true if it comes directly from plum_load_image, for example)
@@ -928,6 +923,7 @@ allocating it via [`plum_allocate_metadata`][allocate-metadata] and inserting it
 It is often desirable to allocate a new image on the heap altogether, like so:
 
 ``` c
+// not recommended (see below)
 struct plum_image * image = calloc(1, sizeof *image);
 ```
 
@@ -1018,7 +1014,7 @@ As a quick summary:
   (using `free`) by the user after using it.
 - [`PLUM_MODE_CALLBACK`][mode-constants] reads or writes data through a callback (from a [`plum_callback`][callback]
   struct), which receives a buffer (to write from or read into) and its size and returns the number of bytes written
-  (or 0 for EOF or a negative value for an error) repeatedly until it finishes or fails.
+  (or 0 for EOF, or a negative value for an error) repeatedly until it finishes or fails.
 
 The following sample program converts image data to the PNG format, like the program shown near the beginning of the
 tutorial in [an earlier section](#2-storing-an-image), but reading from standard input and writing to standard output
@@ -1073,7 +1069,7 @@ write out a hexadecimal dump of the image to standard output:
 #include "libplum.h"
 
 void print_safe_char (unsigned char c) {
-  putchar(((c >= 0x20) && (c <= 0x7e)) ? c : '.');
+  putchar((c >= 0x20 && c <= 0x7e) ? c : '.');
 }
 
 int main (void) {
@@ -1086,12 +1082,12 @@ int main (void) {
     .color_format = PLUM_COLOR_32,
     .data32 = (uint32_t *) pixeldata
   };
-  uint32_t row, col;
-  for (row = 0; row < 256; row ++) for (col = 0; col < 256; col ++) {
-    unsigned red = (row < col) ? 255 + row - col : 255;
-    unsigned blue = ((row + col) < 255) ? row + col : 255;
-    pixeldata[row][col] = COLOR32(red, row, blue, 0);
-  }
+  for (uint32_t row = 0; row < 256; row ++)
+    for (uint32_t col = 0; col < 256; col ++) {
+      unsigned red = (row < col) ? 255 + row - col : 255;
+      unsigned blue = ((row + col) < 255) ? row + col : 255;
+      pixeldata[row][col] = COLOR32(red, row, blue, 0);
+    }
   unsigned error;
   struct plum_buffer buffer;
   plum_store_image(&image, &buffer, PLUM_MODE_BUFFER, &error);
@@ -1101,20 +1097,27 @@ int main (void) {
   }
   const unsigned char * ptr = buffer.data;
   // print rows of 16 bytes each
-  for (row = 0; row < (buffer.size >> 4); row ++) {
-    printf("%04x: ", (unsigned) row * 16);
-    for (col = 0; col < 16; col ++) printf("%02x ", ptr[row * 16 + col]);
-    for (col = 0; col < 16; col ++) print_safe_char(ptr[row * 16 + col]);
+  unsigned rows = buffer.size >> 4;
+  for (unsigned row = 0; row < rows; row ++) {
+    printf("%04x:  ", (unsigned) row * 16);
+    for (uint_fast8_t col = 0; col < 16; col ++)
+      printf("%02x ", ptr[row * 16 + col]);
+    putchar(' ');
+    for (uint_fast8_t col = 0; col < 16; col ++)
+      print_safe_char(ptr[row * 16 + col]);
     putchar('\n');
   }
   // print a last row with the remaining bytes if needed
-  if (buffer.size & 15) {
-    printf("%04x: ", (unsigned) row * 16);
-    for (col = 0; col < (buffer.size & 15); col ++)
-      printf("%02x ", ptr[row * 16 + col]);
-    for (; col < 16; col ++) fputs("   ", stdout); // pad the row length
-    for (col = 0; col < (buffer.size & 15); col ++)
-      print_safe_char(ptr[row * 16 + col]);
+  uint_fast8_t remaining = buffer.size & 15;
+  if (remaining) {
+    printf("%04x:  ", rows * 16);
+    for (uint_fast8_t col = 0; col < remaining; col ++)
+      printf("%02x ", ptr[rows * 16 + col]);
+    for (uint_fast8_t col = remaining; col < 16; col ++)
+      fputs("   ", stdout); // padding to complete the row of hex data
+    putchar(' ');
+    for (uint_fast8_t col = 0; col < remaining; col ++)
+      print_safe_char(ptr[rows * 16 + col]);
     putchar('\n');
   }
   free(buffer.data);
