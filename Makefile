@@ -8,7 +8,8 @@ DEBUGFLAGS = -Wall -Wextra -pedantic -Wnull-dereference -Wshadow -Wundef -Wunuse
              -Wno-parentheses -Wno-dangling-else
 
 ifneq (,$(findstring gcc,$(CC)))
-	DEBUGFLAGS += -Wduplicated-branches -Wduplicated-cond -Wlogical-op -Wshift-overflow=2 -fanalyzer -fanalyzer-verbosity=0
+	DEBUGFLAGS += -Wduplicated-branches -Wduplicated-cond -Wlogical-op -Wshift-overflow=2 -fanalyzer -fanalyzer-verbosity=0 \
+	              -Wno-analyzer-use-of-uninitialized-value
 else
 ifneq (,$(findstring clang, $(CC)))
 	DEBUGFLAGS += -Wno-keyword-macro -fsanitize=undefined
