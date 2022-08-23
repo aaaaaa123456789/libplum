@@ -82,13 +82,13 @@ in the metadata).
   For statically-initialized images, this member must be initialized to a null pointer.
   Images created through one of the [constructor functions][constructors] will initialize this member accordingly.
 - `metadata`: linked list of [`struct plum_metadata`](#plum_metadata) nodes containing image metadata.
-  Can be `NULL` if the image contains no metadata.
+  Can be a null pointer if the image contains no metadata.
   See the [Metadata][metadata] page for more information.
 - `palette`: palette data for the image.
   If the image uses [indexed-color mode][indexed], this member will point to an array of colors that define the
   image's palette; see the [Color formats][colors] page for more information on how the colors are stored.
-  If the image doesn't use a palette, this member will be `NULL`; that is what determines whether an image uses
-  [indexed-color mode][indexed] or not.
+  If the image doesn't use a palette, this member will be a null pointer; that is what determines whether an image
+  uses [indexed-color mode][indexed] or not.
 - `data`: pixel data for the image; it is a frame-major, then row-major array of pixel values.
   (For example, for an image with `frames = 3`, `height = 20`, `width = 10`, index 1 of this array will access the
   pixel at X = 1, Y = 0 in the first frame; index 10 will access the pixel at X = 0, Y = 1; and index 200 will access
@@ -96,7 +96,7 @@ in the metadata).
   For more information about how this data is stored, see [the section on accessing pixel data][accessing].
 - `userdata`: free pointer member intended for the user to store any data they want to associate to the image.
   This member is not used in any way by the library.
-  The [`plum_new_image`][new] and [`plum_load_image`][load] functions initialize this member to `NULL`.
+  The [`plum_new_image`][new] and [`plum_load_image`][load] functions initialize this member to a null pointer.
   The [`plum_copy_image`][copy] function will copy the value from the image it's copying; note that this will
   necessarily be a shallow copy (i.e., only the pointer is copied), since the library doesn't know the structure of
   the user data.

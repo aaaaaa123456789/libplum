@@ -42,7 +42,8 @@ calling [`plum_destroy_image`][destroy], which will also release all memory asso
 
 On the other hand, the individual buffers allocated when constructing an image _can_ be freed with [`plum_free`][free]
 (which might be useful if they are being replaced with other data).
-These buffers are the `data` member, the `palette` member (when not `NULL`), and each individual metadata node.
+These buffers are the `data` member, the `palette` member (when not a null pointer), and each individual metadata
+node.
 
 * * *
 

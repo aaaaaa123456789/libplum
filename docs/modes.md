@@ -82,7 +82,7 @@ When writing out data using this mode, [`plum_store_image`][store] will allocate
 generated data with `malloc`, and set the struct's `data` member to a pointer to this buffer and its `size` member to
 its size.
 This buffer will be owned by the caller and must be released with `free`.
-(If `free` isn't available, a special mode of [`plum_free`][free] with a `NULL` first argument may be used.)
+(If `free` isn't available, a special mode of [`plum_free`][free] with a null first argument may be used.)
 
 If [`plum_store_image`][store] fails to allocate the buffer, it will fail with [`PLUM_ERR_OUT_OF_MEMORY`][errors].
 If the function succeeds, it will return the number of bytes written, as usual; this will be the same as the value
@@ -90,7 +90,7 @@ written to the `size` member of the [`plum_buffer`][buffer] struct.
 
 **Warning:** [`plum_store_image`][store] will **not** write anything to the [`plum_buffer`][buffer] struct at
 `*buffer` if it fails (i.e., if it returns 0).
-The members of that struct will **not** be set to zero/`NULL`: they won't be modified at all.
+The members of that struct will **not** be set to zero/null: they won't be modified at all.
 If zeroing out the members on error is desired, initialize them to zero before calling [`plum_store_image`][store].
 
 ## Accessing files

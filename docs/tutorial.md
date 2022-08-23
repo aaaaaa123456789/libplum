@@ -83,8 +83,8 @@ A few things can be noted in this example:
   as RGBA 8.8.8.8 (with the red channel in the least significant bits), and with the alpha channel inverted (i.e., 0
   means opaque) for convenience when dealing with images without transparency.
 - Some functions can return an error constant describing why they failed.
-  The [`plum_load_image`][load] function does so via a return argument (which may be `NULL` if the caller doesn't care
-  about the reason for failure).
+  The [`plum_load_image`][load] function does so via a return argument (which may be a null pointer if the caller
+  doesn't care about the reason for failure).
   Error constants are always positive, and no error (i.e., [`PLUM_OK`][errors]) is zero, so it is possible to test
   whether an error occurred by testing this value.
 - At no point does the user tell the library the type of file being loaded.
@@ -437,8 +437,9 @@ The library imposes no limitation on the number of colors a palette may have oth
 not required to be a power of two.)
 
 Whether an image uses [indexed-color mode][indexed] is determined entirely by its `palette` member: if this member is
-not `NULL`, then the image has a palette and uses [indexed-color mode][indexed]; if it is `NULL`, the image has no
-palette and it uses direct-color mode (i.e., pixel values are colors, as shown in the examples in previous sections).
+not a null pointer, then the image has a palette and uses [indexed-color mode][indexed]; if it is a null pointer, the
+image has no palette and it uses direct-color mode (i.e., pixel values are colors, as shown in the examples in
+previous sections).
 Note that the image's `max_palette_index` member is meaningless if the image doesn't use a palette.
 
 When loading an image, whether that image will use [indexed-color mode][indexed] or not is determined by a number of
@@ -546,8 +547,8 @@ because it facilitates insertion and removal.)
 
 Each metadata node has a `type`, which describes what kind of metadata that node represents, and a `data` and a `size`
 containing the data; the layout for each metadata node is described in [the corresponding page][metadata].
-(Since metadata is represented by a linked list, the `next` member points to the following node or to `NULL` for the
-last node in the list, as usual.)
+(Since metadata is represented by a linked list, the `next` member points to the following node; for the last node in
+the list, it is a null pointer, as usual.)
 
 It is possible for users to create their own metadata types, too.
 Nodes with a negative value of `type` are reserved for the user.
@@ -903,10 +904,11 @@ void scale_up (struct plum_image * image, unsigned factor) {
 This method of allocation can be used for all images, not only images created by the library.
 For instance, it is accessible for images statically initialized by the user as well, like the example shown in the
 previous section.
-For those images, the `allocator` member must be initialized to `NULL` (which will happen automatically if that member
-is left out in an initializer, as in the example in that section); the library will manage it from that point on.
+For those images, the `allocator` member must be initialized to a null pointer (which will happen automatically if
+that member is left out in an initializer, as in the example in that section); the library will manage it from that
+point on.
 Calling [`plum_destroy_image`][destroy] on such an image works as expected: all memory associated with the image is
-released (and its `allocator` member is reinitialized to `NULL`).
+released (and its `allocator` member is reinitialized to a null pointer).
 However, the struct itself won't be released, as it hasn't been allocated by the library: only memory associated with
 the image (by explicit library calls) is released by [`plum_destroy_image`][destroy].
 Therefore, it is always safe to call this function when the user is finished working with an image, regardless of how
@@ -950,8 +952,8 @@ This requires allocating multiple buffers, determining their sizes, copying thei
 The [`plum_copy_image`][copy] function will handle this, creating a full (deep) copy of an image and copying all its
 data, palette (if any) and metadata (in the same order as the original).
 (Note that the [`plum_image`][image] struct contains a member, `userdata`, whose only purpose is to hold a pointer to
-any data the user wants; it is initialized to `NULL` by [`plum_new_image`][new] and [`plum_load_image`][load] and
-ignored by all other functions in the library.
+any data the user wants; it is initialized to a null pointer by [`plum_new_image`][new] and [`plum_load_image`][load]
+and ignored by all other functions in the library.
 This member will simply be copied directly by [`plum_copy_image`][copy], since the library has no way of knowing the
 internal structure or size of any data placed there by the user.)
 

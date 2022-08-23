@@ -148,7 +148,7 @@ See the [Color formats][colors] page for more information.
 [indexed-color mode][indexed] or not.
 Some modes will load the image in direct-color mode (i.e., without a palette) or indexed-color mode (i.e., with a
 palette) depending on the image data; in those cases, the image's `palette` member can be used to determine what mode
-the image is using (`NULL` for direct-color mode or non-`NULL` for indexed-color mode).
+the image is using (null pointer for direct-color mode or non-null for indexed-color mode).
 
 - `PLUM_PALETTE_NONE` (zero): don't use indexed-color mode at all.
   If the image has a palette, it will be removed on load.

@@ -82,7 +82,7 @@ This image struct is allocated as if by [`plum_malloc`](#plum_malloc), and will 
 
 **Return value:**
 
-Pointer to the new image, or `NULL` on failure due to memory exhaustion.
+Pointer to the new image, or a null pointer on failure due to memory exhaustion.
 
 ### `plum_copy_image`
 
@@ -98,7 +98,7 @@ nodes will be inserted in the same order as the original.
 (However, the `userdata` member of the [`plum_image`][image] struct will be copied directly, since the library has no
 way to know the layout of the user data stored in this member, if any.)
 
-The function can fail if `image` is `NULL`, its `data` member is `NULL`, or there's not enough memory to allocate all
+The function can fail if `image` or its `data` member are null pointers, or there's not enough memory to allocate all
 the necessary buffers.
 
 The image created by this function must be deallocated with the [`plum_destroy_image`](#plum_destroy_image) function;
@@ -110,7 +110,7 @@ see the [Memory management][memory] page for more details.
 
 **Return value:**
 
-Pointer to the copied image, or `NULL` on failure.
+Pointer to the copied image, or a null pointer on failure.
 
 ### `plum_load_image`
 
@@ -132,7 +132,7 @@ user-defined callback; see the [Loading and storing modes][loading-modes] page f
 The loaded image data will contain all of the image's frames, as well as all relevant nodes of [metadata][metadata].
 Depending on the value of the `flags` argument, the image may use [indexed-color mode][indexed] or not; the `palette`
 member can be used to determine which mode it uses.
-(The `palette` member will be `NULL` if the image doesn't use a palette.)
+(The `palette` member will be a null pointer if the image doesn't use a palette.)
 The image's [color format][colors] (and its `color_format` member) will also be determined by the `flags` argument.
 
 The image struct and the data buffers it will contain will be allocated as if by [`plum_malloc`](#plum_malloc), and
@@ -198,23 +198,23 @@ See the [Memory management][memory] page for more details.
       (by removing duplicate and unused colors).
 - `error`: pointer to an `unsigned` value that will be set to [an error constant][errors] if the function fails.
   If the function succeeds, that value will be set to zero.
-  This argument can be `NULL` if the caller isn't interested in the reason why loading failed, as the failure itself
-  can be detected through the return value.
+  This argument can be a null pointer if the caller isn't interested in the reason why loading failed, as the failure
+  itself can be detected through the return value.
 
 **Return value:**
 
-Pointer to the (newly-created) loaded [`struct plum_image`][image], or `NULL` on failure.
-If the function fails and `error` is not `NULL`, `*error` will indicate the reason.
+Pointer to the (newly-created) loaded [`struct plum_image`][image], or a null pointer on failure.
+If the function fails and `error` is not a null pointer, `*error` will indicate the reason.
 
 **Error values:**
 
-If the `error` argument isn't `NULL`, the value it points to will be set to [an error constant][errors].
+If the `error` argument isn't a null pointer, the value it points to will be set to [an error constant][errors].
 The error constants signal the following reasons for failure:
 
 - `PLUM_OK` (zero): success.
-  This value will be used only if the function succeeds, i.e., it returns a non-`NULL` value.
-- `PLUM_ERR_INVALID_ARGUMENTS`: `buffer` is `NULL`, or `size_mode` is [`PLUM_MODE_BUFFER`][mode-constants] and
-  `buffer` points to a [`struct plum_buffer`][buffer] whose `data` member is `NULL`.
+  This value will be used only if the function succeeds, i.e., it returns a non-null pointer.
+- `PLUM_ERR_INVALID_ARGUMENTS`: `buffer` is a null pointer, or `size_mode` is [`PLUM_MODE_BUFFER`][mode-constants] and
+  `buffer` points to a [`struct plum_buffer`][buffer] whose `data` member is a null pointer.
 - `PLUM_ERR_INVALID_FILE_FORMAT`: the image's file format wasn't recognized, or the image was damaged or couldn't be
   loaded for some reason.
   This indicates an error in the image data, such as an unexpected value.
@@ -269,13 +269,13 @@ The `buffer`, `size_mode`, `flags` and `error` arguments have the same meanings 
 
 **Return value:**
 
-Pointer to the (newly-created) loaded [`struct plum_image`][image], or `NULL` on failure.
-If the function fails and `error` is not `NULL`, `*error` will indicate the reason.
+Pointer to the (newly-created) loaded [`struct plum_image`][image], or a null pointer on failure.
+If the function fails and `error` is not a null pointer, `*error` will indicate the reason.
 (This is the same as for [`plum_load_image`](#plum_load_image).)
 
 **Error values:**
 
-If the `error` argument isn't `NULL`, the value it points to will be set to [an error constant][errors].
+If the `error` argument isn't a null pointer, the value it points to will be set to [an error constant][errors].
 
 This function can fail for any of the reasons specified in the [`plum_load_image`](#plum_load_image) function.
 In addition, the following error may occur:
@@ -337,8 +337,8 @@ for that failure.
   size and not a special constant, and is therefore equal to `SIZE_MAX` minus the number of mode constants.)
 - `error`: pointer to an `unsigned` value that will be set to [an error constant][errors] if the function fails.
   If the function succeeds, that value will be set to zero.
-  This argument can be `NULL` if the caller isn't interested in the reason why writing out the image failed, as the
-  failure itself can be detected through the return value.
+  This argument can be a null pointer if the caller isn't interested in the reason why writing out the image failed,
+  as the failure itself can be detected through the return value.
 
 **Return value:**
 
@@ -346,19 +346,19 @@ If the function succeeds, it will return the number of bytes written.
 (If `size_mode` equals [`PLUM_MODE_BUFFER`][mode-constants], then the return value will be equal to the size of the
 allocated buffer.)
 If the function fails, it will return zero (which is never a valid return value on success).
-In this case, if `error` is not `NULL`, `*error` will indicate the reason.
+In this case, if `error` is not a null pointer, `*error` will indicate the reason.
 
 **Error values:**
 
-If the `error` argument isn't `NULL`, the value it points to will be set to [an error constant][errors].
+If the `error` argument isn't a null pointer, the value it points to will be set to [an error constant][errors].
 
 This function can fail for any of the reasons specified in the [`plum_validate_image`](#plum_validate_image) function,
 setting the error code to that function's return value.
 In addition to those results, the following error codes may be set:
 
 - `PLUM_OK` (zero): success.
-  This value will be used only if the function succeeds, i.e., it returns a non-`NULL` value.
-- `PLUM_ERR_INVALID_ARGUMENTS`: `image` or `buffer` are `NULL`, or `size_mode` is zero.
+  This value will be used only if the function succeeds, i.e., it returns a non-null pointer.
+- `PLUM_ERR_INVALID_ARGUMENTS`: `image` or `buffer` are null pointers, or `size_mode` is zero.
 - `PLUM_ERR_INVALID_FILE_FORMAT`: the image's `type` member is [`PLUM_IMAGE_NONE`][types].
 - `PLUM_ERR_INVALID_COLOR_INDEX`: the image uses [indexed-color mode][indexed], but some of the pixels in the image
   have an invalid color index (i.e., a value greater than the image's `max_palette_index`).
@@ -404,7 +404,7 @@ However, in that case, if any of the buffers referenced by the image's members h
 
 If the image was not created by one of the [constructor functions](#basic-functionality) and no memory is associated
 to it, this function will do nothing.
-It will also do nothing if the `image` argument is `NULL`.
+It will also do nothing if the `image` argument is a null pointer.
 Therefore, it is always safe (and recommended) to call this function when the user will stop using an image.
 
 **Arguments:**
@@ -453,7 +453,7 @@ These are the possible error values that the function can return:
 
 - `PLUM_OK` (zero): success.
   This value will be returned only if all checks pass, i.e., if the image is valid.
-- `PLUM_ERR_INVALID_ARGUMENTS`: `image` is `NULL`.
+- `PLUM_ERR_INVALID_ARGUMENTS`: `image` is a null pointer.
 - `PLUM_ERR_INVALID_FILE_FORMAT`: the image's `type` member is set to an invalid value.
   (Note that the [`PLUM_IMAGE_NONE`][types] type will _not_ be considered invalid by this function.
   However, [`plum_image_store`](#plum_image_store) will still refuse to write out an image with that type.)
@@ -538,7 +538,8 @@ This function checks those values and finds the first value that is out of range
 
 Images that use full 256-color palettes, as well as images that don't use [indexed-color mode][indexed] at all, don't
 need any validation, since all pixel values are valid for those images.
-This function handles those images quickly and returns `NULL` for them, ensuring that it can be called for any image.
+This function handles those images quickly and returns a null pointer for them, ensuring that it can be called for any
+image.
 
 **Arguments:**
 
@@ -546,7 +547,7 @@ This function handles those images quickly and returns `NULL` for them, ensuring
 
 **Return value:**
 
-`NULL` if all pixel values are valid (or if `image` itself is `NULL`).
+Null pointer if all pixel values are valid (or if `image` itself is a null pointer).
 Pointer to the first invalid pixel (i.e., a pointer within `image -> data8`) otherwise.
 
 ## Color operations
@@ -609,10 +610,10 @@ format bits are used by this function (in other words, other bits, such as those
 
 - `destination`: buffer where the converted color values will be stored; it must be large enough to store `count`
   color values in the format specified by `to`.
-  This argument must not be `NULL` unless `count` is zero.
+  This argument must not be a null pointer unless `count` is zero.
 - `source`: buffer containing the color values to be converted; it must contain `count` color values in the format
   specified by `from`, and it must not overlap with `destination`.
-  This argument must not be `NULL` unless `count` is zero.
+  This argument must not be a null pointer unless `count` is zero.
 - `count`: number of color values to convert.
   If this value is zero, no conversions are performed.
 - `to`: [color format][colors] to convert to.
@@ -638,7 +639,7 @@ The function operates in place and modifies the image's color or palette values,
 **Arguments:**
 
 - `image`: image to transform.
-  If this argument is `NULL`, the function does nothing.
+  If this argument is a null pointer, the function does nothing.
 
 **Return value:** none.
 
@@ -666,7 +667,7 @@ and updating the index values for all pixels; a sorted array of indexes allows t
 **Arguments:**
 
 - `colors`: array of colors to sort.
-  Must not be `NULL`.
+  Must not be a null pointer.
 - `max_index`: maximum valid index into `colors`, in the same manner the `max_palette_index` member of a
   [`struct plum_image`][image] is specified.
   Note that this is _one less_ than the number of colors in the array.
@@ -747,13 +748,13 @@ As indicated by the `restrict` keyword, the `destination`, `source` and `palette
 **Arguments:**
 
 - `destination`: buffer where the new palette indexes will be written if the function succeeds.
-  Must not be `NULL`.
+  Must not be a null pointer.
 - `source`: array of color values, in the [color format][colors] given by the `flags` argument.
-  Must not be `NULL`.
+  Must not be a null pointer.
 - `palette`: buffer where the palette colors will be written if the function succeeds; it should have enough space for
   up to 256 color values (in the [color format][colors] specified by the `flags` argument), since that is the maximum
   number of colors that a palette can use.
-  Must not be `NULL`.
+  Must not be a null pointer.
 - `count`: number of color values in the `source` array (and therefore, number of indexes that will be written to
   `destination` on success).
   Must not be zero.
@@ -785,7 +786,7 @@ Since all error constants are positive, the function will always return a negati
 
 If the return value is negative, it will be the negated value of one of the following [error constants][errors]:
 
-- `PLUM_ERR_INVALID_ARGUMENTS`: one of the pointer arguments is `NULL`, or `size` is zero.
+- `PLUM_ERR_INVALID_ARGUMENTS`: one of the pointer arguments is a null pointer, or `size` is zero.
 - `PLUM_ERR_TOO_MANY_COLORS`: the `source` array contains more than 256 distinct color values, and therefore a palette
   cannot be generated.
 - `PLUM_ERR_OUT_OF_MEMORY`: there isn't enough memory available to complete the operation.
@@ -814,13 +815,13 @@ As indicated by the `restrict` keyword, the `destination`, `source` and `palette
 
 - `destination`: buffer where the color values will be written; it must have enough space for `count` values in the
   [color format][colors] determined by `flags`.
-  Must not be `NULL`.
+  Must not be a null pointer.
 - `source`: array of `count` palette indexes that will be converted.
-  Must not be `NULL`.
+  Must not be a null pointer.
 - `palette`: color palette used by `source`; it uses the [color format][colors] determined by `flags`, and it must
   have as many entries as needed for all indexes in `source` to be valid.
   (For instance, if the indexes in `source` are all between 0 and 4, `palette` must contain at least 5 entries.)
-  Must not be `NULL`.
+  Must not be a null pointer.
 - `count`: number of indexes in `source`, and therefore number of color values that will be written to `destination`.
 - `flags`: [color format][colors] that `palette` and `destination` will use.
   This argument is named `flags` after the argument to [`plum_load_image`](#plum_load_image), but only the color
@@ -862,7 +863,7 @@ It can also return one of the following [error constants][errors]:
 - `PLUM_OK` (zero): success.
   This value will be used only if the function executes without errors.
 - `PLUM_ERR_INVALID_COLOR_INDEX`: the image contains an invalid color index (i.e.,
-  [`plum_validate_palette_indexes`](#plum_validate_palette_indexes) returns a non-`NULL` value).
+  [`plum_validate_palette_indexes`](#plum_validate_palette_indexes) returns a non-null pointer).
 - `PLUM_ERR_UNDEFINED_PALETTE`: the image doesn't use [indexed-color mode][image] at all (i.e., it doesn't have a
   palette to begin with).
 
@@ -916,10 +917,11 @@ It can also return one of the following [error constants][errors]:
 
 - `PLUM_OK` (zero): success.
   This value will be used only if the function executes without errors.
-- `PLUM_ERR_INVALID_ARGUMENTS`: `callback` is `NULL`.
-  (This error will also occur if `image` is `NULL`, as specified by [`plum_validate_image`](#plum_validate_image).)
+- `PLUM_ERR_INVALID_ARGUMENTS`: `callback` is a null pointer.
+  (This error will also occur if `image` is a null pointer, as specified by
+  [`plum_validate_image`](#plum_validate_image).)
 - `PLUM_ERR_INVALID_COLOR_INDEX`: the image contains an invalid color index (i.e.,
-  [`plum_validate_palette_indexes`](#plum_validate_palette_indexes) returns a non-`NULL` value).
+  [`plum_validate_palette_indexes`](#plum_validate_palette_indexes) returns a non-null pointer).
 - `PLUM_ERR_UNDEFINED_PALETTE`: the image doesn't use [indexed-color mode][image] at all (i.e., it doesn't have a
   palette to begin with).
 
@@ -957,7 +959,7 @@ It can also return one of the following [error constants][errors]:
 - `PLUM_OK` (zero): success.
   This value will be used only if the function executes without errors.
 - `PLUM_ERR_INVALID_COLOR_INDEX`: the image contains an invalid color index (i.e.,
-  [`plum_validate_palette_indexes`](#plum_validate_palette_indexes) returns a non-`NULL` value).
+  [`plum_validate_palette_indexes`](#plum_validate_palette_indexes) returns a non-null pointer).
 - `PLUM_ERR_UNDEFINED_PALETTE`: the image doesn't use [indexed-color mode][image] at all (i.e., it doesn't have a
   palette to begin with).
 
@@ -1026,7 +1028,7 @@ each, anyway.)
 **Return value:**
 
 If a node with the chosen type is found, the function returns a pointer to it.
-Otherwise (or if `image` is `NULL`), it returns `NULL`.
+Otherwise (or if `image` is a null pointer), it returns a null pointer.
 
 ### `plum_rotate_image`
 
@@ -1087,7 +1089,7 @@ For images using [indexed-color mode][indexed], this is simply the product of it
 `frames`).
 For other images, it is that product times the size of each color value, as it would be calculated by
 [`plum_color_buffer_size`](#plum_color_buffer_size) using the image's [color format][colors].
-An image is considered to use [indexed-color mode][indexed] if its `palette` member is not `NULL`.
+An image is considered to use [indexed-color mode][indexed] if its `palette` member is not a null pointer.
 
 **Arguments:**
 
@@ -1097,7 +1099,7 @@ An image is considered to use [indexed-color mode][indexed] if its `palette` mem
 
 If the image's dimensions are valid (as determined by [`plum_check_valid_image_size`](#plum_check_valid_image_size)),
 this function returns the size of the pixel buffer.
-Otherwise, or if `image` is `NULL`, this function returns 0.
+Otherwise, or if `image` is a null pointer, this function returns 0.
 
 ### `plum_palette_buffer_size`
 
@@ -1120,7 +1122,7 @@ Note that this function is purely a convenience function: it is equivalent to
 
 **Return value:**
 
-Size of the image's palette buffer, or 0 if `image` is `NULL`.
+Size of the image's palette buffer, or 0 if `image` is a null pointer.
 
 ## Memory management
 
@@ -1148,13 +1150,14 @@ Memory allocated this way can be redimensioned with [`plum_realloc`](#plum_reall
 **Arguments:**
 
 - `image`: image that the allocated buffer will be linked to.
-  Must not be `NULL`.
+  Must not be a null pointer.
 - `size`: size of the allocated buffer.
 
 **Return value:**
 
-Pointer to the allocated buffer, or `NULL` if there isn't enough memory available (or if `image` is `NULL`).
-Note that this function will never return `NULL` on success, even if `size` is zero.
+Pointer to the allocated buffer, or a null pointer if there isn't enough memory available (or if `image` is a null
+pointer).
+Note that this function will never return a null pointer on success, even if `size` is zero.
 
 ### `plum_calloc`
 
@@ -1170,13 +1173,14 @@ standard library function `calloc` does.
 **Arguments:**
 
 - `image`: image that the allocated buffer will be linked to.
-  Must not be `NULL`.
+  Must not be a null pointer.
 - `size`: size of the allocated buffer.
 
 **Return value:**
 
-Pointer to the allocated buffer, or `NULL` if there isn't enough memory available (or if `image` is `NULL`).
-Note that this function will never return `NULL` on success, even if `size` is zero.
+Pointer to the allocated buffer, or a null pointer if there isn't enough memory available (or if `image` is a null
+pointer).
+Note that this function will never return a null pointer on success, even if `size` is zero.
 
 ### `plum_realloc`
 
@@ -1197,23 +1201,23 @@ original data will be truncated away.
 As with the standard library function `realloc`, buffers reallocated by this function will be suitably aligned for any
 built-in data type.
 
-If `buffer` is `NULL`, this function behaves exactly like `plum_malloc(image, size)`.
+If `buffer` is a null pointer, this function behaves exactly like `plum_malloc(image, size)`.
 This is consistent with what `malloc` does.
 
 **Arguments:**
 
 - `image`: image that the buffer is associated to; the buffer will continue to be associated to it.
-  Must not be `NULL`.
+  Must not be a null pointer.
 - `buffer`: buffer to redimension (and possibly relocate).
-  If this argument is `NULL`, a new buffer will be allocated, as if by [`plum_malloc`](#plum_malloc).
+  If this argument is a null pointer, a new buffer will be allocated, as if by [`plum_malloc`](#plum_malloc).
 - `size`: new size for the buffer.
   Note that the buffer will **not** be freed if this argument is zero.
 
 **Return value:**
 
-Pointer to the redimensioned buffer (which may or may not be equal to its old address), or `NULL` if there isn't
-enough memory available (or if `image` is `NULL`).
-Note that this function will never return `NULL` on success, even if `size` is zero.
+Pointer to the redimensioned buffer (which may or may not be equal to its old address), or a null pointer if there
+isn't enough memory available (or if `image` is a null pointer).
+Note that this function will never return a null pointer on success, even if `size` is zero.
 
 ### `plum_allocate_metadata`
 
@@ -1247,13 +1251,13 @@ allocated by these functions.
 **Arguments:**
 
 - `image`: image that the allocated buffer will be linked to.
-  Must not be `NULL`.
+  Must not be a null pointer.
 - `size`: size to allocate for the [metadata node][metadata]'s associated data buffer.
 
 **Return value:**
 
-Pointer to the allocated [`struct plum_metadata`][metadata-struct], or `NULL` if there isn't enough memory available
-(or if `image` is `NULL`).
+Pointer to the allocated [`struct plum_metadata`][metadata-struct], or a null pointer if there isn't enough memory
+available (or if `image` is a null pointer).
 The allocated struct's `data` and `size` members will be initialized to the associated data buffer and its size.
 
 ### `plum_append_metadata`
@@ -1279,7 +1283,7 @@ Note: the data is copied to the new node (via `memcpy`); the new node will _not_
 - `type`: type of the metadata node; its `type` member will be set to this value.
   For positive, library-defined types, this should be one of the [metadata constants][metadata-constants].
 - `data`: data that will be copied to the new [metadata node][metadata].
-  Should not be `NULL` unless `size` is zero.
+  Should not be a null pointer unless `size` is zero.
 - `size`: size of the data that will be copied to the new [metadata node][metadata] (i.e., size of the buffer pointed
   to by `data`); this value will also be used as the new node's `size` member.
 
@@ -1294,7 +1298,7 @@ These are the possible error values that the function can return:
 
 - `PLUM_OK` (zero): success.
   This value will be returned if the new node is appended to the image's metadata.
-- `PLUM_ERR_INVALID_ARGUMENTS`: `image` is `NULL`, or `data` is `NULL` while `size` is non-zero.
+- `PLUM_ERR_INVALID_ARGUMENTS`: `image` is a null pointer, or `data` is a null pointer while `size` is non-zero.
 - `PLUM_ERR_OUT_OF_MEMORY`: there is not enough memory available to allocate the new metadata node.
 
 ### `plum_free`
@@ -1310,9 +1314,9 @@ This function frees a buffer previously allocated with any of the other
 This is equivalent to the standard library function `free`: the buffer ceases to exist and its memory is returned to
 the system.
 
-If `buffer` is `NULL`, this function is a harmless no-op, just like `free`.
+If `buffer` is a null pointer, this function is a harmless no-op, just like `free`.
 
-If `image` is `NULL`, this function is equivalent to `free(buffer)`.
+If `image` is a null pointer, this function is equivalent to `free(buffer)`.
 (In other words, it calls the standard library function `free` directly.)
 This can be used to free the memory allocated with `malloc` when [`plum_store_image`](#plum_store_image) is called
 with a `size_mode` argument of [`PLUM_MODE_BUFFER`][mode-constants]; it is only intended for users that may not have
@@ -1322,9 +1326,9 @@ access to the C standard library, or to the exact allocator used by this library
 **Arguments:**
 
 - `image`: image that the buffer is associated to.
-  If this value is `NULL`, it triggers the special mode mentioned in the description.
+  If this value is a null pointer, it triggers the special mode mentioned in the description.
 - `buffer`: buffer to deallocate.
-  If this value is `NULL`, the function does nothing.
+  If this value is a null pointer, the function does nothing.
 
 **Return value:** none.
 
@@ -1352,7 +1356,7 @@ The returned string is a constant and must not be modified.
 **Return value:**
 
 If `format` is a valid [format value][types], the function returns a constant string naming that format.
-If `format` is [`PLUM_IMAGE_NONE`][types] or an out-of-range value, the function returns `NULL`.
+If `format` is [`PLUM_IMAGE_NONE`][types] or an out-of-range value, the function returns a null pointer.
 
 ### `plum_get_error_text`
 
@@ -1374,7 +1378,7 @@ The returned string is a constant and must not be modified.
 
 If `error` is a valid [error constant][errors] (including [`PLUM_OK`][errors]), the function returns an error message
 describing it.
-If `error` is out of range, the function returns `NULL`.
+If `error` is out of range, the function returns a null pointer.
 
 ### `plum_get_version_number`
 

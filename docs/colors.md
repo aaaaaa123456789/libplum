@@ -83,7 +83,7 @@ The palette itself stores colors in whichever color format is set for the image 
 member).
 
 An image uses indexed-color mode if its `palette` member (and therefore, the corresponding `palette16`, `palette32`
-and `palette64` members, which alias `palette`) is not `NULL`.
+and `palette64` members, which alias `palette`) is not a null pointer.
 In this case, the `max_palette_index` member determines the maximum valid index value (and thus implicitly the size of
 the palette); note that this maximum is _inclusive_, so that a `max_palette_index` of 3 indicates a palette with four
 colors (with indexes ranging between 0 and 3).
