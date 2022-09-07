@@ -1,18 +1,17 @@
 #include "proto.h"
 
 struct plum_metadata * plum_allocate_metadata (struct plum_image * image, size_t size) {
-  union {
+  struct {
     struct plum_metadata result;
-    max_align_t alignment;
+    alignas(max_align_t) unsigned char data[];
   } * result = plum_malloc(image, sizeof *result + size);
-  if (!result) return NULL;
-  result -> result = (struct plum_metadata) {
+  if (result) result -> result = (struct plum_metadata) {
     .type = PLUM_METADATA_NONE,
     .size = size,
-    .data = result + 1,
+    .data = result -> data,
     .next = NULL
   };
-  return &(result -> result);
+  return (struct plum_metadata *) result;
 }
 
 unsigned plum_append_metadata (struct plum_image * image, int type, const void * data, size_t size) {
