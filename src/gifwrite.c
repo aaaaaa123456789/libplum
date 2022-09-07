@@ -41,17 +41,16 @@ void generate_GIF_data_with_palette (struct context * context, unsigned char * h
     palette[p] &= 0xffffffu;
   }
   int_fast32_t background = get_GIF_background_color(context);
+  uint_fast16_t background_index = 256; // out of range: no background
   if (background >= 0) {
-    uint_fast16_t index;
-    for (index = 0; index < colors; index ++) if (palette[index] == background) break;
-    if (index == colors && colors < 256) palette[colors ++] = background;
-    background = (index < colors) ? index : -1;
+    for (background_index = 0; background_index < colors; background_index ++) if (palette[background_index] == background) break;
+    if (background_index == colors && colors < 256) palette[colors ++] = background;
   }
   uint_fast16_t colorbits;
   for (colorbits = 0; colors > (2 << colorbits); colorbits ++);
   uint_fast16_t colorcount = 2 << colorbits;
   header[4] |= 0x80 + colorbits;
-  if (background >= 0) header[5] = background;
+  if (background_index < colors) header[5] = background_index;
   write_GIF_palette(context, palette, colorcount);
   ctxfree(context, palette);
   write_GIF_loop_info(context);
