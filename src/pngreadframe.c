@@ -209,7 +209,7 @@ void remove_PNG_filter (struct context * context, unsigned char * restrict data,
     unsigned char * rowdata = data + 1;
     switch (*data) {
       case 4:
-        for (size_t p = 0; p < pixelsize * width; p ++) {
+        for (ptrdiff_t p = 0; p < pixelsize * width; p ++) {
           int top = row ? rowdata[p - rowsize] : 0, left = (p < pixelsize) ? 0 : rowdata[p - pixelsize];
           int diagonal = (row && p >= pixelsize) ? rowdata[p - pixelsize - rowsize] : 0;
           int topdiff = absolute_value(left - diagonal), leftdiff = absolute_value(top - diagonal), diagdiff = absolute_value(left + top - diagonal * 2);
@@ -218,16 +218,16 @@ void remove_PNG_filter (struct context * context, unsigned char * restrict data,
         break;
       case 3:
         if (row) {
-          for (size_t p = 0; p < pixelsize; p ++) rowdata[p] += rowdata[p - rowsize] >> 1;
-          for (size_t p = pixelsize; p < pixelsize * width; p ++) rowdata[p] += (rowdata[p - pixelsize] + rowdata[p - rowsize]) >> 1;
+          for (ptrdiff_t p = 0; p < pixelsize; p ++) rowdata[p] += rowdata[p - rowsize] >> 1;
+          for (ptrdiff_t p = pixelsize; p < pixelsize * width; p ++) rowdata[p] += (rowdata[p - pixelsize] + rowdata[p - rowsize]) >> 1;
         } else
-          for (size_t p = pixelsize; p < pixelsize * width; p ++) rowdata[p] += rowdata[p - pixelsize] >> 1;
+          for (ptrdiff_t p = pixelsize; p < pixelsize * width; p ++) rowdata[p] += rowdata[p - pixelsize] >> 1;
         break;
       case 2:
-        if (row) for (size_t p = 0; p < pixelsize * width; p ++) rowdata[p] += rowdata[p - rowsize];
+        if (row) for (ptrdiff_t p = 0; p < pixelsize * width; p ++) rowdata[p] += rowdata[p - rowsize];
         break;
       case 1:
-        for (size_t p = pixelsize; p < pixelsize * width; p ++) rowdata[p] += rowdata[p - pixelsize];
+        for (ptrdiff_t p = pixelsize; p < pixelsize * width; p ++) rowdata[p] += rowdata[p - pixelsize];
       case 0:
         break;
       default:

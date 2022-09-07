@@ -5,6 +5,7 @@ Note: releases are listed from latest to oldest.
 ## Version 1.2 (in development)
 
 - Fixed alignment errors when `alignof(jmp_buf) > alignof(max_align_t)`
+- Fixed undefined behavior when reading PNG files due to array index overflow after signed to unsigned conversion
 
 ## Version 1.1 (9 May 2022)
 
