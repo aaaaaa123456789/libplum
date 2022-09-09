@@ -54,7 +54,7 @@ uint32_t * get_true_PNM_frame_sizes (struct context * context) {
     else
       checkclasses(32);
     #undef checkclasses
-    for (uint_fast32_t frame = 0; frame < context -> source -> frames; frame ++) {
+    for (size_t frame = 0; frame < context -> source -> frames; frame ++) {
       const uint8_t * data = context -> source -> data8 + offset * frame;
       if (colorclass[*data]) goto fail;
       for (width = 1; width < context -> source -> width; width ++) if (colorclass[data[width]]) break;
@@ -88,12 +88,12 @@ uint32_t * get_true_PNM_frame_sizes (struct context * context) {
       checkframe(32);
     #undef checkframe
   }
-  width = height = 0;
-  for (uint_fast32_t frame = 0; frame < context -> source -> frames && !(width && height); frame ++) {
-    if (result[frame * 2] == context -> source -> width) width = 1;
-    if (result[frame * 2 + 1] == context -> source -> height) height = 1;
+  bool fullwidth = false, fullheight = false;
+  for (size_t frame = 0; frame < context -> source -> frames && !(fullwidth && fullheight); frame ++) {
+    if (result[frame * 2] == context -> source -> width) fullwidth = true;
+    if (result[frame * 2 + 1] == context -> source -> height) fullheight = true;
   }
-  if (width && height) return result;
+  if (fullwidth && fullheight) return result;
   fail:
   ctxfree(context, result);
   return NULL;

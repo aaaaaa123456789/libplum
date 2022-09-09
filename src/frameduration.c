@@ -22,21 +22,17 @@ void update_frame_duration_remainder (uint64_t actual, uint64_t computed, int64_
   if (actual < computed) {
     uint64_t difference = computed - actual;
     if (difference > INT64_MAX) difference = INT64_MAX;
-    if (*remainder >= 0)
+    if (*remainder >= 0 || difference - *remainder <= (uint64_t) INT64_MIN)
       *remainder -= (int64_t) difference;
-    else if (difference + -*remainder > -(uint64_t) INT64_MIN)
-      *remainder = INT64_MIN;
     else
-      *remainder -= (int64_t) difference;
+      *remainder = INT64_MIN;
   } else {
     uint64_t difference = actual - computed;
     if (difference > INT64_MAX) difference = INT64_MAX;
-    if (*remainder < 0)
+    if (*remainder < 0 || difference + *remainder <= (uint64_t) INT64_MAX)
       *remainder += (int64_t) difference;
-    else if (difference + *remainder > INT64_MAX)
-      *remainder = INT64_MAX;
     else
-      *remainder += (int64_t) difference;
+      *remainder = INT64_MAX;
   }
 }
 
