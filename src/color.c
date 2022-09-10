@@ -34,50 +34,55 @@ uint64_t plum_convert_color (uint64_t color, unsigned from, unsigned to) {
     from &= 0xffffu;
   else if ((from & PLUM_COLOR_MASK) != PLUM_COLOR_64)
     from &= 0xffffffffu;
-  switch (((from & PLUM_COLOR_MASK) << 2) | (to & PLUM_COLOR_MASK)) {
-    case 0: case 5: case 10: case 15: // no conversion
+  #define formatpair(from, to) (((from) << 2) & (PLUM_COLOR_MASK << 2) | (to) & PLUM_COLOR_MASK)
+  switch (formatpair(from, to)) {
+    case formatpair(PLUM_COLOR_32, PLUM_COLOR_32):
+    case formatpair(PLUM_COLOR_64, PLUM_COLOR_64):
+    case formatpair(PLUM_COLOR_16, PLUM_COLOR_16):
+    case formatpair(PLUM_COLOR_32X, PLUM_COLOR_32X):
       result = color;
       break;
-    case 1: // 32 to 64
+    case formatpair(PLUM_COLOR_32, PLUM_COLOR_64):
       result = ((color & 0xff) | ((color << 8) & 0xff0000u) | ((color << 16) & 0xff00000000u) | ((color << 24) & 0xff000000000000u)) * 0x101;
       break;
-    case 2: // 32 to 16
+    case formatpair(PLUM_COLOR_32, PLUM_COLOR_16):
       result = ((color >> 3) & 0x1f) | ((color >> 6) & 0x3e0) | ((color >> 9) & 0x7c00) | ((color >> 16) & 0x8000u);
       break;
-    case 3: // 32 to 32x
+    case formatpair(PLUM_COLOR_32, PLUM_COLOR_32X):
       result = ((color << 2) & 0x3fc) | ((color << 4) & 0xff000u) | ((color << 6) & 0x3fc00000u) | (color & 0xc0000000u) |
                ((color >> 6) & 3) | ((color >> 4) & 0xc00) | ((color >> 2) & 0x300000u);
       break;
-    case 4: // 64 to 32
+    case formatpair(PLUM_COLOR_64, PLUM_COLOR_32):
       result = ((color >> 8) & 0xff) | ((color >> 16) & 0xff00u) | ((color >> 24) & 0xff0000u) | ((color >> 32) & 0xff000000u);
       break;
-    case 6: // 64 to 16
+    case formatpair(PLUM_COLOR_64, PLUM_COLOR_16):
       result = ((color >> 11) & 0x1f) | ((color >> 22) & 0x3e0) | ((color >> 33) & 0x7c00) | ((color >> 48) & 0x8000u);
       break;
-    case 7: // 64 to 32x
+    case formatpair(PLUM_COLOR_64, PLUM_COLOR_32X):
       result = ((color >> 6) & 0x3ff) | ((color >> 12) & 0xffc00u) | ((color >> 18) & 0x3ff00000u) | ((color >> 32) & 0xc0000000u);
       break;
-    case 8: // 16 to 32
+    case formatpair(PLUM_COLOR_16, PLUM_COLOR_32):
       result = ((color << 3) & 0xf8) | ((color << 6) & 0xf800u) | ((color << 9) & 0xf80000u) | ((color & 0x8000u) ? 0xff000000u : 0) |
                ((color >> 2) & 7) | ((color << 1) & 0x700) | ((color << 4) & 0x70000u);
       break;
-    case 9: // 16 to 64
+    case formatpair(PLUM_COLOR_16, PLUM_COLOR_64):
       result = (((color & 0x1f) | ((color << 11) & 0x1f0000u) | ((color << 22) & 0x1f00000000u)) * 0x842) | ((color & 0x8000u) ? 0xffff000000000000u : 0) |
                ((color >> 4) & 1) | ((color << 7) & 0x10000u) | ((color << 18) & 0x100000000u);
       break;
-    case 11: // 16 to 32x
+    case formatpair(PLUM_COLOR_16, PLUM_COLOR_32X):
       result = (((color & 0x1f) | ((color << 5) & 0x7c00) | ((color << 10) & 0x1f00000u)) * 0x21) | ((color & 0x8000u) ? 0xc0000000u : 0);
       break;
-    case 12: // 32x to 32
+    case formatpair(PLUM_COLOR_32X, PLUM_COLOR_32):
       result = ((color >> 2) & 0xff) | ((color >> 4) & 0xff00u) | ((color >> 6) & 0xff0000u) | ((color >> 30) * 0x55000000u);
       break;
-    case 13: // 32x to 64
+    case formatpair(PLUM_COLOR_32X, PLUM_COLOR_64):
       result = ((color << 6) & 0xffc0u) | ((color << 12) & 0xffc00000u) | ((color << 18) & 0xffc000000000u) | ((color >> 30) * 0x5555000000000000u) |
                ((color >> 4) & 0x3f) | ((color << 2) & 0x3f0000u) | ((color << 8) & 0x3f00000000u);
       break;
-    case 14: // 32x to 16
+    case formatpair(PLUM_COLOR_32X, PLUM_COLOR_16):
       result = ((color >> 5) & 0x1f) | ((color >> 10) & 0x3e0) | ((color >> 15) & 0x7c00) | ((color >> 16) & 0x8000u);
   }
+  #undef formatpair
   if ((to ^ from) & PLUM_ALPHA_INVERT) result ^= alpha_component_masks[to & PLUM_COLOR_MASK];
   return result;
 }

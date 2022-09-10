@@ -153,11 +153,9 @@ short * decode_PNG_Huffman_tree (struct context * context, const unsigned char *
 
 uint16_t next_PNG_Huffman_code (struct context * context, const short * restrict tree, const unsigned char ** compressed, size_t * restrict size,
                                 uint32_t * restrict dataword, uint8_t * restrict bits) {
-  short index = 0;
-  while (true) {
+  for (uint_fast16_t index = 0; index != 1; index = -tree[index]) {
     index += shift_in_left(context, 1, dataword, bits, compressed, size);
     if (tree[index] >= 0) return tree[index];
-    index = -tree[index];
-    if (index == 1) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   }
+  throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
 }

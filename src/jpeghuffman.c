@@ -211,12 +211,10 @@ void decompress_JPEG_Huffman_lossless_scan (struct context * context, struct JPE
 }
 
 unsigned char next_JPEG_Huffman_value (struct context * context, const unsigned char ** data, size_t * restrict count, uint32_t * restrict dataword,
-                                       uint8_t * restrict bits, const short * restrict table) {
-  unsigned short index = 0;
-  while (true) {
+                                       uint8_t * restrict bits, const short * restrict tree) {
+  for (uint_fast16_t index = 0; index != 1; index = -tree[index]) {
     index += shift_in_right_JPEG(context, 1, dataword, bits, data, count);
-    if (table[index] >= 0) return table[index];
-    if (table[index] == -1) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-    index = -table[index];
+    if (tree[index] >= 0) return tree[index];
   }
+  throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
 }
