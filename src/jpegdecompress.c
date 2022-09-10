@@ -65,11 +65,10 @@ void initialize_JPEG_decompressor_state_common (struct context * context, struct
 
 uint16_t predict_JPEG_lossless_sample (const uint16_t * next, ptrdiff_t rowsize, bool leftmost, bool topmost, unsigned predictor, unsigned precision) {
   if (!predictor) return 0;
-  if (topmost)
-    if (leftmost)
-      return 1u << (precision - 1);
-    else
-      return next[-1];
+  if (topmost && leftmost)
+    return 1u << (precision - 1);
+  else if (topmost)
+    return next[-1];
   else if (leftmost)
     return next[-rowsize];
   uint_fast32_t left = next[-1], top = next[-rowsize], corner = next[-1 - rowsize];

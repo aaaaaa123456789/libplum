@@ -15,18 +15,16 @@ void generate_Huffman_tree (struct context * context, const size_t * restrict co
     return;
   }
   qsort(sorted, truecount, 2 * sizeof *sorted, &compare_index_value_pairs);
-  size_t * parents = ctxmalloc(context, (entries + truecount) * sizeof *parents);
   size_t * pendingnodes = ctxmalloc(context, truecount * sizeof *pendingnodes);
   size_t * pendingcounts = ctxmalloc(context, truecount * sizeof *pendingcounts);
-  size_t next = entries;
   for (size_t p = 0; p < truecount; p ++) {
     pendingnodes[p] = sorted[2 * p];
     pendingcounts[p] = counts[pendingnodes[p]];
   }
-  uint64_t remaining = truecount;
-  while (remaining > 1) {
-    parents[pendingnodes[-- remaining]] = next;
-    parents[pendingnodes[remaining - 1]] = next;
+  size_t next = entries;
+  size_t * parents = ctxmalloc(context, (entries + truecount) * sizeof *parents);
+  for (uint64_t remaining = truecount - 1; remaining; remaining --) {
+    parents[pendingnodes[remaining]] = parents[pendingnodes[remaining - 1]] = next;
     size_t sum = pendingcounts[remaining - 1] + pendingcounts[remaining];
     size_t first = 0, last = remaining - 1;
     while (first < last) {
@@ -60,7 +58,7 @@ void generate_Huffman_tree (struct context * context, const size_t * restrict co
   ctxfree(context, parents);
   if (maxlength > max) {
     // the maximum length has been exceeded, so increase some other lengths to make everything fit
-    remaining = (uint64_t) 1 << max;
+    uint64_t remaining = (uint64_t) 1 << max;
     for (size_t p = 0; p < truecount; p ++) {
       next = sorted[p * 2];
       if (lengths[next] > max) {
