@@ -65,9 +65,9 @@ struct compressed_PNG_code * generate_compressed_PNG_block (struct context * con
   struct compressed_PNG_code * codes = ctxmalloc(context, allocated * sizeof *codes);
   *count = 0;
   int literals = 0, score = 0;
-  unsigned length;
-  while (size - current_offset >= 3 && size - current_offset < (SIZE_MAX >> 4))
-    if (length = find_PNG_reference(data, references, current_offset, size, &backref)) {
+  while (size - current_offset >= 3 && size - current_offset < (SIZE_MAX >> 4)) {
+    unsigned length = find_PNG_reference(data, references, current_offset, size, &backref);
+    if (length) {
       // we found a matching back reference, so emit any pending literals and the reference
       for (; literals; literals --) emit_PNG_code(context, &codes, &allocated, count, data[current_offset - literals], 0);
       emit_PNG_code(context, &codes, &allocated, count, -(int) length, current_offset - backref);
@@ -85,6 +85,7 @@ struct compressed_PNG_code * generate_compressed_PNG_block (struct context * con
         else
           break;
     }
+  }
   if (size - current_offset < 3) {
     literals += size - current_offset;
     current_offset = size;

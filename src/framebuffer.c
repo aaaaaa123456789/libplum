@@ -21,14 +21,14 @@ int plum_check_limited_image_size (uint32_t width, uint32_t height, uint32_t fra
   return p <= limit;
 }
 
-size_t plum_color_buffer_size (size_t count, unsigned flags) {
-  if (count > SIZE_MAX / sizeof(uint64_t)) return 0;
+size_t plum_color_buffer_size (size_t size, unsigned flags) {
+  if (size > SIZE_MAX / sizeof(uint64_t)) return 0;
   if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_64)
-    return count * sizeof(uint64_t);
+    return size * sizeof(uint64_t);
   else if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_16)
-    return count * sizeof(uint16_t);
+    return size * sizeof(uint16_t);
   else
-    return count * sizeof(uint32_t);
+    return size * sizeof(uint32_t);
 }
 
 size_t plum_pixel_buffer_size (const struct plum_image * image) {

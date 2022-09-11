@@ -55,14 +55,14 @@ void load_JPEG_data (struct context * context, unsigned flags, size_t limit) {
 }
 
 struct JPEG_marker_layout * load_JPEG_marker_layout (struct context * context) {
-  size_t prev, offset = 1;
+  size_t offset = 1;
   while (context -> data[offset ++] == 0xff); // the first marker must be SOI (from file type detection), so skip it
   uint_fast8_t next_restart_marker = 0; // 0 if not in a scan
   size_t restart_offset, restart_interval, scan, frame = SIZE_MAX, markers = 0;
   struct JPEG_marker_layout * layout = ctxmalloc(context, sizeof *layout);
   *layout = (struct JPEG_marker_layout) {0}; // ensure that integers and pointers are properly zero-initialized
   while (offset < context -> size) {
-    prev = offset;
+    size_t prev = offset;
     if (context -> data[offset ++] != 0xff)
       if (next_restart_marker)
         continue;
