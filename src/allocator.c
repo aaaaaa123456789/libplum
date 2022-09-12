@@ -72,7 +72,7 @@ void * plum_realloc (struct plum_image * image, void * buffer, size_t size) {
   if (!image) return NULL;
   struct allocator_node * list = image -> allocator;
   void * result = reallocate(&list, buffer, size);
-  image -> allocator = list;
+  if (result) image -> allocator = list;
   return result;
 }
 
