@@ -7,6 +7,7 @@ Note: releases are listed from latest to oldest.
 - Fixed alignment errors when `alignof(jmp_buf) > alignof(max_align_t)`
 - Fixed undefined behavior when reading PNG files due to array index overflow after signed to unsigned conversion
 - Fixed memory leak on `plum_realloc` failure
+- Corrected a mistake in the documentation for `plum_store_image`
 
 ## Version 1.1 (9 May 2022)
 

@@ -357,7 +357,7 @@ setting the error code to that function's return value.
 In addition to those results, the following error codes may be set:
 
 - `PLUM_OK` (zero): success.
-  This value will be used only if the function succeeds, i.e., it returns a non-null pointer.
+  This value will be used only if the function succeeds, i.e., it returns a non-zero value.
 - `PLUM_ERR_INVALID_ARGUMENTS`: `image` or `buffer` are null pointers, or `size_mode` is zero.
 - `PLUM_ERR_INVALID_FILE_FORMAT`: the image's `type` member is [`PLUM_IMAGE_NONE`][types].
 - `PLUM_ERR_INVALID_COLOR_INDEX`: the image uses [indexed-color mode][indexed], but some of the pixels in the image
