@@ -19,10 +19,12 @@ void load_PNM_data (struct context * context, unsigned flags, size_t limit) {
   } while (offset < context -> size);
   allocate_framebuffers(context, flags, false);
   add_PNM_bit_depth_metadata(context, headers);
+  struct plum_rectangle * frameareas = add_frame_area_metadata(context);
   uint64_t * buffer = ctxmalloc(context, sizeof *buffer * context -> image -> width * context -> image -> height);
   offset = plum_color_buffer_size((size_t) context -> image -> width * context -> image -> height, flags);
   for (uint_fast32_t frame = 0; frame < context -> image -> frames; frame ++) {
     load_PNM_frame(context, headers + frame, buffer);
+    frameareas[frame] = (struct plum_rectangle) {.left = 0, .top = 0, .width = headers[frame].width, .height = headers[frame].height};
     plum_convert_colors(context -> image -> data8 + offset * frame, buffer, (size_t) context -> image -> width * context -> image -> height, flags,
                         PLUM_COLOR_64 | PLUM_ALPHA_INVERT);
   }

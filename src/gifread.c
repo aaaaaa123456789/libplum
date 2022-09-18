@@ -14,8 +14,9 @@ void load_GIF_data (struct context * context, unsigned flags, size_t limit) {
   uint64_t * durations;
   uint8_t * disposals;
   add_animation_metadata(context, &durations, &disposals);
+  struct plum_rectangle * frameareas = add_frame_area_metadata(context);
   for (uint_fast32_t frame = 0; frame < context -> image -> frames; frame ++)
-    load_GIF_frame(context, &offset, flags, frame, palettes ? palettes[frame] : NULL, transparent, durations + frame, disposals + frame);
+    load_GIF_frame(context, &offset, flags, frame, palettes ? palettes[frame] : NULL, transparent, durations + frame, disposals + frame, frameareas + frame);
   if (!plum_find_metadata(context -> image, PLUM_METADATA_LOOP_COUNT)) add_loop_count_metadata(context, 1);
 }
 
@@ -181,7 +182,7 @@ void skip_GIF_data_blocks (struct context * context, size_t * restrict offset) {
 }
 
 void load_GIF_frame (struct context * context, size_t * restrict offset, unsigned flags, uint32_t frame, const uint64_t * restrict palette,
-                     uint64_t transparent_color, uint64_t * restrict duration, uint8_t * restrict disposal) {
+                     uint64_t transparent_color, uint64_t * restrict duration, uint8_t * restrict disposal, struct plum_rectangle * restrict framearea) {
   *duration = *disposal = 0;
   int transparent_index = -1;
   // frames have already been validated, so at this point, we can only have extensions (0x21 ID block block block...) or image descriptors
@@ -213,6 +214,7 @@ void load_GIF_frame (struct context * context, size_t * restrict offset, unsigne
   uint_fast32_t width = read_le16_unaligned(context -> data + *offset + 4);
   uint_fast32_t height = read_le16_unaligned(context -> data + *offset + 6);
   if (left + width > context -> image -> width || top + height > context -> image -> height) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  *framearea = (struct plum_rectangle) {.left = left, .top = top, .width = width, .height = height};
   uint_fast8_t frameflags = context -> data[*offset + 8];
   *offset += 9;
   uint8_t max_palette_index;

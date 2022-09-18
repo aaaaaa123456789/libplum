@@ -93,7 +93,8 @@ internal uint64_t ** load_GIF_palettes_and_frame_count(struct context *, unsigne
 internal void load_GIF_palette(struct context *, uint64_t * restrict, size_t * restrict, unsigned);
 internal void * load_GIF_data_blocks(struct context *, size_t * restrict, size_t * restrict);
 internal void skip_GIF_data_blocks(struct context *, size_t * restrict);
-internal void load_GIF_frame(struct context *, size_t * restrict, unsigned, uint32_t, const uint64_t * restrict, uint64_t, uint64_t * restrict, uint8_t * restrict);
+internal void load_GIF_frame(struct context *, size_t * restrict, unsigned, uint32_t, const uint64_t * restrict, uint64_t, uint64_t * restrict, uint8_t * restrict,
+                             struct plum_rectangle * restrict);
 
 // gifwrite.c
 internal void generate_GIF_data(struct context *);
@@ -233,6 +234,7 @@ internal void add_color_depth_metadata(struct context *, unsigned, unsigned, uns
 internal void add_background_color_metadata(struct context *, uint64_t, unsigned);
 internal void add_loop_count_metadata(struct context *, uint32_t);
 internal void add_animation_metadata(struct context *, uint64_t ** restrict, uint8_t ** restrict);
+internal struct plum_rectangle * add_frame_area_metadata(struct context *);
 internal uint64_t get_background_color(const struct plum_image *, uint64_t);
 
 // misc.c

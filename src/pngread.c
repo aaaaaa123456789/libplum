@@ -53,6 +53,7 @@ void load_PNG_data (struct context * context, unsigned flags, size_t limit) {
   uint64_t * durations;
   uint8_t * disposals;
   add_animation_metadata(context, &durations, &disposals);
+  struct plum_rectangle * frameareas = add_frame_area_metadata(context);
   const size_t * frameinfo = chunks -> frameinfo;
   const size_t * const * framedata = (const size_t * const *) chunks -> framedata;
   // handle the first frame's metadata, which is special and may or may not be part of the animation (the frame data will have already been loaded)
@@ -72,6 +73,7 @@ void load_PNG_data (struct context * context, unsigned flags, size_t limit) {
     *disposals = PLUM_DISPOSAL_PREVIOUS;
     *durations = 0;
   }
+  *frameareas = (struct plum_rectangle) {.left = 0, .top = 0, .width = context -> image -> width, .height = context -> image -> height};
   // actually load animation frames
   if (*frameinfo && *frameinfo < *chunks -> data) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   for (uint_fast32_t frame = 1; frame < context -> image -> frames; frame ++) {
@@ -83,6 +85,7 @@ void load_PNG_data (struct context * context, unsigned flags, size_t limit) {
     uint_fast32_t top = read_be32_unaligned(context -> data + *frameinfo + 16);
     if ((width | height | left | top) & 0x80000000u) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     if (width + left > context -> image -> width || height + top > context -> image -> height) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+    frameareas[frame] = (struct plum_rectangle) {.left = left, .top = top, .width = width, .height = height};
     if (width == context -> image -> width && height == context -> image -> height)
       load_PNG_frame(context, *framedata, frame, palette, max_palette_index, imagetype, bitdepth, interlaced, background, transparent);
     else {

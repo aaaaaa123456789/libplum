@@ -26,6 +26,9 @@ unsigned plum_validate_image (const struct plum_image * image) {
         break;
       case PLUM_METADATA_FRAME_DISPOSAL:
         for (size_t p = 0; p < metadata -> size; p ++) if (p[(uint8_t *) metadata -> data] >= PLUM_NUM_DISPOSAL_METHODS) return PLUM_ERR_INVALID_METADATA;
+        break;
+      case PLUM_METADATA_FRAME_AREA:
+        if (metadata -> size % sizeof(struct plum_rectangle)) return PLUM_ERR_INVALID_METADATA;
     }
   }
   return 0;

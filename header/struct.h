@@ -51,3 +51,10 @@ struct plum_image {
 #include "accessors.hpp"
 #endif
 };
+
+struct plum_rectangle {
+  uint32_t left;
+  uint32_t top;
+  uint32_t width;
+  uint32_t height;
+};

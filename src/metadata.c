@@ -72,6 +72,16 @@ void add_animation_metadata (struct context * context, uint64_t ** restrict dura
   context -> image -> metadata = durations_metadata;
 }
 
+struct plum_rectangle * add_frame_area_metadata (struct context * context) {
+  if (context -> image -> frames > SIZE_MAX / sizeof(struct plum_rectangle)) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
+  struct plum_metadata * metadata = plum_allocate_metadata(context -> image, sizeof(struct plum_rectangle) * context -> image -> frames);
+  if (!metadata) throw(context, PLUM_ERR_OUT_OF_MEMORY);
+  metadata -> type = PLUM_METADATA_FRAME_AREA;
+  metadata -> next = context -> image -> metadata;
+  context -> image -> metadata = metadata;
+  return metadata -> data;
+}
+
 uint64_t get_background_color (const struct plum_image * image, uint64_t fallback) {
   const struct plum_metadata * background = plum_find_metadata(image, PLUM_METADATA_BACKGROUND);
   if (!background) return fallback;
