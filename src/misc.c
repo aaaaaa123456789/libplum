@@ -25,10 +25,18 @@ unsigned plum_validate_image (const struct plum_image * image) {
         if (metadata -> size % sizeof(uint64_t)) return PLUM_ERR_INVALID_METADATA;
         break;
       case PLUM_METADATA_FRAME_DISPOSAL:
-        for (size_t p = 0; p < metadata -> size; p ++) if (p[(uint8_t *) metadata -> data] >= PLUM_NUM_DISPOSAL_METHODS) return PLUM_ERR_INVALID_METADATA;
+        for (size_t p = 0; p < metadata -> size; p ++) if (p[(const uint8_t *) metadata -> data] >= PLUM_NUM_DISPOSAL_METHODS) return PLUM_ERR_INVALID_METADATA;
         break;
-      case PLUM_METADATA_FRAME_AREA:
-        if (metadata -> size % sizeof(struct plum_rectangle)) return PLUM_ERR_INVALID_METADATA;
+      case PLUM_METADATA_FRAME_AREA: {
+        const struct plum_rectangle * rectangles = metadata -> data;
+        if (metadata -> size % sizeof *rectangles) return PLUM_ERR_INVALID_METADATA;
+        uint_fast32_t frames = (image -> frames > metadata -> size / sizeof *rectangles) ? metadata -> size / sizeof *rectangles : image -> frames;
+        for (uint_fast32_t frame = 0; frame < frames; frame ++) {
+          uint32_t right = rectangles[frame].left + rectangles[frame].width, bottom = rectangles[frame].top + rectangles[frame].height;
+          if (right < rectangles[frame].left || right > image -> width || bottom < rectangles[frame].top || bottom > image -> height)
+            return PLUM_ERR_INVALID_METADATA;
+        }
+      }
     }
   }
   return 0;
