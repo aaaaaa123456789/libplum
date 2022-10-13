@@ -59,6 +59,7 @@ internal uint32_t get_true_color_depth(const struct plum_image *);
 
 // framebuffer.c
 internal void validate_image_size(struct context *, size_t);
+internal struct plum_rectangle * get_frame_boundaries(struct context *, bool);
 internal void allocate_framebuffers(struct context *, unsigned, bool);
 internal void write_framebuffer_to_image(struct plum_image *, const uint64_t * restrict, uint32_t, unsigned);
 internal void write_palette_framebuffer_to_image(struct context *, const uint8_t * restrict, const uint64_t * restrict, uint32_t, unsigned, uint8_t);
@@ -101,7 +102,7 @@ internal void generate_GIF_data(struct context *);
 internal void generate_GIF_data_with_palette(struct context *, unsigned char *);
 internal void generate_GIF_data_from_raw(struct context *, unsigned char *);
 internal void generate_GIF_frame_data(struct context *, uint32_t * restrict, unsigned char * restrict, uint32_t, const struct plum_metadata *,
-                                      const struct plum_metadata *, int64_t * restrict);
+                                      const struct plum_metadata *, int64_t * restrict, const struct plum_rectangle *);
 internal int_fast32_t get_GIF_background_color(struct context *);
 internal void write_GIF_palette(struct context *, const uint32_t * restrict, unsigned);
 internal void write_GIF_loop_info(struct context *);
