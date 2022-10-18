@@ -43,25 +43,6 @@ size_t plum_palette_buffer_size (const struct plum_image * image) {
   return plum_color_buffer_size(image -> max_palette_index + 1, image -> color_format);
 }
 
-struct plum_rectangle * get_frame_boundaries (struct context * context, bool anchor_corner) {
-  const struct plum_metadata * metadata = plum_find_metadata(context -> source, PLUM_METADATA_FRAME_AREA);
-  if (!metadata) return NULL;
-  struct plum_rectangle * result = ctxmalloc(context, sizeof *result * context -> source -> frames);
-  uint_fast32_t frames = (context -> source -> frames > metadata -> size / sizeof *result) ? metadata -> size / sizeof *result : context -> source -> frames;
-  if (frames) {
-    memcpy(result, metadata -> data, sizeof *result * frames);
-    if (anchor_corner)
-      for (uint_fast32_t frame = 0; frame < frames; frame ++) {
-        result[frame].width += result[frame].left;
-        result[frame].height += result[frame].top;
-        result[frame].top = result[frame].left = 0;
-      }
-  }
-  for (uint_fast32_t frame = frames; frame < context -> source -> frames; frame ++)
-    result[frame] = (struct plum_rectangle) {.left = 0, .top = 0, .width = context -> source -> width, .height = context -> source -> height};
-  return result;
-}
-
 void allocate_framebuffers (struct context * context, unsigned flags, bool palette) {
   size_t size = (size_t) context -> image -> width * context -> image -> height * context -> image -> frames;
   if (!palette) size = plum_color_buffer_size(size, flags);

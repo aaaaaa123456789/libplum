@@ -131,53 +131,28 @@ void plum_remove_alpha (struct plum_image * image) {
 }
 
 bool image_has_transparency (const struct plum_image * image) {
-  const void * colordata;
-  size_t count;
-  if (image -> palette) {
-    colordata = image -> palette;
-    count = image -> max_palette_index + 1;
-  } else {
-    colordata = image -> data;
-    count = (size_t) image -> width * image -> height * image -> frames;
-  }
+  size_t count = image -> palette ? image -> max_palette_index + 1 : ((size_t) image -> width * image -> height * image -> frames);
+  #define checkcolors(bits) do {                                                                 \
+    const uint ## bits ## _t * color = image -> palette ? image -> palette : image -> data;      \
+    uint ## bits ## _t mask = alpha_component_masks[image -> color_format & PLUM_COLOR_MASK];    \
+    if (image -> color_format & PLUM_ALPHA_INVERT) {                                             \
+      while (count --) if (*(color ++) < mask) return true;                                      \
+    } else {                                                                                     \
+      mask = ~mask;                                                                              \
+      while (count --) if (*(color ++) > mask) return true;                                      \
+    }                                                                                            \
+  } while (false)
   switch (image -> color_format & PLUM_COLOR_MASK) {
-    case PLUM_COLOR_32: {
-      const uint32_t * color = colordata;
-      if (image -> color_format & PLUM_ALPHA_INVERT) {
-        while (count --) if (*(color ++) < 0xff000000u) return true;
-      } else
-        while (count --) if (*(color ++) >= 0x1000000u) return true;
-      return false;
-    }
-    case PLUM_COLOR_64: {
-      const uint64_t * color = colordata;
-      if (image -> color_format & PLUM_ALPHA_INVERT) {
-        while (count --) if (*(color ++) < 0xffff000000000000u) return true;
-      } else
-        while (count --) if (*(color ++) >= 0x1000000000000u) return true;
-      return false;
-    }
-    case PLUM_COLOR_16: {
-      const uint16_t * color = colordata;
-      if (image -> color_format & PLUM_ALPHA_INVERT) {
-        while (count --) if (*(color ++) < 0x8000u) return true;
-      } else
-        while (count --) if (*(color ++) >= 0x7fff) return true;
-      return false;
-    }
-    default: { // PLUM_COLOR_32X
-      const uint32_t * color = colordata;
-      if (image -> color_format & PLUM_ALPHA_INVERT) {
-        while (count --) if (*(color ++) < 0xc0000000u) return true;
-      } else
-        while (count --) if (*(color ++) >= 0x40000000u) return true;
-      return false;
-    }
+    case PLUM_COLOR_64: checkcolors(64); break;
+    case PLUM_COLOR_16: checkcolors(16); break;
+    default: checkcolors(32);
   }
+  #undef checkcolors
+  return false;
 }
 
-uint32_t get_true_color_depth (const struct plum_image * image) {
-  uint8_t red, green, blue, alpha;
+uint32_t get_color_depth (const struct plum_image * image) {
+  uint_fast32_t red, green, blue, alpha;
   switch (image -> color_format & PLUM_COLOR_MASK) {
     case PLUM_COLOR_32:
       red = green = blue = alpha = 8;
@@ -195,7 +170,7 @@ uint32_t get_true_color_depth (const struct plum_image * image) {
   }
   const struct plum_metadata * colorinfo = plum_find_metadata(image, PLUM_METADATA_COLOR_DEPTH);
   if (colorinfo) {
-    unsigned char * data = colorinfo -> data;
+    const unsigned char * data = colorinfo -> data;
     if (*data || data[1] || data[2]) {
       if (*data) red = *data;
       if (data[1]) green = data[1];
@@ -204,10 +179,15 @@ uint32_t get_true_color_depth (const struct plum_image * image) {
       red = green = blue = data[4];
     if (colorinfo -> size >= 4 && data[3]) alpha = data[3];
   }
-  if (!image_has_transparency(image)) alpha = 0;
   if (red > 16) red = 16;
   if (green > 16) green = 16;
   if (blue > 16) blue = 16;
   if (alpha > 16) alpha = 16;
-  return (uint32_t) red | ((uint32_t) green << 8) | ((uint32_t) blue << 16) | ((uint32_t) alpha << 24);
+  return red | (green << 8) | (blue << 16) | (alpha << 24);
+}
+
+uint32_t get_true_color_depth (const struct plum_image * image) {
+  uint32_t result = get_color_depth(image);
+  if (!image_has_transparency(image)) result &= 0xffffffu;
+  return result;
 }

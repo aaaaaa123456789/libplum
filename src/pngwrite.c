@@ -2,14 +2,15 @@
 
 void generate_PNG_data (struct context * context) {
   if (context -> source -> frames > 1) throw(context, PLUM_ERR_NO_MULTI_FRAME);
-  unsigned type = generate_PNG_header(context);
-  append_PNG_image_data(context, context -> source -> data, type, NULL);
+  unsigned type = generate_PNG_header(context, NULL);
+  append_PNG_image_data(context, context -> source -> data, type, NULL, NULL);
   output_PNG_chunk(context, 0x49454e44u, 0, NULL); // IEND
 }
 
 void generate_APNG_data (struct context * context) {
   if (context -> source -> frames > 0x40000000u) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
-  unsigned type = generate_PNG_header(context);
+  struct plum_rectangle * boundaries = get_frame_boundaries(context, false);
+  unsigned type = generate_PNG_header(context, boundaries);
   uint32_t loops = 1;
   const struct plum_metadata * metadata = plum_find_metadata(context -> source, PLUM_METADATA_LOOP_COUNT);
   if (metadata) {
@@ -36,29 +37,45 @@ void generate_APNG_data (struct context * context) {
     write_be32_unaligned(animation_data, context -> source -> frames);
     output_PNG_chunk(context, 0x6163544cu, sizeof animation_data, animation_data); // acTL
     uint_fast8_t disposal = disposal_count ? *disposals : 0;
-    append_APNG_frame_header(context, duration_count ? *durations : 0, disposal, last_disposal, &chunkID, &duration_remainder);
+    append_APNG_frame_header(context, duration_count ? *durations : 0, disposal, last_disposal, &chunkID, &duration_remainder, NULL);
     last_disposal = disposal;
   } else {
     write_be32_unaligned(animation_data, context -> source -> frames - 1);
     output_PNG_chunk(context, 0x6163544cu, sizeof animation_data, animation_data); // acTL
   }
-  append_PNG_image_data(context, context -> source -> data, type, NULL);
+  append_PNG_image_data(context, context -> source -> data, type, NULL, NULL);
   size_t framesize = (size_t) context -> source -> width * context -> source -> height;
   if (!context -> source -> palette) framesize = plum_color_buffer_size(framesize, context -> source -> color_format);
   for (uint_fast32_t frame = 1; frame < context -> source -> frames; frame ++) {
+    const struct plum_rectangle * rectangle = boundaries ? boundaries + frame : NULL;
     uint_fast8_t disposal = (disposal_count > frame) ? disposals[frame] : 0;
-    append_APNG_frame_header(context, (duration_count > frame) ? durations[frame] : 0, disposal, last_disposal, &chunkID, &duration_remainder);
+    append_APNG_frame_header(context, (duration_count > frame) ? durations[frame] : 0, disposal, last_disposal, &chunkID, &duration_remainder, rectangle);
     last_disposal = disposal;
-    append_PNG_image_data(context, context -> source -> data8 + framesize * frame, type, &chunkID);
+    append_PNG_image_data(context, context -> source -> data8 + framesize * frame, type, &chunkID, rectangle);
   }
+  ctxfree(context, boundaries);
   output_PNG_chunk(context, 0x49454e44u, 0, NULL); // IEND
 }
 
-unsigned generate_PNG_header (struct context * context) {
+unsigned generate_PNG_header (struct context * context, struct plum_rectangle * restrict boundaries) {
   // returns the selected type of image: 0, 1, 2, 3: paletted (1 << type bits), 4, 5: 8-bit RGB (without and with alpha), 6, 7: 16-bit RGB
+  // also updates the frame boundaries for APNG images (ensuring that frame 0 and frames with nonempty pixels outside their boundaries become full size)
   byteoutput(context, 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a);
+  bool transparency;
+  if (boundaries) {
+    *boundaries = (struct plum_rectangle) {.top = 0, .left = 0, .width = context -> source -> width, .height = context -> source -> height};
+    uint64_t empty = get_background_color(context -> source, 0);
+    if (context -> source -> color_format & PLUM_ALPHA_INVERT)
+      empty &= ~alpha_component_masks[context -> source -> color_format & PLUM_COLOR_MASK];
+    else
+      empty |= alpha_component_masks[context -> source -> color_format & PLUM_COLOR_MASK];
+    adjust_frame_boundaries(context -> source, boundaries, empty);
+    transparency = image_rectangles_have_transparency(context -> source, boundaries);
+  } else
+    transparency = image_has_transparency(context -> source);
+  uint32_t depth = get_color_depth(context -> source);
+  if (!transparency) depth &= 0xffffffu;
   uint_fast8_t type;
-  uint32_t depth = get_true_color_depth(context -> source);
   if (context -> source -> palette)
     if (context -> source -> max_palette_index < 2)
       type = 0;
@@ -69,11 +86,11 @@ unsigned generate_PNG_header (struct context * context) {
     else
       type = 3;
   else if (bit_depth_less_than(depth, 0x8080808u))
-    type = 4 + (depth >= 0x1000000u);
+    type = 4 + transparency;
   else
-    type = 6 + (depth >= 0x1000000u);
+    type = 6 + transparency;
   append_PNG_header_chunks(context, type, depth);
-  if (type < 4) append_PNG_palette_data(context, depth >= 0x1000000u);
+  if (type < 4) append_PNG_palette_data(context, transparency);
   const struct plum_metadata * background = plum_find_metadata(context -> source, PLUM_METADATA_BACKGROUND);
   if (background) append_PNG_background_chunk(context, background -> data, type);
   return type;
@@ -134,10 +151,11 @@ void append_PNG_background_chunk (struct context * context, const void * restric
   }
 }
 
-void append_PNG_image_data (struct context * context, const void * restrict data, unsigned type, uint32_t * restrict chunkID) {
+void append_PNG_image_data (struct context * context, const void * restrict data, unsigned type, uint32_t * restrict chunkID,
+                            const struct plum_rectangle * boundaries) {
   // chunkID counts animation data chunks (fcTL, fdAT); if chunkID is null, emit IDAT chunks instead
   size_t raw, size;
-  unsigned char * uncompressed = generate_PNG_frame_data(context, data, type, &raw);
+  unsigned char * uncompressed = generate_PNG_frame_data(context, data, type, &raw, boundaries);
   // if chunkID is non-null, compress_PNG_data will insert four bytes of padding before the compressed data so this function can write a chunk ID there
   unsigned char * compressed = compress_PNG_data(context, uncompressed, raw, chunkID ? 4 : 0, &size);
   ctxfree(context, uncompressed);
@@ -168,7 +186,7 @@ void append_PNG_image_data (struct context * context, const void * restrict data
 }
 
 void append_APNG_frame_header (struct context * context, uint64_t duration, uint8_t disposal, uint8_t previous, uint32_t * restrict chunkID,
-                               int64_t * restrict duration_remainder) {
+                               int64_t * restrict duration_remainder, const struct plum_rectangle * boundaries) {
   if (*chunkID > 0x7fffffffu) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
   uint32_t numerator = 0, denominator = 0;
   if (duration) {
@@ -189,9 +207,16 @@ void append_APNG_frame_header (struct context * context, uint64_t duration, uint
   }
   unsigned char data[26];
   write_be32_unaligned(data, (*chunkID) ++);
-  write_be32_unaligned(data + 4, context -> source -> width);
-  write_be32_unaligned(data + 8, context -> source -> height);
-  memset(data + 12, 0, 8);
+  if (boundaries) {
+    write_be32_unaligned(data + 4, boundaries -> width);
+    write_be32_unaligned(data + 8, boundaries -> height);
+    write_be32_unaligned(data + 12, boundaries -> left);
+    write_be32_unaligned(data + 16, boundaries -> top);
+  } else {
+    write_be32_unaligned(data + 4, context -> source -> width);
+    write_be32_unaligned(data + 8, context -> source -> height);
+    memset(data + 12, 0, 8);
+  }
   write_be16_unaligned(data + 20, numerator);
   write_be16_unaligned(data + 22, denominator);
   bytewrite(data + 24, disposal % PLUM_DISPOSAL_REPLACE, previous < PLUM_DISPOSAL_REPLACE);
@@ -206,21 +231,25 @@ void output_PNG_chunk (struct context * context, uint32_t type, uint32_t size, c
   write_be32_unaligned(node + size + 8, compute_PNG_CRC(node + 4, size + 4));
 }
 
-unsigned char * generate_PNG_frame_data (struct context * context, const void * restrict data, unsigned type, size_t * restrict size) {
+unsigned char * generate_PNG_frame_data (struct context * context, const void * restrict data, unsigned type, size_t * restrict size,
+                                         const struct plum_rectangle * boundaries) {
+  if (!boundaries) boundaries = &(const struct plum_rectangle) {.left = 0, .top = 0, .width = context -> source -> width, .height = context -> source -> height};
   size_t rowsize, pixelsize = bytes_per_channel_PNG[type];
   if (pixelsize)
-    rowsize = context -> source -> width * pixelsize + 1;
+    rowsize = boundaries -> width * pixelsize + 1;
   else
-    rowsize = (((size_t) context -> source -> width << type) + 7) / 8 + 1;
-  *size = rowsize * context -> source -> height;
-  if (*size > SIZE_MAX - 2 || rowsize > SIZE_MAX / 6 || *size / rowsize != context -> source -> height) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
+    rowsize = (((size_t) boundaries -> width << type) + 7) / 8 + 1;
+  *size = rowsize * boundaries -> height;
+  if (*size > SIZE_MAX - 2 || rowsize > SIZE_MAX / 6 || *size / rowsize != boundaries -> height) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
   // allocate and initialize two extra bytes so the compressor can operate safely
   unsigned char * result = ctxcalloc(context, *size + 2);
   unsigned char * rowbuffer = ctxcalloc(context, 6 * rowsize);
-  size_t rowoffset = (type < 4) ? context -> source -> width : plum_color_buffer_size(context -> source -> width, context -> source -> color_format);
-  for (uint_fast32_t row = 0; row < context -> source -> height; row ++) {
-    generate_PNG_row_data(context, (const unsigned char *) data + rowoffset * row, rowbuffer, type);
-    filter_PNG_rows(rowbuffer, rowbuffer + 5 * rowsize, context -> source -> width, type);
+  size_t rowoffset = (type >= 4) ? plum_color_buffer_size(context -> source -> width, context -> source -> color_format) : context -> source -> width;
+  size_t dataoffset = (type >= 4) ? plum_color_buffer_size(boundaries -> left, context -> source -> color_format) : boundaries -> left;
+  dataoffset += rowoffset * boundaries -> top;
+  for (uint_fast32_t row = 0; row < boundaries -> height; row ++) {
+    generate_PNG_row_data(context, (const unsigned char *) data + dataoffset + rowoffset * row, rowbuffer, boundaries -> width, type);
+    filter_PNG_rows(rowbuffer, rowbuffer + 5 * rowsize, boundaries -> width, type);
     memcpy(rowbuffer + 5 * rowsize, rowbuffer, rowsize);
     memcpy(result + rowsize * row, rowbuffer + rowsize * select_PNG_filtered_row(rowbuffer, rowsize), rowsize);
   }
@@ -228,13 +257,13 @@ unsigned char * generate_PNG_frame_data (struct context * context, const void * 
   return result;
 }
 
-void generate_PNG_row_data (struct context * context, const void * restrict data, unsigned char * restrict output, unsigned type) {
+void generate_PNG_row_data (struct context * context, const void * restrict data, unsigned char * restrict output, size_t width, unsigned type) {
   *(output ++) = 0;
   switch (type) {
     case 0: case 1: case 2: {
       const unsigned char * indexes = data;
       uint_fast8_t dataword = 0, bits = 0, pixelbits = 1 << type;
-      for (uint_fast32_t p = 0; p < context -> source -> width; p ++) {
+      for (uint_fast32_t p = 0; p < width; p ++) {
         dataword = (dataword << pixelbits) | *(indexes ++);
         bits += pixelbits;
         if (bits == 8) {
@@ -245,26 +274,26 @@ void generate_PNG_row_data (struct context * context, const void * restrict data
       if (bits) *output = dataword << (8 - bits);
     } break;
     case 3:
-      memcpy(output, data, context -> source -> width);
+      memcpy(output, data, width);
       break;
     case 4: case 5: {
-      uint32_t * pixels = ctxmalloc(context, sizeof *pixels * context -> source -> width);
-      plum_convert_colors(pixels, data, context -> source -> width, PLUM_COLOR_32 | PLUM_ALPHA_INVERT, context -> source -> color_format);
+      uint32_t * pixels = ctxmalloc(context, sizeof *pixels * width);
+      plum_convert_colors(pixels, data, width, PLUM_COLOR_32 | PLUM_ALPHA_INVERT, context -> source -> color_format);
       if (type == 5)
-        for (uint_fast32_t p = 0; p < context -> source -> width; p ++) write_le32_unaligned(output + 4 * p, pixels[p]);
+        for (uint_fast32_t p = 0; p < width; p ++) write_le32_unaligned(output + 4 * p, pixels[p]);
       else
-        for (uint_fast32_t p = 0; p < context -> source -> width; p ++) output += byteappend(output, pixels[p], pixels[p] >> 8, pixels[p] >> 16);
+        for (uint_fast32_t p = 0; p < width; p ++) output += byteappend(output, pixels[p], pixels[p] >> 8, pixels[p] >> 16);
       ctxfree(context, pixels);
     } break;
     case 6: case 7: {
-      uint64_t * pixels = ctxmalloc(context, sizeof *pixels * context -> source -> width);
-      plum_convert_colors(pixels, data, context -> source -> width, PLUM_COLOR_64 | PLUM_ALPHA_INVERT, context -> source -> color_format);
+      uint64_t * pixels = ctxmalloc(context, sizeof *pixels * width);
+      plum_convert_colors(pixels, data, width, PLUM_COLOR_64 | PLUM_ALPHA_INVERT, context -> source -> color_format);
       if (type == 7)
-        for (uint_fast32_t p = 0; p < context -> source -> width; p ++)
+        for (uint_fast32_t p = 0; p < width; p ++)
           output += byteappend(output, pixels[p] >> 8, pixels[p], pixels[p] >> 24, pixels[p] >> 16, pixels[p] >> 40, pixels[p] >> 32,
                                pixels[p] >> 56, pixels[p] >> 48);
       else
-        for (uint_fast32_t p = 0; p < context -> source -> width; p ++)
+        for (uint_fast32_t p = 0; p < width; p ++)
           output += byteappend(output, pixels[p] >> 8, pixels[p], pixels[p] >> 24, pixels[p] >> 16, pixels[p] >> 40, pixels[p] >> 32);
       ctxfree(context, pixels);
     }

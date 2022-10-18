@@ -55,11 +55,16 @@ internal uint32_t compute_Adler32_checksum(const unsigned char *, size_t);
 
 // color.c
 internal bool image_has_transparency(const struct plum_image *);
+internal uint32_t get_color_depth(const struct plum_image *);
 internal uint32_t get_true_color_depth(const struct plum_image *);
+
+// framebounds.c
+internal struct plum_rectangle * get_frame_boundaries(struct context *, bool);
+internal void adjust_frame_boundaries(const struct plum_image *, struct plum_rectangle * restrict, uint64_t);
+internal bool image_rectangles_have_transparency(const struct plum_image *, const struct plum_rectangle *);
 
 // framebuffer.c
 internal void validate_image_size(struct context *, size_t);
-internal struct plum_rectangle * get_frame_boundaries(struct context *, bool);
 internal void allocate_framebuffers(struct context *, unsigned, bool);
 internal void write_framebuffer_to_image(struct plum_image *, const uint64_t * restrict, uint32_t, unsigned);
 internal void write_palette_framebuffer_to_image(struct context *, const uint8_t * restrict, const uint64_t * restrict, uint32_t, unsigned, uint8_t);
@@ -304,15 +309,15 @@ internal void remove_PNG_filter(struct context *, unsigned char * restrict, uint
 // pngwrite.c
 internal void generate_PNG_data(struct context *);
 internal void generate_APNG_data(struct context *);
-internal unsigned generate_PNG_header(struct context *);
+internal unsigned generate_PNG_header(struct context *, struct plum_rectangle * restrict);
 internal void append_PNG_header_chunks(struct context *, unsigned, uint32_t);
 internal void append_PNG_palette_data(struct context *, bool);
 internal void append_PNG_background_chunk(struct context *, const void * restrict, unsigned);
-internal void append_PNG_image_data(struct context *, const void * restrict, unsigned, uint32_t * restrict);
-internal void append_APNG_frame_header(struct context *, uint64_t, uint8_t, uint8_t, uint32_t * restrict, int64_t * restrict);
+internal void append_PNG_image_data(struct context *, const void * restrict, unsigned, uint32_t * restrict, const struct plum_rectangle *);
+internal void append_APNG_frame_header(struct context *, uint64_t, uint8_t, uint8_t, uint32_t * restrict, int64_t * restrict, const struct plum_rectangle *);
 internal void output_PNG_chunk(struct context *, uint32_t, uint32_t, const void * restrict);
-internal unsigned char * generate_PNG_frame_data(struct context *, const void * restrict, unsigned, size_t * restrict);
-internal void generate_PNG_row_data(struct context *, const void * restrict, unsigned char * restrict, unsigned);
+internal unsigned char * generate_PNG_frame_data(struct context *, const void * restrict, unsigned, size_t * restrict, const struct plum_rectangle *);
+internal void generate_PNG_row_data(struct context *, const void * restrict, unsigned char * restrict, size_t, unsigned);
 internal void filter_PNG_rows(unsigned char * restrict, const unsigned char * restrict, size_t, unsigned);
 internal unsigned char select_PNG_filtered_row(const unsigned char *, size_t);
 
