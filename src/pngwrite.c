@@ -64,12 +64,7 @@ unsigned generate_PNG_header (struct context * context, struct plum_rectangle * 
   bool transparency;
   if (boundaries) {
     *boundaries = (struct plum_rectangle) {.top = 0, .left = 0, .width = context -> source -> width, .height = context -> source -> height};
-    uint64_t empty = get_background_color(context -> source, 0);
-    if (context -> source -> color_format & PLUM_ALPHA_INVERT)
-      empty &= ~alpha_component_masks[context -> source -> color_format & PLUM_COLOR_MASK];
-    else
-      empty |= alpha_component_masks[context -> source -> color_format & PLUM_COLOR_MASK];
-    adjust_frame_boundaries(context -> source, boundaries, empty);
+    adjust_frame_boundaries(context -> source, boundaries);
     transparency = image_rectangles_have_transparency(context -> source, boundaries);
   } else
     transparency = image_has_transparency(context -> source);

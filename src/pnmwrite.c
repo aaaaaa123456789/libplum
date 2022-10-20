@@ -1,7 +1,22 @@
 #include "proto.h"
 
 void generate_PNM_data (struct context * context) {
-  uint32_t depth = get_true_color_depth(context -> source);
+  struct plum_rectangle * boundaries = get_frame_boundaries(context, true);
+  uint32_t depth = get_color_depth(context -> source);
+  bool transparency;
+  if (boundaries) {
+    adjust_frame_boundaries(context -> source, boundaries);
+    bool extendwidth = true, extendheight = true;
+    for (uint_fast32_t frame = 0; (extendwidth || extendheight) && frame < context -> source -> frames; frame ++) {
+      if (boundaries[frame].width == context -> source -> width) extendwidth = false;
+      if (boundaries[frame].height == context -> source -> height) extendheight = false;
+    }
+    if (extendwidth) boundaries -> width = context -> source -> width;
+    if (extendheight) boundaries -> height = context -> source -> height;
+    transparency = image_rectangles_have_transparency(context -> source, boundaries);
+  } else
+    transparency = image_has_transparency(context -> source);
+  if (!transparency) depth &= 0xffffffu;
   uint_fast8_t max = 0;
   for (uint_fast8_t p = 0; p < 32; p += 8) if (((depth >> p) & 0xff) > max) max = (depth >> p) & 0xff;
   uint64_t * buffer;
@@ -11,29 +26,31 @@ void generate_PNM_data (struct context * context) {
                         context -> source -> color_format);
   } else
     buffer = ctxmalloc(context, sizeof *buffer * context -> source -> width * context -> source -> height);
-  if (depth < 0x1000000u)
-    generate_PPM_data(context, NULL, max, buffer);
-  else if (context -> source -> frames == 1)
-    generate_PAM_data(context, max, buffer);
-  else {
-    uint32_t * sizes = get_true_PNM_frame_sizes(context);
-    if (sizes) {
-      generate_PPM_data(context, sizes, max, buffer);
-      ctxfree(context, sizes);
-    } else
-      generate_PAM_data(context, max, buffer);
+  uint32_t * sizes = NULL;
+  if (boundaries) {
+    sizes = ctxmalloc(context, sizeof *sizes * 2 * context -> source -> frames);
+    for (size_t frame = 0; frame < context -> source -> frames; frame ++) {
+      sizes[frame * 2] = boundaries[frame].width;
+      sizes[frame * 2 + 1] = boundaries[frame].height;
+    }
+    ctxfree(context, boundaries);
+  } else if (transparency && context -> source -> frames > 1) {
+    sizes = get_true_PNM_frame_sizes(context);
+    transparency = !sizes;
   }
+  if (transparency)
+    generate_PAM_data(context, sizes, max, buffer);
+  else
+    generate_PPM_data(context, sizes, max, buffer);
+  ctxfree(context, sizes);
   ctxfree(context, buffer);
 }
 
 uint32_t * get_true_PNM_frame_sizes (struct context * context) {
   // returns width, height pairs for each frame if the only transparency in those frames is an empty border on the bottom and right edges
   unsigned char format = context -> source -> color_format & PLUM_COLOR_MASK;
-  uint64_t mask = alpha_component_masks[format], check = 0, color = get_background_color(context -> source, 0) & ~mask;
-  if (context -> source -> color_format & PLUM_ALPHA_INVERT)
-    check = mask;
-  else
-    color |= mask;
+  uint64_t mask = alpha_component_masks[format], check = 0, color = get_empty_color(context -> source);
+  if (context -> source -> color_format & PLUM_ALPHA_INVERT) check = mask;
   uint32_t * result = ctxmalloc(context, sizeof *result * 2 * context -> source -> frames);
   size_t width, height, offset = (size_t) context -> source -> width * context -> source -> height;
   if (context -> source -> palette) {
@@ -128,21 +145,22 @@ void generate_PPM_header (struct context * context, uint32_t width, uint32_t hei
   context -> output -> size = offset;
 }
 
-void generate_PAM_data (struct context * context, unsigned bitdepth, uint64_t * restrict buffer) {
+void generate_PAM_data (struct context * context, const uint32_t * restrict sizes, unsigned bitdepth, uint64_t * restrict buffer) {
   size_t size = (size_t) context -> source -> width * context -> source -> height, offset = plum_color_buffer_size(size, context -> source -> color_format);
   for (uint_fast32_t frame = 0; frame < context -> source -> frames; frame ++) {
-    generate_PAM_header(context, bitdepth);
+    size_t width = sizes ? sizes[frame * 2] : context -> source -> width;
+    size_t height = sizes ? sizes[frame * 2 + 1] : context -> source -> height;
+    generate_PAM_header(context, width, height, bitdepth);
     if (context -> source -> palette)
-      generate_PNM_frame_data_from_palette(context, context -> source -> data8 + size * frame, buffer, context -> source -> width, context -> source -> height,
-                                           bitdepth, true);
+      generate_PNM_frame_data_from_palette(context, context -> source -> data8 + size * frame, buffer, width, height, bitdepth, true);
     else {
       plum_convert_colors(buffer, context -> source -> data8 + offset * frame, size, PLUM_COLOR_64 | PLUM_ALPHA_INVERT, context -> source -> color_format);
-      generate_PNM_frame_data(context, buffer, context -> source -> width, context -> source -> height, bitdepth, true);
+      generate_PNM_frame_data(context, buffer, width, height, bitdepth, true);
     }
   }
 }
 
-void generate_PAM_header (struct context * context, unsigned bitdepth) {
+void generate_PAM_header (struct context * context, uint32_t width, uint32_t height, unsigned bitdepth) {
   unsigned char * node = append_output_node(context, 96);
   size_t offset = byteappend(node,
                              0x50, 0x37, 0x0a, // P7<newline>
@@ -150,9 +168,9 @@ void generate_PAM_header (struct context * context, unsigned bitdepth) {
                              0x52, 0x47, 0x42, 0x5f, 0x41, 0x4c, 0x50, 0x48, 0x41, 0x0a, // RGB_ALPHA<newline>
                              0x57, 0x49, 0x44, 0x54, 0x48, 0x20 // WIDTH<space>
                             );
-  offset += write_PNM_number(node + offset, context -> source -> width);
+  offset += write_PNM_number(node + offset, width);
   offset += byteappend(node + offset, 0x0a, 0x48, 0x45, 0x49, 0x47, 0x48, 0x54, 0x20); // <newline>HEIGHT<space>
-  offset += write_PNM_number(node + offset, context -> source -> height);
+  offset += write_PNM_number(node + offset, height);
   offset += byteappend(node + offset, 0x0a, 0x4d, 0x41, 0x58, 0x56, 0x41, 0x4c, 0x20); // <newline>MAXVAL<space>
   offset += write_PNM_number(node + offset, ((uint32_t) 1 << bitdepth) - 1);
   offset += byteappend(node + offset,

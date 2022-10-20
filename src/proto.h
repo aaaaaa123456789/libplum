@@ -60,7 +60,7 @@ internal uint32_t get_true_color_depth(const struct plum_image *);
 
 // framebounds.c
 internal struct plum_rectangle * get_frame_boundaries(struct context *, bool);
-internal void adjust_frame_boundaries(const struct plum_image *, struct plum_rectangle * restrict, uint64_t);
+internal void adjust_frame_boundaries(const struct plum_image *, struct plum_rectangle * restrict);
 internal bool image_rectangles_have_transparency(const struct plum_image *, const struct plum_rectangle *);
 
 // framebuffer.c
@@ -241,7 +241,7 @@ internal void add_background_color_metadata(struct context *, uint64_t, unsigned
 internal void add_loop_count_metadata(struct context *, uint32_t);
 internal void add_animation_metadata(struct context *, uint64_t ** restrict, uint8_t ** restrict);
 internal struct plum_rectangle * add_frame_area_metadata(struct context *);
-internal uint64_t get_background_color(const struct plum_image *, uint64_t);
+internal uint64_t get_empty_color(const struct plum_image *);
 
 // misc.c
 internal int compare64(const void *, const void *);
@@ -338,8 +338,8 @@ internal void generate_PNM_data(struct context *);
 internal uint32_t * get_true_PNM_frame_sizes(struct context *);
 internal void generate_PPM_data(struct context *, const uint32_t * restrict, unsigned, uint64_t * restrict);
 internal void generate_PPM_header(struct context *, uint32_t, uint32_t, unsigned);
-internal void generate_PAM_data(struct context *, unsigned, uint64_t * restrict);
-internal void generate_PAM_header(struct context *, unsigned);
+internal void generate_PAM_data(struct context *, const uint32_t * restrict, unsigned, uint64_t * restrict);
+internal void generate_PAM_header(struct context *, uint32_t, uint32_t, unsigned);
 internal size_t write_PNM_number(unsigned char * restrict, uint32_t);
 internal void generate_PNM_frame_data(struct context *, const uint64_t *, uint32_t, uint32_t, unsigned, bool);
 internal void generate_PNM_frame_data_from_palette(struct context *, const uint8_t *, const uint64_t *, uint32_t, uint32_t, unsigned, bool);

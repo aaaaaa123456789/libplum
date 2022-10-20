@@ -82,13 +82,16 @@ struct plum_rectangle * add_frame_area_metadata (struct context * context) {
   return metadata -> data;
 }
 
-uint64_t get_background_color (const struct plum_image * image, uint64_t fallback) {
+uint64_t get_empty_color (const struct plum_image * image) {
+  uint64_t result, mask = alpha_component_masks[image -> color_format & PLUM_COLOR_MASK];
   const struct plum_metadata * background = plum_find_metadata(image, PLUM_METADATA_BACKGROUND);
-  if (!background) return fallback;
-  if ((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_64)
-    return *(const uint64_t *) background -> data;
+  if (!background)
+    result = 0;
+  else if ((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_64)
+    result = *(const uint64_t *) background -> data;
   else if ((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_16)
-    return *(const uint16_t *) background -> data;
+    result = *(const uint16_t *) background -> data;
   else
-    return *(const uint32_t *) background -> data;
+    result = *(const uint32_t *) background -> data;
+  return (image -> color_format & PLUM_ALPHA_INVERT) ? result & ~mask : result | mask;
 }

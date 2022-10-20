@@ -19,7 +19,8 @@ struct plum_rectangle * get_frame_boundaries (struct context * context, bool anc
   return result;
 }
 
-void adjust_frame_boundaries (const struct plum_image * image, struct plum_rectangle * restrict boundaries, uint64_t empty_color) {
+void adjust_frame_boundaries (const struct plum_image * image, struct plum_rectangle * restrict boundaries) {
+  uint64_t empty_color = get_empty_color(image);
   if (image -> palette) {
     bool empty[256];
     switch (image -> color_format & PLUM_COLOR_MASK) {
