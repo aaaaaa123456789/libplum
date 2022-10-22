@@ -101,6 +101,7 @@ Excess values will be ignored; missing values are assumed to be rectangles cover
 If the node is absent, the [`plum_store_image`][store] function will assume frames' effective regions aren't defined;
 this is _not_ the same as defining them to their default values, as it will allow that function to recompute them if
 needed.
+(An empty node (i.e., with a size of zero) may be used to force the library to treat all frames as full-sized.)
 
 ## Animation metadata types
 

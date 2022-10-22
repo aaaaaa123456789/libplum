@@ -91,7 +91,7 @@ When generating a file, [indexed-color mode][indexed] images will use a global p
 All other images will use per-frame palettes, and generating them will fail with [`PLUM_ERR_TOO_MANY_COLORS`][errors]
 if a frame uses more than 256 distinct colors.
 
-True frame dimensions will always be loaded into [`PLUM_METADATA_FRAME_AREA`][metadata-constants] metadata nodes when
+True frame dimensions will always be loaded into a [`PLUM_METADATA_FRAME_AREA`][metadata-constants] metadata node when
 a file is loaded.
 When generating a file, if the image contains such a metadata node, then for each frame, if the area outside the
 defined region is made out of [empty pixels](#definitions), that frame will be encoded with the specified dimensions.
@@ -194,14 +194,14 @@ The maximum loop count supported in a [`PLUM_METADATA_LOOP_COUNT`][metadata-cons
 higher values will be treated as 0 (i.e., infinity) when generating a file.
 Animations lacking this metadata node will have a loop count of 1.
 
-True frame dimensions will always be loaded into [`PLUM_METADATA_FRAME_AREA`][metadata-constants] metadata nodes when
+True frame dimensions will always be loaded into a [`PLUM_METADATA_FRAME_AREA`][metadata-constants] metadata node when
 a file is loaded.
 When generating a file, if the image contains such a metadata node, then for each frame other than the first, if the
 area outside the defined region is made out of [empty pixels](#definitions), that frame will be encoded with the
 specified dimensions.
 Otherwise (i.e., if the metadata node is absent, if the region outside the defined area does not contain only empty
-pixels, or if the frame in question is the first frame of the image), the corresponding frames will be encoded as
-full-size frames.
+pixels, or if the frame in question is the first frame of the image), the corresponding frame will be encoded as a
+full-size frame.
 If reducing frames this way removes all transparent pixels from the image, the image will be considered to not use
 transparency for the purposes of selecting the mode to use.
 
@@ -294,14 +294,14 @@ are adjusted as follows:
    corner in place.
    In practice, this means setting `width` to `width + left` and `height` to `height + top`, while resetting `top` and
    `left` to zero.
-   (Note that these changes, as well as all subsequent changes, are applied on a copy of the frame area data.
+   (Note that these changes, as well as all subsequent changes, are applied on a copy of the frame area metadata.
    The data in the image is not modified.)
 2. Since there is no separate way to specify the canvas size in a PNM file, if none of the frames has the same width
    as the image, the first frame's width is set to the image's width.
    The same is done for the height.
 3. For each frame, if the frame only contains [empty pixels](#definitions) outside of the defined region, the frame
    area is considered valid.
-   Otherwise, the frame dimensions for that frame are set to the image's dimensions.
+   Otherwise, the frame dimensions for that frame are reset to the image's dimensions.
 
 If the resulting image doesn't use transparency in the defined regions, the library will generate a binary PPM file.
 Otherwise, it will generate a PAM file.
