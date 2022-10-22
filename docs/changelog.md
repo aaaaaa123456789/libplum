@@ -4,6 +4,9 @@ Note: releases are listed from latest to oldest.
 
 ## Version 1.2 (in development)
 
+- Added `PLUM_METADATA_FRAME_AREA` metadata node when reading GIF, APNG and PNM files, preserving the sizes of the
+  frames read in
+- Updated image generators for GIF, APNG and PNM formats, to handle `PLUM_METADATA_FRAME_AREA` metadata when possible
 - Fixed alignment errors when `alignof(jmp_buf) > alignof(max_align_t)`
 - Fixed undefined behavior when reading PNG files due to array index overflow after signed to unsigned conversion
 - Fixed memory leak on `plum_realloc` failure

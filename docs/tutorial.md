@@ -572,6 +572,9 @@ Metadata nodes defined by the library are:
 - [`PLUM_METADATA_BACKGROUND`][metadata-constants]: contains a single color value indicating the image's background
   color, i.e., the color against which it should be presented.
   (Note that this node, if present, will always contain a color, even for [indexed-color mode][indexed] images.)
+- [`PLUM_METADATA_FRAME_AREA`][metadata-constants]: defines the effective area for each frame in a multi-frame image.
+  This will be determined when loading such an image; when storing one, this node will allow the library to store
+  reduced frames if appropriate.
 - [`PLUM_METADATA_LOOP_COUNT`][metadata-constants]: indicates how many times an animation will loop; defaults to 1 if
   not present.
 - [`PLUM_METADATA_FRAME_DURATION`][metadata-constants]: indicates the duration of each frame in an animation, in

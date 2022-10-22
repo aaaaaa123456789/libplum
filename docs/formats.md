@@ -90,8 +90,14 @@ In all other cases, the image will be loaded as if it didn't have a palette.
 When generating a file, [indexed-color mode][indexed] images will use a global palette.
 All other images will use per-frame palettes, and generating them will fail with [`PLUM_ERR_TOO_MANY_COLORS`][errors]
 if a frame uses more than 256 distinct colors.
-For an image using per-frame palettes, if any frame of the image has a border made of [empty pixels](#definitions),
-that frame will be encoded with reduced dimensions.
+
+True frame dimensions will always be loaded into [`PLUM_METADATA_FRAME_AREA`][metadata-constants] metadata nodes when
+a file is loaded.
+When generating a file, if the image contains such a metadata node, then for each frame, if the area outside the
+defined region is made out of [empty pixels](#definitions), that frame will be encoded with the specified dimensions.
+Otherwise (i.e., if the metadata node is absent or if the region outside the defined area does not contain only empty
+pixels), if the image uses per-frame palettes, any frame of the image which has some border made of
+[empty pixels](#definitions) will be encoded with reduced dimensions.
 
 The library will ignore the image's version number (i.e., it will parse `GIF87a` and `GIF89a` files identically) and
 will always generate `GIF89a` files.
@@ -155,7 +161,7 @@ APNG (animated PNG) files are fully supported, but treated as a format of their 
 
 APNG is a format that is superficially compatible with [PNG](#png) (i.e., it generates files that can be loaded by a
 PNG loader without errors), but not actually conformant with the PNG specification, since it stores critical
-information (namely, animation data) in ancillary chunks.
+information (namely, animation frames) in ancillary chunks.
 This may cause any PNG editor that is unaware of APNG (such as `pngcrush`, at least at the time of writing) to destroy
 all animation data when processing such a file.
 Due to this incompatibility, the library treats APNG as an independent format, thus ensuring that it will never
@@ -187,6 +193,17 @@ However, a duration of 0 will never be adjusted to compensate for cumulative rou
 The maximum loop count supported in a [`PLUM_METADATA_LOOP_COUNT`][metadata-constants] metadata node is `0x7fffffff`;
 higher values will be treated as 0 (i.e., infinity) when generating a file.
 Animations lacking this metadata node will have a loop count of 1.
+
+True frame dimensions will always be loaded into [`PLUM_METADATA_FRAME_AREA`][metadata-constants] metadata nodes when
+a file is loaded.
+When generating a file, if the image contains such a metadata node, then for each frame other than the first, if the
+area outside the defined region is made out of [empty pixels](#definitions), that frame will be encoded with the
+specified dimensions.
+Otherwise (i.e., if the metadata node is absent, if the region outside the defined area does not contain only empty
+pixels, or if the frame in question is the first frame of the image), the corresponding frames will be encoded as
+full-size frames.
+If reducing frames this way removes all transparent pixels from the image, the image will be considered to not use
+transparency for the purposes of selecting the mode to use.
 
 ## JPEG
 
@@ -253,33 +270,60 @@ However, the library does accept concatenating a text-based frame after any numb
 When loading a multi-frame image, if the frames are of different sizes, the image's width and height will be set to
 the maximal values for each dimension across all images.
 Excess pixels below and to the right of each frame's actual dimensions will be set to fully-transparent black.
+The [`PLUM_METADATA_FRAME_AREA`][metadata-constants] metadata node will reflect the true dimensions of each frame in
+the image; since all frames begin at the top left corner of the image, the `top` and `left` members of the
+corresponding [`struct plum_rectangle`][rectangle] elements will be set to zero.
 
-When storing an image, if the image has any transparency (i.e., if the alpha component's
-[true bit depth](#definitions) is not zero), it will generate a PAM image; otherwise, it will generate a binary PPM
-image.
+When storing an image, the library may generate a binary PPM image or a PAM image.
+This will depend on whether the image has any transparency and on whether it contains a
+[`PLUM_METADATA_FRAME_AREA`][metadata-constants] metadata node.
 (The library will never generate PBM, PGM, or text-based PPM images.)
-If the only transparency in the image is an [empty border](#definitions) below and to the right of each frame, it will
-generate a binary PPM file instead of a PAM file, since PPM is more supported than PAM.
-The exact conditions for this to happen are:
+This will also determine the dimensions of the generated image frames.
 
-- The image has at least two frames.
-  (This condition is redundant, since it is impossible for a single-frame image to meet the conditions below.
-  However, it is checked first, for simplicity.)
+If the image has only one frame, the generated dimensions will always match the image dimensions.
+If that frame uses transparency (i.e., the alpha channel's [true bit depth](#definitions) is not zero), the library
+will generate a PAM file; otherwise, it will generate a binary PPM file.
+The [`PLUM_METADATA_FRAME_AREA`][metadata-constants] metadata node has no effect in this case.
+(Note that this isn't truly a special case: it results from applying the rules below for multi-frame images.
+However, it is highlighted for simplicity.)
+
+If a multi-frame image has a [`PLUM_METADATA_FRAME_AREA`][metadata-constants] metadata node, then the frame dimensions
+are adjusted as follows:
+
+1. For each frame, the top left corner of the frame area is placed at the origin, while keeping the bottom right
+   corner in place.
+   In practice, this means setting `width` to `width + left` and `height` to `height + top`, while resetting `top` and
+   `left` to zero.
+   (Note that these changes, as well as all subsequent changes, are applied on a copy of the frame area data.
+   The data in the image is not modified.)
+2. Since there is no separate way to specify the canvas size in a PNM file, if none of the frames has the same width
+   as the image, the first frame's width is set to the image's width.
+   The same is done for the height.
+3. For each frame, if the frame only contains [empty pixels](#definitions) outside of the defined region, the frame
+   area is considered valid.
+   Otherwise, the frame dimensions for that frame are set to the image's dimensions.
+
+If the resulting image doesn't use transparency in the defined regions, the library will generate a binary PPM file.
+Otherwise, it will generate a PAM file.
+
+If a multi-frame image does _not_ have a [`PLUM_METADATA_FRAME_AREA`][metadata-constants] metadata node, then the
+frame dimensions are by default equal to the size of the image.
+The resulting file will be a PAM file if the image uses transparency in any frame (i.e., if the alpha channel's
+[true bit depth](#definitions) is not zero), or a binary PPM file otherwise.
+However, if the image uses transparency, the library will attempt to remove that transparency if possible.
+If **all** of the following conditions are true, the frame dimensions for each frame will be adjusted so that they
+exclude the [empty borders](#definition) to the right and the bottom of each frame, causing a binary PPM file to be
+generated instead of a PAM file:
+
 - The only transparent pixels in each frame are [empty pixels](#definitions) to the right and at the bottom of the
   image.
 - Those [empty borders](#definitions) are strips that contain nothing but [empty pixels](#definitions); all other
   pixels in each frame are fully opaque.
-- At least one frame has a true width equal to the image's width.
-  (The true width of a frame is the width of the image minus the width of the [empty border](#definitions) to the
-  right of it.)
-  In other words, at least one frame has no [empty border](#definitions) to its right.
-- Likewise, at least one frame has a true height equal to the image's height, having no [empty border](#definitions)
-  at the bottom.
+- At least one frame would have a width equal to the image's width, and at least one frame would have a height equal
+  to the image's height.
 - The top left corner of each frame is an opaque pixel.
-  (In other words, no frame has a true width or true height of zero.)
+  (In other words, no frame would have a width or height of zero.)
 
-If all of these conditions are met, the generated file will be a binary PPM file, where each frame's dimensions will
-be set to its true width and height as defined above.
 These conditions are mostly intended to ensure that multi-frame images that were loaded from PBM, PGM or PPM files can
 be stored as PPM files instead of PAM files, since the transparent borders in those cases are artificially introduced
 by the library to pad all frames to a common width and height.
@@ -313,3 +357,4 @@ Up: [README](README.md)
 [image-types]: constants.md#image-types
 [indexed]: colors.md#indexed-color-mode
 [metadata-constants]: constants.md#metadata-node-types
+[rectangle]: structs.md#plum_rectangle

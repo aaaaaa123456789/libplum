@@ -18,6 +18,7 @@ available.)
 - [`plum_metadata`](#plum_metadata)
 - [`plum_buffer`](#plum_buffer)
 - [`plum_callback`](#plum_callback)
+- [`plum_rectangle`](#plum_rectangle)
 
 ## `plum_image`
 
@@ -173,6 +174,28 @@ For more information, see the [Data callbacks][callbacks] section.
 - `userdata`: value that will be passed to the callback as its first argument.
 
 **Warning:** in C++ mode, the callback function must be marked `extern "C"` and it must not throw any exceptions.
+
+## `plum_rectangle`
+
+``` c
+struct plum_rectangle {
+  uint32_t left;
+  uint32_t top;
+  uint32_t width;
+  uint32_t height;
+};
+```
+
+This structure is used for the [`PLUM_METADATA_FRAME_AREA`][metadata-constants] metadata node, which contains an array
+of them.
+The structure describes a rectangular region of an image, used to determine the region of a frame that is actually in
+use.
+For more information, see the [Metadata][metadata] page.
+
+The `left` and `top` members of the structure determine the top-left corner of the rectangular region, and the `width`
+and `height` members determine the size of the rectangle; `width` and `height` cannot be zero, and the rectangle must
+be fully contained within the corresponding image.
+The bottom-right corner of the rectangle can be calculated as (`left + width - 1`, `top + height - 1`).
 
 * * *
 

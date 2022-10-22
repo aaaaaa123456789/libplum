@@ -84,6 +84,8 @@ These constants are used to specify the type of a metadata node.
 - `PLUM_METADATA_FRAME_DURATION`: node containing the duration of each frame in an animation.
 - `PLUM_METADATA_FRAME_DISPOSAL`: node indicating the action that must be taken on an animation's frame buffer after
   an animation frame has been rendered and displayed for the required amount of time.
+- `PLUM_METADATA_FRAME_AREA`: node containing the true dimensions and coordinates of the frames that comprise a
+  multi-frame file.
 
 For more information, see the [Metadata][metadata] page.
 

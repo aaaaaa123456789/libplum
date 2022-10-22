@@ -9,6 +9,7 @@ stored as metadata is minimal, only representing data that image formats may nee
 - [Generic metadata types](#generic-metadata-types)
     - [`PLUM_METADATA_COLOR_DEPTH`](#plum_metadata_color_depth)
     - [`PLUM_METADATA_BACKGROUND`](#plum_metadata_background)
+    - [`PLUM_METADATA_FRAME_AREA`](#plum_metadata_frame_area)
 - [Animation metadata types](#animation-metadata-types)
     - [`PLUM_METADATA_LOOP_COUNT`](#plum_metadata_loop_count)
     - [`PLUM_METADATA_FRAME_DURATION`](#plum_metadata_frame_duration)
@@ -82,6 +83,25 @@ the size must be the size of that value.
 (Note that this is a color value, not a color index; even for images using [indexed-color mode][indexed], the
 background color must be a color value, and not a `uint8_t` palette index.)
 
+### `PLUM_METADATA_FRAME_AREA`
+
+This metadata node indicates the effective area of each frame in a multi-frame image.
+While this node is valid for a single-frame image, its main purpose is specifying the region where a subsequent frame
+(typically an animation frame) is defined; if the image is animated, pixels outside the defined region will not be
+updated when the corresponding frame is rendered.
+
+This node contains an array of [`struct plum_rectangle`][rectangle] values, one per frame; its size must be a multiple
+of `sizeof(struct plum_rectangle)`.
+
+The [`plum_load_image`][load] function will load this metadata node for the formats that define it. Likewise, the
+[`plum_store_image`][store] function will use this metadata node for those formats to determine the true sizes of the
+frames to be stored as long as the pixels outside of the defined frame sizes are [empty pixels][format-definitions].
+Excess values will be ignored; missing values are assumed to be rectangles covering the entire image (i.e., `top` and
+`left` set to 0 and `width` and `height` set to the image's dimensions).
+If the node is absent, the [`plum_store_image`][store] function will assume frames' effective regions aren't defined;
+this is _not_ the same as defining them to their default values, as it will allow that function to recompute them if
+needed.
+
 ## Animation metadata types
 
 These metadata types describe animations.
@@ -149,8 +169,10 @@ Up: [README](README.md)
 [constants]: constants.md#metadata-node-types
 [copy]: functions.md#plum_copy_image
 [disposal-constants]: constants.md#frame-disposal-methods
+[format-definitions]: formats.md#definitions
 [formats]: colors.md
 [indexed]: colors.md#indexed-color-mode
 [load]: functions.md#plum_load_image
+[rectangle]: structs.md#plum_rectangle
 [store]: functions.md#plum_store_image
 [struct]: structs.md#plum_metadata
