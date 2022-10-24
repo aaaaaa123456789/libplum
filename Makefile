@@ -12,7 +12,7 @@ ifneq (,$(findstring gcc,$(CC)))
 	              -Wno-analyzer-use-of-uninitialized-value
 else
 ifneq (,$(findstring clang, $(CC)))
-	DEBUGFLAGS += -Wno-keyword-macro -fsanitize=undefined
+	DEBUGFLAGS += -Wno-keyword-macro -fsanitize=undefined -Wno-tautological-constant-out-of-range-compare
 endif
 endif
 
