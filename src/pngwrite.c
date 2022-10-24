@@ -228,23 +228,27 @@ void output_PNG_chunk (struct context * context, uint32_t type, uint32_t size, c
 
 unsigned char * generate_PNG_frame_data (struct context * context, const void * restrict data, unsigned type, size_t * restrict size,
                                          const struct plum_rectangle * boundaries) {
-  if (!boundaries) boundaries = &(const struct plum_rectangle) {.left = 0, .top = 0, .width = context -> source -> width, .height = context -> source -> height};
+  struct plum_rectangle framearea;
+  if (boundaries)
+    framearea = *boundaries;
+  else
+    framearea = (const struct plum_rectangle) {.left = 0, .top = 0, .width = context -> source -> width, .height = context -> source -> height};
   size_t rowsize, pixelsize = bytes_per_channel_PNG[type];
   if (pixelsize)
-    rowsize = boundaries -> width * pixelsize + 1;
+    rowsize = framearea.width * pixelsize + 1;
   else
-    rowsize = (((size_t) boundaries -> width << type) + 7) / 8 + 1;
-  *size = rowsize * boundaries -> height;
-  if (*size > SIZE_MAX - 2 || rowsize > SIZE_MAX / 6 || *size / rowsize != boundaries -> height) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
+    rowsize = (((size_t) framearea.width << type) + 7) / 8 + 1;
+  *size = rowsize * framearea.height;
+  if (*size > SIZE_MAX - 2 || rowsize > SIZE_MAX / 6 || *size / rowsize != framearea.height) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
   // allocate and initialize two extra bytes so the compressor can operate safely
   unsigned char * result = ctxcalloc(context, *size + 2);
   unsigned char * rowbuffer = ctxcalloc(context, 6 * rowsize);
   size_t rowoffset = (type >= 4) ? plum_color_buffer_size(context -> source -> width, context -> source -> color_format) : context -> source -> width;
-  size_t dataoffset = (type >= 4) ? plum_color_buffer_size(boundaries -> left, context -> source -> color_format) : boundaries -> left;
-  dataoffset += rowoffset * boundaries -> top;
-  for (uint_fast32_t row = 0; row < boundaries -> height; row ++) {
-    generate_PNG_row_data(context, (const unsigned char *) data + dataoffset + rowoffset * row, rowbuffer, boundaries -> width, type);
-    filter_PNG_rows(rowbuffer, rowbuffer + 5 * rowsize, boundaries -> width, type);
+  size_t dataoffset = (type >= 4) ? plum_color_buffer_size(framearea.left, context -> source -> color_format) : framearea.left;
+  dataoffset += rowoffset * framearea.top;
+  for (uint_fast32_t row = 0; row < framearea.height; row ++) {
+    generate_PNG_row_data(context, (const unsigned char *) data + dataoffset + rowoffset * row, rowbuffer, framearea.width, type);
+    filter_PNG_rows(rowbuffer, rowbuffer + 5 * rowsize, framearea.width, type);
     memcpy(rowbuffer + 5 * rowsize, rowbuffer, rowsize);
     memcpy(result + rowsize * row, rowbuffer + rowsize * select_PNG_filtered_row(rowbuffer, rowsize), rowsize);
   }
