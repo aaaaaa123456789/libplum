@@ -8,23 +8,18 @@ uint32_t determine_JPEG_components (struct context * context, size_t offset) {
   if (size != 8 + 3 * count) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   unsigned char components[4] = {0};
   for (uint_fast8_t p = 0; p < count; p ++) components[p] = context -> data[offset + 8 + 3 * p];
-  #define swap(first, second) do {    \
-    uint_fast8_t temp = first;        \
-    first = second, second = temp;    \
-  } while (false)
   switch (count) {
     // since there's at most four components, a simple swap-based sort is the best implementation
     case 4:
-      if (components[3] < *components) swap(*components, components[3]);
-      if (components[3] < components[1]) swap(components[1], components[3]);
-      if (components[3] < components[2]) swap(components[2], components[3]);
+      if (components[3] < *components) swap(uint_fast8_t, *components, components[3]);
+      if (components[3] < components[1]) swap(uint_fast8_t, components[1], components[3]);
+      if (components[3] < components[2]) swap(uint_fast8_t, components[2], components[3]);
     case 3:
-      if (components[2] < *components) swap(*components, components[2]);
-      if (components[2] < components[1]) swap(components[1], components[2]);
+      if (components[2] < *components) swap(uint_fast8_t, *components, components[2]);
+      if (components[2] < components[1]) swap(uint_fast8_t, components[1], components[2]);
     case 2:
-      if (components[1] < *components) swap(*components, components[1]);
+      if (components[1] < *components) swap(uint_fast8_t, *components, components[1]);
   }
-  #undef swap
   for (uint_fast8_t p = 1; p < count; p ++) if (components[p - 1] == components[p]) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   return read_le32_unaligned(components);
 }

@@ -3,6 +3,7 @@
 #define PLUM_DEFS
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <stdalign.h>
 
 #if defined(PLUM_NO_STDINT) || defined(PLUM_NO_ANON_MEMBERS) || defined(PLUM_NO_VLA)
@@ -32,5 +33,7 @@
 #define bytewrite(address, ...) (memcpy(address, (unsigned char []) {__VA_ARGS__}, sizeof (unsigned char []) {__VA_ARGS__}))
 #define byteoutput(context, ...) (bytewrite(append_output_node((context), sizeof (unsigned char []) {__VA_ARGS__}), __VA_ARGS__))
 #define byteappend(address, ...) (bytewrite(address, __VA_ARGS__), sizeof (unsigned char []) {__VA_ARGS__})
+
+#define swap(T, first, second) do {T temp = first; first = second; second = temp;} while (false)
 
 #endif

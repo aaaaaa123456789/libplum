@@ -1,11 +1,5 @@
 #include "proto.h"
 
-#define swap(first, second) do {    \
-  uint64_t temp = first;            \
-  first = second;                   \
-  second = temp;                    \
-} while (false)
-
 void sort_values (uint64_t * restrict data, uint64_t count) {
   #define THRESHOLD 16
   uint64_t * buffer;
@@ -19,7 +13,8 @@ void sort_values (uint64_t * restrict data, uint64_t count) {
     if (descending ? data[current] <= data[current - 1] : data[current] >= data[current - 1])
       runsize ++;
     else {
-      if (descending && runsize >= THRESHOLD) for (uint_fast64_t p = 0; p < runsize / 2; p ++) swap(data[start + p], data[start + runsize - 1 - p]);
+      if (descending && runsize >= THRESHOLD)
+        for (uint_fast64_t p = 0; p < runsize / 2; p ++) swap(uint_fast64_t, data[start + p], data[start + runsize - 1 - p]);
       buffer[start] = runsize;
       start = current ++;
       if (current == count)
@@ -29,7 +24,8 @@ void sort_values (uint64_t * restrict data, uint64_t count) {
         runsize = 2;
       }
     }
-  if (descending && runsize >= THRESHOLD) for (uint_fast64_t p = 0; p < runsize / 2; p ++) swap(data[start + p], data[start + runsize - 1 - p]);
+  if (descending && runsize >= THRESHOLD)
+    for (uint_fast64_t p = 0; p < runsize / 2; p ++) swap(uint_fast64_t, data[start + p], data[start + runsize - 1 - p]);
   buffer[start] = runsize;
   start = 0;
   for (uint_fast64_t current = 0; current < count; current += buffer[current] * ((buffer[current] < 0) ? -1 : 1))
@@ -49,10 +45,10 @@ void sort_values (uint64_t * restrict data, uint64_t count) {
 void quicksort_values (uint64_t * restrict data, uint64_t count) {
   switch (count) {
     case 3:
-      if (*data > data[2]) swap(*data, data[2]);
-      if (data[1] > data[2]) swap(data[1], data[2]);
+      if (*data > data[2]) swap(uint_fast64_t, *data, data[2]);
+      if (data[1] > data[2]) swap(uint_fast64_t, data[1], data[2]);
     case 2:
-      if (*data > data[1]) swap(*data, data[1]);
+      if (*data > data[1]) swap(uint_fast64_t, *data, data[1]);
     case 0: case 1:
       return;
   }
@@ -61,14 +57,12 @@ void quicksort_values (uint64_t * restrict data, uint64_t count) {
     while (data[++ left] < pivot);
     while (data[-- right] > pivot);
     if (left >= right) break;
-    swap(data[left], data[right]);
+    swap(uint_fast64_t, data[left], data[right]);
   }
   right ++;
   if (right > 1) quicksort_values(data, right);
   if (count - right > 1) quicksort_values(data + right, count - right);
 }
-
-#undef swap
 
 void merge_sorted_values (uint64_t * restrict data, uint64_t count, uint64_t * restrict runs) {
   // in: data = data to sort, runs = run lengths; out: flipped
