@@ -233,7 +233,7 @@ void sort_PNG_animation_chunks (struct context * context, struct PNG_chunk_locat
     indexes[p] = ((uint64_t) read_be32_unaligned(context -> data + locations -> frameinfo[p]) << 32) | 0x80000000u | p;
   for (uint_fast32_t p = 0; p < framedata_count; p ++)
     indexes[p + frameinfo_count] = ((uint64_t) read_be32_unaligned(context -> data + framedata[p]) << 32) | p;
-  qsort(indexes, frameinfo_count + framedata_count, sizeof *indexes, &compare64);
+  sort_values(indexes, frameinfo_count + framedata_count);
   if (!(*indexes & 0x80000000u)) throw(context, PLUM_ERR_INVALID_FILE_FORMAT); // fdAT before fcTL
   size_t * frames = ctxmalloc(context, sizeof *frames * frameinfo_count);
   locations -> framedata = ctxmalloc(context, sizeof *locations -> framedata * frameinfo_count);

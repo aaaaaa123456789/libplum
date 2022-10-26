@@ -222,7 +222,7 @@ int plum_convert_colors_to_indexes (uint8_t * restrict destination, const void *
       *(cc ++) = (get_color_sorting_score(colors[index], flags) << 11) | index;
     }
   }
-  qsort(sorted, total, sizeof *sorted, &compare64);
+  sort_values(sorted, total);
   // afterwards, write the actual palette, and replace the colors with indexes into it
   #define copypalette(bits) do {                   \
     uint ## bits ## _t * pp = palette;             \
@@ -285,6 +285,6 @@ void plum_sort_colors (const void * restrict colors, uint8_t max_index, unsigned
     for (uint_fast16_t p = 0; p <= max_index; p ++) keys[p] = p | (get_color_sorting_score(p[(const uint16_t *) colors], flags) << 8);
   else
     for (uint_fast16_t p = 0; p <= max_index; p ++) keys[p] = p | (get_color_sorting_score(p[(const uint32_t *) colors], flags) << 8);
-  qsort(keys, max_index + 1, sizeof *keys, &compare64);
+  sort_values(keys, max_index + 1);
   for (uint_fast16_t p = 0; p <= max_index; p ++) result[p] = keys[p];
 }

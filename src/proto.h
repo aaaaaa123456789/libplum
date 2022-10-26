@@ -244,7 +244,6 @@ internal struct plum_rectangle * add_frame_area_metadata(struct context *);
 internal uint64_t get_empty_color(const struct plum_image *);
 
 // misc.c
-internal int compare64(const void *, const void *);
 internal int compare_index_value_pairs(const void *, const void *);
 
 // newstruct.c
@@ -343,6 +342,11 @@ internal void generate_PAM_header(struct context *, uint32_t, uint32_t, unsigned
 internal size_t write_PNM_number(unsigned char * restrict, uint32_t);
 internal void generate_PNM_frame_data(struct context *, const uint64_t *, uint32_t, uint32_t, unsigned, bool);
 internal void generate_PNM_frame_data_from_palette(struct context *, const uint8_t *, const uint64_t *, uint32_t, uint32_t, unsigned, bool);
+
+// sort.c
+internal void sort_values(uint64_t * restrict, uint64_t);
+internal void quicksort_values(uint64_t * restrict, uint64_t);
+internal void merge_sorted_values(uint64_t * restrict, uint64_t, uint64_t * restrict);
 
 // store.c
 internal void write_generated_image_data_to_file(struct context *, const char *);

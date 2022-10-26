@@ -80,12 +80,6 @@ uint32_t plum_get_version_number (void) {
   return PLUM_VERSION;
 }
 
-int compare64 (const void * first, const void * second) {
-  const uint64_t * p1 = first;
-  const uint64_t * p2 = second;
-  return (*p1 > *p2) - (*p1 < *p2);
-}
-
 int compare_index_value_pairs (const void * first, const void * second) {
   const uint64_t * p1 = first;
   const uint64_t * p2 = second;
