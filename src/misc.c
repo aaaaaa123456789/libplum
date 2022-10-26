@@ -79,10 +79,3 @@ const char * plum_get_file_format_name (unsigned format) {
 uint32_t plum_get_version_number (void) {
   return PLUM_VERSION;
 }
-
-int compare_index_value_pairs (const void * first, const void * second) {
-  const uint64_t * p1 = first;
-  const uint64_t * p2 = second;
-  size_t index = p1[1] != p2[1];
-  return (p1[index] > p2[index]) - (p1[index] < p2[index]);
-}

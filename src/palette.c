@@ -41,12 +41,12 @@ unsigned plum_sort_palette_custom (struct plum_image * image, uint64_t (* callba
   if (!callback) return PLUM_ERR_INVALID_ARGUMENTS;
   unsigned error = check_image_palette(image);
   if (error) return error;
-  uint64_t sortdata[0x200];
-  #define filldata(bits) do                                                                                                       \
-    for (uint_fast16_t p = 0; p <= image -> max_palette_index; p ++) {                                                            \
-      sortdata[2 * p] = p;                                                                                                        \
-      sortdata[2 * p + 1] = callback(argument, plum_convert_color(image -> palette ## bits[p], image -> color_format, flags));    \
-    }                                                                                                                             \
+  struct pair sortdata[0x100];
+  #define filldata(bits) do                                                                                         \
+    for (uint_fast16_t p = 0; p <= image -> max_palette_index; p ++) sortdata[p] = (struct pair) {                  \
+      .value = p,                                                                                                   \
+      .index = callback(argument, plum_convert_color(image -> palette ## bits[p], image -> color_format, flags))    \
+    };                                                                                                              \
   while (false)
   if ((image -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_64)
     filldata(64);
@@ -55,9 +55,9 @@ unsigned plum_sort_palette_custom (struct plum_image * image, uint64_t (* callba
   else
     filldata(32);
   #undef filldata
-  qsort(sortdata, image -> max_palette_index + 1, 2 * sizeof *sortdata, &compare_index_value_pairs);
+  sort_pairs(sortdata, image -> max_palette_index + 1);
   uint8_t sorted[0x100];
-  for (uint_fast16_t p = 0; p <= image -> max_palette_index; p ++) sorted[sortdata[2 * p]] = p;
+  for (uint_fast16_t p = 0; p <= image -> max_palette_index; p ++) sorted[sortdata[p].value] = p;
   apply_sorted_palette(image, image -> color_format, sorted);
   return 0;
 }
@@ -98,20 +98,17 @@ void reduce_palette (struct plum_image * image) {
   uint64_t colors[0x100];
   plum_convert_colors(colors, image -> palette, image -> max_palette_index + 1, PLUM_COLOR_64, image -> color_format);
   // expand from an array of colors to an interleaved array of indexes and colors (for sorting)
-  uint64_t sorted[0x200];
-  for (uint_fast16_t p = 0; p <= image -> max_palette_index; p ++) {
-    sorted[2 * p] = p;
-    sorted[2 * p + 1] = colors[p];
-  }
+  struct pair sorted[0x100];
+  for (uint_fast16_t p = 0; p <= image -> max_palette_index; p ++) sorted[p] = (struct pair) {.value = p, .index = colors[p]};
   // mark all colors in the image as in use
   bool used[0x100] = {0};
   size_t size = (size_t) image -> width * image -> height * image -> frames;
   for (size_t p = 0; p < size; p ++) used[image -> data8[p]] = true;
   // sort the colors and check for duplicates; if duplicates are found, mark the duplicates as unused and the originals as in use
-  qsort(sorted, image -> max_palette_index + 1, 2 * sizeof *sorted, &compare_index_value_pairs);
-  for (uint_fast8_t p = image -> max_palette_index; p; p --) if (sorted[2 * p + 1] == sorted[2 * p - 1]) {
-    used[sorted[2 * p - 2]] |= used[sorted[2 * p]];
-    used[sorted[2 * p]] = false;
+  sort_pairs(sorted, image -> max_palette_index + 1);
+  for (uint_fast8_t p = image -> max_palette_index; p; p --) if (sorted[p].index == sorted[p - 1].index) {
+    used[sorted[p - 1].value] |= used[sorted[p].value];
+    used[sorted[p].value] = false;
   }
   // create a mapping of colors (in the colors array) to indexes; colors in use (after duplicates were marked unused) get their own index
   // colors marked unused point to the previous color in use; this will deduplicate the colors, as duplicates come right after the originals
@@ -119,10 +116,10 @@ void reduce_palette (struct plum_image * image) {
   uint8_t map[0x100];
   uint_fast8_t ref = 0; // initialize it to avoid reading an uninitialized variable in the loop (even though the copied value will never be used)
   for (uint_fast16_t p = 0; p <= image -> max_palette_index; p ++)
-    if (used[sorted[2 * p]])
-      ref = map[sorted[2 * p]] = sorted[2 * p];
+    if (used[sorted[p].value])
+      ref = map[sorted[p].value] = sorted[p].value;
     else
-      map[sorted[2 * p]] = ref;
+      map[sorted[p].value] = ref;
   // update the mapping table to preserve the order of the colors in the original palette, and generate the reduced palette (in the colors array)
   ref = 0;
   for (uint_fast16_t p = 0; p <= image -> max_palette_index; p ++)

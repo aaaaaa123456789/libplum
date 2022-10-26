@@ -41,6 +41,11 @@ struct context {
   jmp_buf target;
 };
 
+struct pair {
+  size_t value;
+  size_t index;
+};
+
 struct compressed_GIF_code {
   alignas(uint32_t) int16_t reference; // align the first member to align the struct
   unsigned char value;

@@ -243,9 +243,6 @@ internal void add_animation_metadata(struct context *, uint64_t ** restrict, uin
 internal struct plum_rectangle * add_frame_area_metadata(struct context *);
 internal uint64_t get_empty_color(const struct plum_image *);
 
-// misc.c
-internal int compare_index_value_pairs(const void *, const void *);
-
 // newstruct.c
 internal struct context * create_context(void);
 
@@ -347,6 +344,9 @@ internal void generate_PNM_frame_data_from_palette(struct context *, const uint8
 internal void sort_values(uint64_t * restrict, uint64_t);
 internal void quicksort_values(uint64_t * restrict, uint64_t);
 internal void merge_sorted_values(uint64_t * restrict, uint64_t, uint64_t * restrict);
+internal void sort_pairs(struct pair * restrict, uint64_t);
+internal void quicksort_pairs(struct pair * restrict, uint64_t);
+internal void merge_sorted_pairs(struct pair * restrict, uint64_t, struct pair * restrict);
 
 // store.c
 internal void write_generated_image_data_to_file(struct context *, const char *);
