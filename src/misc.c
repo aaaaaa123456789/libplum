@@ -32,6 +32,7 @@ unsigned plum_validate_image (const struct plum_image * image) {
         if (metadata -> size % sizeof *rectangles) return PLUM_ERR_INVALID_METADATA;
         uint_fast32_t frames = (image -> frames > metadata -> size / sizeof *rectangles) ? metadata -> size / sizeof *rectangles : image -> frames;
         for (uint_fast32_t frame = 0; frame < frames; frame ++) {
+          if (!(rectangles[frame].width && rectangles[frame].height)) return PLUM_ERR_INVALID_METADATA;
           uint32_t right = rectangles[frame].left + rectangles[frame].width, bottom = rectangles[frame].top + rectangles[frame].height;
           if (right < rectangles[frame].left || right > image -> width || bottom < rectangles[frame].top || bottom > image -> height)
             return PLUM_ERR_INVALID_METADATA;
