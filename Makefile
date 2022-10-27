@@ -1,5 +1,5 @@
 CLANG ?= clang
-WARNFLAGS = -Wno-pointer-sign -Wno-dangling-else -Wno-parentheses -Wno-return-type
+WARNFLAGS = -Wno-pointer-sign -Wno-dangling-else -Wno-parentheses -Wno-return-type -Wno-tautological-constant-out-of-range-compare
 OPTFLAGS = -Ofast -fomit-frame-pointer -fno-asynchronous-unwind-tables -fno-exceptions -Wl,-S -Wl,-x -Wl,--gc-sections -march=native -mtune=native
 
 BINARIES = fuzz fuzz32 fuzztest fasttest

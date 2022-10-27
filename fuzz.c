@@ -192,6 +192,12 @@ static void generate_animation_metadata (struct plum_image * image) {
   plum_append_metadata(image, PLUM_METADATA_FRAME_DURATION, buffer -> data, sizeof(uint64_t) * frames);
   buffer -> data = (unsigned char *) buffer -> data + sizeof(uint64_t) * frames;
   buffer -> size -= sizeof(uint64_t) * frames;
+  if (!buffer -> size) return;
+  frames = buffer -> size / sizeof(struct plum_rectangle);
+  if (frames > image -> frames) frames = image -> frames;
+  plum_append_metadata(image, PLUM_METADATA_FRAME_AREA, buffer -> data, sizeof(struct plum_rectangle) * frames);
+  buffer -> data = (unsigned char *) buffer -> data + sizeof(struct plum_rectangle) * frames;
+  buffer -> size -= sizeof(struct plum_rectangle) * frames;
 }
 
 static struct plum_buffer identity_transform (const unsigned char * data, size_t size) {
