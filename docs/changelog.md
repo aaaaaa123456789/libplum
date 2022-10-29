@@ -11,6 +11,7 @@ Note: releases are listed from latest to oldest.
 - Fixed undefined behavior when reading PNG files due to array index overflow after signed to unsigned conversion
 - Fixed memory leak on `plum_realloc` failure
 - Corrected a mistake in the documentation for `plum_store_image`
+- Improved the performance of sorting operations (such as color sorting when generating a palette)
 
 ## Version 1.1 (9 May 2022)
 
