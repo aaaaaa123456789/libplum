@@ -2,7 +2,7 @@
 
 Note: releases are listed from latest to oldest.
 
-## Version 1.2 (in development)
+## Version 1.2 (29 October 2022)
 
 - Added `PLUM_METADATA_FRAME_AREA` metadata node when reading GIF, APNG and PNM files, preserving the sizes of the
   frames read in
