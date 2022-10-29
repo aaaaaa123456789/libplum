@@ -40,6 +40,20 @@ For further information, please check the [documentation](docs/README.md).
 source archive will contain documentation suitable for that version of the library.
 If you're using an older version of the library, please refer to that documentation if needed.)
 
+## Repository layout
+
+The `src` directory contains all the C files of the project.
+These files are concatenated in filename order into `build/libplum.c` at build time; the headers they include will be
+copied into the output at the point of first inclusion.
+Private headers (that is, headers that are not exposed in `libplum.h`) are also in this directory.
+
+The `header` directory contains all public header files; the final public header, `build/libplum.h`, is generated from
+`header/libplum.h` by recursively copying all included files at the point of first inclusion.
+(Files in `header/` are not allowed to reference files from other directories.)
+
+Other directories are self-explanatory: `docs` contains documentation and sample code, and `build` will be generated
+by the build process to contain build artifacts.
+
 ## Acknowledgements
 
 Thanks to [Rangi42](https://github.com/Rangi42) for her help reviewing much of the code and making a number of style
