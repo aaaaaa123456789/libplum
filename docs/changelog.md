@@ -2,6 +2,11 @@
 
 Note: releases are listed from latest to oldest.
 
+## Version 2.0 (in development)
+
+- **Break:** removed support for undocumented legacy constants `PLUM_FILENAME`, `PLUM_BUFFER` and `PLUM_CALLBACK` (now
+  only accepting the documented `PLUM_MODE_FILENAME`, `PLUM_MODE_BUFFER` and `PLUM_MODE_CALLBACK`)
+
 ## Version 1.2 (29 October 2022)
 
 - Added `PLUM_METADATA_FRAME_AREA` metadata node when reading GIF, APNG and PNM files, preserving the sizes of the
