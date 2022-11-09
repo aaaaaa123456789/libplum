@@ -13,6 +13,7 @@ ifneq (,$(findstring gcc,$(CC)))
 else
 ifneq (,$(findstring clang, $(CC)))
 	DEBUGFLAGS += -Wno-keyword-macro -fsanitize=undefined -Wno-tautological-constant-out-of-range-compare
+	CFLAGS += -Wno-parentheses -Wno-dangling-else -Wno-tautological-constant-out-of-range-compare
 endif
 endif
 
@@ -34,7 +35,7 @@ build/libplum.c: $(wildcard src/*.c) $(wildcard src/*.h) $(wildcard header/*.h) 
 
 build/libplum-debug.so: $(wildcard src/*.c) $(wildcard src/*.h) $(wildcard header/*.h)
 	mkdir -p build
-	$(CC) -shared -ggdb -fPIC -DPLUM_DEBUG $(DEBUGFLAGS) $(wildcard src/*.c) -o $@
+	$(CC) -shared -g -fPIC -DPLUM_DEBUG $(DEBUGFLAGS) $(wildcard src/*.c) -o $@
 
 build/libplum.h: $(wildcard header/*.h) merge.sh
 	mkdir -p build
