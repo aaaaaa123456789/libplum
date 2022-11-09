@@ -17,7 +17,7 @@ The [`plum_load_image`][load] and [`plum_store_image`][store] functions look lik
 
 ``` c
 struct plum_image * plum_load_image(const void * restrict buffer,
-                                    size_t size_mode, unsigned flags,
+                                    size_t size_mode, unsigned long flags,
                                     unsigned * restrict error);
 size_t plum_store_image(const struct plum_image * image, void * restrict buffer,
                         size_t size_mode, unsigned * restrict error);
@@ -76,7 +76,7 @@ When using this mode, the `size_mode` argument to the function must be set to [`
 Loading data in this mode behaves exactly the same as with a [fixed-size memory buffer](#fixed-size-memory-buffers),
 except that the `size` member of the struct is always interpreted literally and never as a
 [special loading/storing mode constant][constants].
-This mode is only provided for [`plum_load_image`][load] for completeness.
+This mode is provided for [`plum_load_image`][load] only for completeness.
 
 When writing out data using this mode, [`plum_store_image`][store] will allocate a buffer large enough to hold the
 generated data with `malloc`, and set the struct's `data` member to a pointer to this buffer and its `size` member to

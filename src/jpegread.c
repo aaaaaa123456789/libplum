@@ -1,6 +1,6 @@
 #include "proto.h"
 
-void load_JPEG_data (struct context * context, unsigned flags, size_t limit) {
+void load_JPEG_data (struct context * context, unsigned long flags, size_t limit) {
   struct JPEG_marker_layout * layout = load_JPEG_marker_layout(context); // will be leaked (to be collected by context release)
   uint32_t components = determine_JPEG_components(context, layout -> hierarchical ? layout -> hierarchical : *layout -> frames);
   void (* transfer) (uint64_t * restrict, size_t, unsigned, const double **) = get_JPEG_component_transfer_function(context, layout, components);

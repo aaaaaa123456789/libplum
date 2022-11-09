@@ -132,7 +132,6 @@ Ordering is pure ASCII (that is, all uppercase letters come before all lowercase
 - [`plum_destroy_image` function](functions.md#plum_destroy_image)
 - [`plum_errors` enum tag](constants.md#errors)
 - [`plum_find_metadata` function](functions.md#plum_find_metadata)
-- [`plum_flags` enum tag](constants.md#loading-flags)
 - [`plum_frame_disposal_methods` enum tag](constants.md#frame-disposal-methods)
 - [`plum_free` function](functions.md#plum_free)
 - [`plum_get_error_text` function](functions.md#plum_get_error_text)

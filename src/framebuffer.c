@@ -21,7 +21,7 @@ int plum_check_limited_image_size (uint32_t width, uint32_t height, uint32_t fra
   return p <= limit;
 }
 
-size_t plum_color_buffer_size (size_t size, unsigned flags) {
+size_t plum_color_buffer_size (size_t size, unsigned long flags) {
   if (size > SIZE_MAX / sizeof(uint64_t)) return 0;
   if ((flags & PLUM_COLOR_MASK) == PLUM_COLOR_64)
     return size * sizeof(uint64_t);
@@ -43,20 +43,20 @@ size_t plum_palette_buffer_size (const struct plum_image * image) {
   return plum_color_buffer_size(image -> max_palette_index + 1, image -> color_format);
 }
 
-void allocate_framebuffers (struct context * context, unsigned flags, bool palette) {
+void allocate_framebuffers (struct context * context, unsigned long flags, bool palette) {
   size_t size = (size_t) context -> image -> width * context -> image -> height * context -> image -> frames;
   if (!palette) size = plum_color_buffer_size(size, flags);
   if (!(context -> image -> data = plum_malloc(context -> image, size))) throw(context, PLUM_ERR_OUT_OF_MEMORY);
   context -> image -> color_format = flags & (PLUM_COLOR_MASK | PLUM_ALPHA_INVERT);
 }
 
-void write_framebuffer_to_image (struct plum_image * image, const uint64_t * restrict framebuffer, uint32_t frame, unsigned flags) {
+void write_framebuffer_to_image (struct plum_image * image, const uint64_t * restrict framebuffer, uint32_t frame, unsigned long flags) {
   size_t pixels = (size_t) image -> width * image -> height, framesize = plum_color_buffer_size(pixels, flags);
   plum_convert_colors(image -> data8 + framesize * frame, framebuffer, pixels, flags, PLUM_COLOR_64);
 }
 
 void write_palette_framebuffer_to_image (struct context * context, const uint8_t * restrict framebuffer, const uint64_t * restrict palette, uint32_t frame,
-                                         unsigned flags, uint8_t max_palette_index) {
+                                         unsigned long flags, uint8_t max_palette_index) {
   size_t framesize = (size_t) context -> image -> width * context -> image -> height;
   if (max_palette_index < 0xff)
     for (size_t pos = 0; pos < framesize; pos ++) if (framebuffer[pos] > max_palette_index) throw(context, PLUM_ERR_INVALID_COLOR_INDEX);
@@ -70,7 +70,7 @@ void write_palette_framebuffer_to_image (struct context * context, const uint8_t
   ctxfree(context, converted);
 }
 
-void write_palette_to_image (struct context * context, const uint64_t * restrict palette, unsigned flags) {
+void write_palette_to_image (struct context * context, const uint64_t * restrict palette, unsigned long flags) {
   size_t size = plum_color_buffer_size(context -> image -> max_palette_index + 1, flags);
   if (!(context -> image -> palette = plum_malloc(context -> image, size))) throw(context, PLUM_ERR_OUT_OF_MEMORY);
   plum_convert_colors(context -> image -> palette, palette, context -> image -> max_palette_index + 1, flags, PLUM_COLOR_64);

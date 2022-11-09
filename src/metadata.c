@@ -38,7 +38,7 @@ void add_color_depth_metadata (struct context * context, unsigned red, unsigned 
   if (result) throw(context, result);
 }
 
-void add_background_color_metadata (struct context * context, uint64_t color, unsigned flags) {
+void add_background_color_metadata (struct context * context, uint64_t color, unsigned long flags) {
   color = plum_convert_color(color, PLUM_COLOR_64, flags);
   size_t size = plum_color_buffer_size(1, flags);
   struct plum_metadata * metadata = plum_allocate_metadata(context -> image, size);

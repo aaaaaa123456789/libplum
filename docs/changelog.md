@@ -6,6 +6,10 @@ Note: releases are listed from latest to oldest.
 
 - **Break:** removed support for undocumented legacy constants `PLUM_FILENAME`, `PLUM_BUFFER` and `PLUM_CALLBACK` (now
   only accepting the documented `PLUM_MODE_FILENAME`, `PLUM_MODE_BUFFER` and `PLUM_MODE_CALLBACK`)
+- **Break:** `flags` arguments in functions that accept them (like `plum_load_image` or `plum_convert_color`) are now
+  `unsigned long` instead of `unsigned`
+- **Break:** removed `enum plum_flags` type; the corresponding enumeration constants are now declared via `#define`
+  and of `unsigned long` type
 
 ## Version 1.2 (29 October 2022)
 

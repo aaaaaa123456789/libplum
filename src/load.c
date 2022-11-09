@@ -1,10 +1,10 @@
 #include "proto.h"
 
-struct plum_image * plum_load_image (const void * restrict buffer, size_t size_mode, unsigned flags, unsigned * restrict error) {
+struct plum_image * plum_load_image (const void * restrict buffer, size_t size_mode, unsigned long flags, unsigned * restrict error) {
   return plum_load_image_limited(buffer, size_mode, flags, SIZE_MAX, error);
 }
 
-struct plum_image * plum_load_image_limited (const void * restrict buffer, size_t size_mode, unsigned flags, size_t limit, unsigned * restrict error) {
+struct plum_image * plum_load_image_limited (const void * restrict buffer, size_t size_mode, unsigned long flags, size_t limit, unsigned * restrict error) {
   struct context * context = create_context();
   if (!context) {
     if (error) *error = PLUM_ERR_OUT_OF_MEMORY;
@@ -44,7 +44,7 @@ struct plum_image * plum_load_image_limited (const void * restrict buffer, size_
   return image;
 }
 
-void load_image_buffer_data (struct context * context, unsigned flags, size_t limit) {
+void load_image_buffer_data (struct context * context, unsigned long flags, size_t limit) {
   if (context -> size == 7 && (bytematch(context -> data, 0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x3b) ||
                                bytematch(context -> data, 0x47, 0x49, 0x46, 0x38, 0x37, 0x61, 0x3b)))
     // empty GIF file
@@ -141,7 +141,7 @@ void * resize_read_buffer (struct context * context, void * buffer, size_t * res
   return ctxrealloc(context, buffer, *allocated);
 }
 
-void update_loaded_palette (struct context * context, unsigned flags) {
+void update_loaded_palette (struct context * context, unsigned long flags) {
   if (flags & PLUM_SORT_EXISTING) sort_palette(context -> image, flags);
   if (flags & PLUM_PALETTE_REDUCE) {
     reduce_palette(context -> image);

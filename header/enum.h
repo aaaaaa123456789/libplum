@@ -3,28 +3,27 @@
 #define PLUM_MODE_CALLBACK   ((size_t) -3)
 #define PLUM_MAX_MEMORY_SIZE ((size_t) -4)
 
-enum plum_flags {
-  /* color formats */
-  PLUM_COLOR_32     = 0, /* RGBA 8.8.8.8 */
-  PLUM_COLOR_64     = 1, /* RGBA 16.16.16.16 */
-  PLUM_COLOR_16     = 2, /* RGBA 5.5.5.1 */
-  PLUM_COLOR_32X    = 3, /* RGBA 10.10.10.2 */
-  PLUM_COLOR_MASK   = 3,
-  PLUM_ALPHA_INVERT = 4,
-  /* palettes */
-  PLUM_PALETTE_NONE     =     0,
-  PLUM_PALETTE_LOAD     = 0x200,
-  PLUM_PALETTE_GENERATE = 0x400,
-  PLUM_PALETTE_FORCE    = 0x600,
-  PLUM_PALETTE_MASK     = 0x600,
-  /* palette sorting */
-  PLUM_SORT_LIGHT_FIRST =     0,
-  PLUM_SORT_DARK_FIRST  = 0x800,
-  /* other bit flags */
-  PLUM_ALPHA_REMOVE   =  0x100,
-  PLUM_SORT_EXISTING  = 0x1000,
-  PLUM_PALETTE_REDUCE = 0x2000
-};
+/* flags: not an enum (must be unsigned long) */
+/* color formats */
+#define PLUM_COLOR_32              0ul /* RGBA 8.8.8.8 */
+#define PLUM_COLOR_64              1ul /* RGBA 16.16.16.16 */
+#define PLUM_COLOR_16              2ul /* RGBA 5.5.5.1 */
+#define PLUM_COLOR_32X             3ul /* RGBA 10.10.10.2 */
+#define PLUM_COLOR_MASK            3ul
+#define PLUM_ALPHA_INVERT          4ul
+/* palettes */
+#define PLUM_PALETTE_NONE          0ul
+#define PLUM_PALETTE_LOAD      0x200ul
+#define PLUM_PALETTE_GENERATE  0x400ul
+#define PLUM_PALETTE_FORCE     0x600ul
+#define PLUM_PALETTE_MASK      0x600ul
+/* palette sorting */
+#define PLUM_SORT_LIGHT_FIRST      0ul
+#define PLUM_SORT_DARK_FIRST   0x800ul
+/* other bit flags */
+#define PLUM_ALPHA_REMOVE      0x100ul
+#define PLUM_SORT_EXISTING    0x1000ul
+#define PLUM_PALETTE_REDUCE   0x2000ul
 
 enum plum_image_types {
   PLUM_IMAGE_NONE,

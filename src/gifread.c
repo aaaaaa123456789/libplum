@@ -1,6 +1,6 @@
 #include "proto.h"
 
-void load_GIF_data (struct context * context, unsigned flags, size_t limit) {
+void load_GIF_data (struct context * context, unsigned long flags, size_t limit) {
   if (context -> size < 14) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   context -> image -> type = PLUM_IMAGE_GIF;
   context -> image -> width = read_le16_unaligned(context -> data + 6);
@@ -20,7 +20,7 @@ void load_GIF_data (struct context * context, unsigned flags, size_t limit) {
   if (!plum_find_metadata(context -> image, PLUM_METADATA_LOOP_COUNT)) add_loop_count_metadata(context, 1);
 }
 
-uint64_t ** load_GIF_palettes_and_frame_count (struct context * context, unsigned flags, size_t * restrict offset, uint64_t * restrict transparent_color) {
+uint64_t ** load_GIF_palettes_and_frame_count (struct context * context, unsigned long flags, size_t * restrict offset, uint64_t * restrict transparent_color) {
   // will also validate block order
   unsigned char depth = 1 + ((context -> data[10] >> 4) & 7);
   add_color_depth_metadata(context, depth, depth, depth, 1, 0);
@@ -181,7 +181,7 @@ void skip_GIF_data_blocks (struct context * context, size_t * restrict offset) {
   } while (skip);
 }
 
-void load_GIF_frame (struct context * context, size_t * restrict offset, unsigned flags, uint32_t frame, const uint64_t * restrict palette,
+void load_GIF_frame (struct context * context, size_t * restrict offset, unsigned long flags, uint32_t frame, const uint64_t * restrict palette,
                      uint64_t transparent_color, uint64_t * restrict duration, uint8_t * restrict disposal, struct plum_rectangle * restrict framearea) {
   *duration = *disposal = 0;
   int transparent_index = -1;

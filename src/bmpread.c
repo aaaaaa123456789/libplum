@@ -1,6 +1,6 @@
 #include "proto.h"
 
-void load_BMP_data (struct context * context, unsigned flags, size_t limit) {
+void load_BMP_data (struct context * context, unsigned long flags, size_t limit) {
   if (context -> size < 54) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   uint_fast32_t subheader = read_le32_unaligned(context -> data + 14);
   if (subheader < 40 || subheader >= 0xffffffe6u) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);

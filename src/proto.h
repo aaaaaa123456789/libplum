@@ -23,7 +23,7 @@ internal void * reallocate(struct allocator_node **, void *, size_t);
 internal void destroy_allocator_list(struct allocator_node *);
 
 // bmpread.c
-internal void load_BMP_data(struct context *, unsigned, size_t);
+internal void load_BMP_data(struct context *, unsigned long, size_t);
 internal uint8_t load_BMP_palette(struct context *, size_t, unsigned, uint64_t * restrict);
 internal void load_BMP_bitmasks(struct context *, size_t, uint8_t * restrict, unsigned);
 internal uint8_t * load_monochrome_BMP(struct context *, size_t, bool);
@@ -65,10 +65,10 @@ internal bool image_rectangles_have_transparency(const struct plum_image *, cons
 
 // framebuffer.c
 internal void validate_image_size(struct context *, size_t);
-internal void allocate_framebuffers(struct context *, unsigned, bool);
-internal void write_framebuffer_to_image(struct plum_image *, const uint64_t * restrict, uint32_t, unsigned);
-internal void write_palette_framebuffer_to_image(struct context *, const uint8_t * restrict, const uint64_t * restrict, uint32_t, unsigned, uint8_t);
-internal void write_palette_to_image(struct context *, const uint64_t * restrict, unsigned);
+internal void allocate_framebuffers(struct context *, unsigned long, bool);
+internal void write_framebuffer_to_image(struct plum_image *, const uint64_t * restrict, uint32_t, unsigned long);
+internal void write_palette_framebuffer_to_image(struct context *, const uint8_t * restrict, const uint64_t * restrict, uint32_t, unsigned long, uint8_t);
+internal void write_palette_to_image(struct context *, const uint64_t * restrict, unsigned long);
 internal void rotate_frame_8(uint8_t * restrict, uint8_t * restrict, size_t, size_t, size_t (*) (size_t, size_t, size_t, size_t));
 internal void rotate_frame_16(uint16_t * restrict, uint16_t * restrict, size_t, size_t, size_t (*) (size_t, size_t, size_t, size_t));
 internal void rotate_frame_32(uint32_t * restrict, uint32_t * restrict, size_t, size_t, size_t (*) (size_t, size_t, size_t, size_t));
@@ -94,13 +94,13 @@ internal uint8_t find_leading_GIF_code(const struct compressed_GIF_code * restri
 internal void emit_GIF_data(struct context *, const struct compressed_GIF_code * restrict, unsigned, unsigned char **, unsigned char *);
 
 // gifread.c
-internal void load_GIF_data(struct context *, unsigned, size_t);
-internal uint64_t ** load_GIF_palettes_and_frame_count(struct context *, unsigned, size_t * restrict, uint64_t * restrict);
+internal void load_GIF_data(struct context *, unsigned long, size_t);
+internal uint64_t ** load_GIF_palettes_and_frame_count(struct context *, unsigned long, size_t * restrict, uint64_t * restrict);
 internal void load_GIF_palette(struct context *, uint64_t * restrict, size_t * restrict, unsigned);
 internal void * load_GIF_data_blocks(struct context *, size_t * restrict, size_t * restrict);
 internal void skip_GIF_data_blocks(struct context *, size_t * restrict);
-internal void load_GIF_frame(struct context *, size_t * restrict, unsigned, uint32_t, const uint64_t * restrict, uint64_t, uint64_t * restrict, uint8_t * restrict,
-                             struct plum_rectangle * restrict);
+internal void load_GIF_frame(struct context *, size_t * restrict, unsigned long, uint32_t, const uint64_t * restrict, uint64_t, uint64_t * restrict,
+                             uint8_t * restrict, struct plum_rectangle * restrict);
 
 // gifwrite.c
 internal void generate_GIF_data(struct context *);
@@ -197,7 +197,7 @@ internal unsigned char next_JPEG_Huffman_value(struct context *, const unsigned 
                                                const short * restrict);
 
 // jpegread.c
-internal void load_JPEG_data(struct context *, unsigned, size_t);
+internal void load_JPEG_data(struct context *, unsigned long, size_t);
 internal struct JPEG_marker_layout * load_JPEG_marker_layout(struct context *);
 internal unsigned get_JPEG_rotation(struct context *, size_t);
 internal unsigned load_single_frame_JPEG(struct context *, const struct JPEG_marker_layout *, uint32_t, double **);
@@ -228,16 +228,16 @@ internal void convert_JPEG_colors_to_YCbCr(const void * restrict, size_t, unsign
 internal void subsample_JPEG_component(double (* restrict)[64], double (* restrict)[64], size_t, size_t);
 
 // load.c
-internal void load_image_buffer_data(struct context *, unsigned, size_t);
+internal void load_image_buffer_data(struct context *, unsigned long, size_t);
 internal void prepare_image_buffer_data(struct context *, const void * restrict, size_t);
 internal void load_file(struct context *, const char *);
 internal void load_from_callback(struct context *, const struct plum_callback *);
 internal void * resize_read_buffer(struct context *, void *, size_t * restrict);
-internal void update_loaded_palette(struct context *, unsigned);
+internal void update_loaded_palette(struct context *, unsigned long);
 
 // metadata.c
 internal void add_color_depth_metadata(struct context *, unsigned, unsigned, unsigned, unsigned, unsigned);
-internal void add_background_color_metadata(struct context *, uint64_t, unsigned);
+internal void add_background_color_metadata(struct context *, uint64_t, unsigned long);
 internal void add_loop_count_metadata(struct context *, uint32_t);
 internal void add_animation_metadata(struct context *, uint64_t ** restrict, uint8_t ** restrict);
 internal struct plum_rectangle * add_frame_area_metadata(struct context *);
@@ -247,13 +247,13 @@ internal uint64_t get_empty_color(const struct plum_image *);
 internal struct context * create_context(void);
 
 // palette.c
-internal void generate_palette(struct context *, unsigned);
+internal void generate_palette(struct context *, unsigned long);
 internal void remove_palette(struct context *);
-internal void sort_palette(struct plum_image *, unsigned);
-internal void apply_sorted_palette(struct plum_image *, unsigned, const uint8_t *);
+internal void sort_palette(struct plum_image *, unsigned long);
+internal void apply_sorted_palette(struct plum_image *, unsigned long, const uint8_t *);
 internal void reduce_palette(struct plum_image *);
 internal unsigned check_image_palette(const struct plum_image *);
-internal uint64_t get_color_sorting_score(uint64_t, unsigned);
+internal uint64_t get_color_sorting_score(uint64_t, unsigned long);
 
 // pngcompress.c
 internal unsigned char * compress_PNG_data(struct context *, const unsigned char * restrict, size_t, size_t, size_t * restrict);
@@ -281,13 +281,13 @@ internal uint16_t next_PNG_Huffman_code(struct context *, const short * restrict
                                         uint8_t * restrict);
 
 // pngread.c
-internal void load_PNG_data(struct context *, unsigned, size_t);
+internal void load_PNG_data(struct context *, unsigned long, size_t);
 internal struct PNG_chunk_locations * load_PNG_chunk_locations(struct context *);
 internal void append_PNG_chunk_location(struct context *, size_t **, size_t, size_t * restrict);
 internal void sort_PNG_animation_chunks(struct context *, struct PNG_chunk_locations * restrict, const size_t * restrict, size_t, size_t);
 internal uint8_t load_PNG_palette(struct context *, const struct PNG_chunk_locations * restrict, uint8_t, uint64_t * restrict);
 internal void add_PNG_bit_depth_metadata(struct context *, const struct PNG_chunk_locations *, uint8_t, uint8_t);
-internal uint64_t add_PNG_background_metadata(struct context *, const struct PNG_chunk_locations *, const uint64_t *, uint8_t, uint8_t, uint8_t, unsigned);
+internal uint64_t add_PNG_background_metadata(struct context *, const struct PNG_chunk_locations *, const uint64_t *, uint8_t, uint8_t, uint8_t, unsigned long);
 internal uint64_t load_PNG_transparent_color(struct context *, size_t, uint8_t, uint8_t);
 internal bool check_PNG_reduced_frames(struct context *, const struct PNG_chunk_locations *);
 internal bool load_PNG_animation_frame_metadata(struct context *, size_t, uint64_t * restrict, uint8_t * restrict);
@@ -318,7 +318,7 @@ internal void filter_PNG_rows(unsigned char * restrict, const unsigned char * re
 internal unsigned char select_PNG_filtered_row(const unsigned char *, size_t);
 
 // pnmread.c
-internal void load_PNM_data(struct context *, unsigned, size_t);
+internal void load_PNM_data(struct context *, unsigned long, size_t);
 internal void load_PNM_header(struct context *, size_t, struct PNM_image_header * restrict);
 internal void load_PAM_header(struct context *, size_t, struct PNM_image_header * restrict);
 internal void skip_PNM_whitespace(struct context *, size_t * restrict);

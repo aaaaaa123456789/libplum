@@ -116,7 +116,7 @@ Pointer to the copied image, or a null pointer on failure.
 
 ``` c
 struct plum_image * plum_load_image(const void * restrict buffer,
-                                    size_t size_mode, unsigned flags,
+                                    size_t size_mode, unsigned long flags,
                                     unsigned * restrict error);
 ```
 
@@ -242,8 +242,8 @@ The error constants signal the following reasons for failure:
 
 ``` c
 struct plum_image * plum_load_image_limited(const void * restrict buffer,
-                                            size_t size_mode, unsigned flags,
-                                            size_t limit,
+                                            size_t size_mode,
+                                            unsigned long flags, size_t limit,
                                             unsigned * restrict error);
 ```
 
@@ -558,7 +558,8 @@ different [color formats][colors].
 ### `plum_convert_color`
 
 ``` c
-uint64_t plum_convert_color(uint64_t color, unsigned from, unsigned to);
+uint64_t plum_convert_color(uint64_t color, unsigned long from,
+                            unsigned long to);
 ```
 
 **Description:**
@@ -585,7 +586,7 @@ The result is unspecified if `color` is out of range for the format specified by
 ``` c
 void plum_convert_colors(void * restrict destination,
                          const void * restrict source, size_t count,
-                         unsigned to, unsigned from);
+                         unsigned long to, unsigned long from);
 ```
 
 **Description:**
@@ -647,7 +648,7 @@ The function operates in place and modifies the image's color or palette values,
 
 ``` c
 void plum_sort_colors(const void * restrict colors, uint8_t max_index,
-                      unsigned flags, uint8_t * restrict result);
+                      unsigned long flags, uint8_t * restrict result);
 ```
 
 **Description:**
@@ -689,7 +690,7 @@ and updating the index values for all pixels; a sorted array of indexes allows t
 ### `plum_color_buffer_size`
 
 ``` c
-size_t plum_color_buffer_size(size_t size, unsigned flags);
+size_t plum_color_buffer_size(size_t size, unsigned long flags);
 ```
 
 **Description:**
@@ -727,7 +728,7 @@ and in manipulating the palettes already there.
 int plum_convert_colors_to_indexes(uint8_t * restrict destination,
                                    const void * restrict source,
                                    void * restrict palette,
-                                   size_t count, unsigned flags);
+                                   size_t count, unsigned long flags);
 ```
 
 **Description:**
@@ -797,7 +798,7 @@ If the return value is negative, it will be the negated value of one of the foll
 void plum_convert_indexes_to_colors(void * restrict destination,
                                     const uint8_t * restrict source,
                                     const void * restrict palette,
-                                    size_t count, unsigned flags);
+                                    size_t count, unsigned long flags);
 ```
 
 **Description:**
@@ -832,7 +833,7 @@ As indicated by the `restrict` keyword, the `destination`, `source` and `palette
 ### `plum_sort_palette`
 
 ``` c
-unsigned plum_sort_palette(struct plum_image * image, unsigned flags);
+unsigned plum_sort_palette(struct plum_image * image, unsigned long flags);
 ```
 
 **Description:**
@@ -872,7 +873,7 @@ It can also return one of the following [error constants][errors]:
 ``` c
 unsigned plum_sort_palette_custom(struct plum_image * image,
                                   uint64_t (* callback) (void *, uint64_t),
-                                  void * argument, unsigned flags);
+                                  void * argument, unsigned long flags);
 ```
 
 **Description:**

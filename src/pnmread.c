@@ -1,6 +1,6 @@
 #include "proto.h"
 
-void load_PNM_data (struct context * context, unsigned flags, size_t limit) {
+void load_PNM_data (struct context * context, unsigned long flags, size_t limit) {
   struct PNM_image_header * headers = NULL;
   size_t offset = 0;
   context -> image -> type = PLUM_IMAGE_PNM;

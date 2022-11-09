@@ -115,7 +115,7 @@ For more information, see the description of the [`PLUM_METADATA_FRAME_DISPOSAL`
 
 ## Loading flags
 
-**Type:** `enum plum_flags`
+These constants are of `unsigned long` type, and they don't belong to an `enum`.
 
 These flags are used by the [`plum_load_image`][load] function to specify various parameters regarding how the image
 will be loaded.
@@ -130,8 +130,7 @@ Naturally, when flags are combined with a bitwise OR (`|`), the "zero" member (w
 default and can be left out.
 Groups also have a mask member, which can be used to mask out that group's bits (for checking, etc.)
 
-Note that, since members of this enumeration are meant to be combined via bitwise OR (`|`), their values are **not**
-consecutive.
+Note that, since these constants are meant to be combined via bitwise OR (`|`), their values are **not** consecutive.
 
 **Color format flags:** these flags are used to determine the image's or the color buffer's color format.
 See the [Color formats][colors] page for more information.

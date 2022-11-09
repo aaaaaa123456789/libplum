@@ -1,6 +1,6 @@
 #include "proto.h"
 
-void load_PNG_data (struct context * context, unsigned flags, size_t limit) {
+void load_PNG_data (struct context * context, unsigned long flags, size_t limit) {
   struct PNG_chunk_locations * chunks = load_PNG_chunk_locations(context); // also sets context -> image -> frames for APNGs
   // load basic header data
   if (chunks -> animation) {
@@ -346,7 +346,7 @@ void add_PNG_bit_depth_metadata (struct context * context, const struct PNG_chun
 }
 
 uint64_t add_PNG_background_metadata (struct context * context, const struct PNG_chunk_locations * chunks, const uint64_t * palette, uint8_t imagetype,
-                                      uint8_t bitdepth, uint8_t max_palette_index, unsigned flags) {
+                                      uint8_t bitdepth, uint8_t max_palette_index, unsigned long flags) {
   if (!chunks -> background) return 0;
   uint64_t color;
   const unsigned char * data = context -> data + chunks -> background;

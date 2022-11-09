@@ -56,13 +56,13 @@ the missing components will be taken to be zero.
 
 The five values, in order, represent the bit depth of the red, green, blue, alpha and grayscale channels.
 While the library doesn't have any explicit support for grayscale, whenever a grayscale image is loaded,
-[`plum_image_load`][load] will set the depth of the grayscale to a non-zero value (and the depth of the red, green and
+[`plum_load_image`][load] will set the depth of the grayscale to a non-zero value (and the depth of the red, green and
 blue channels to zero) to indicate that the original image contained only grayscale data.
 In other cases, the grayscale channel will be set to zero depth and the red, green and blue channels will show their
 proper bit depths.
 The alpha channel will have a non-zero depth if the original image had transparency data, or zero otherwise.
 
-The [`plum_image_store`][store] function will use this metadata node, if present, to determine the actual precision to
+The [`plum_store_image`][store] function will use this metadata node, if present, to determine the actual precision to
 use for each channel when storing the image.
 This will be adjusted according to what the actual image format allows.
 If the red, green and blue channels are all set to zero depth, the grayscale depth will be used for all three;

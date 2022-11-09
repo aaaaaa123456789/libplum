@@ -1,6 +1,6 @@
 #include "proto.h"
 
-void plum_convert_colors (void * restrict destination, const void * restrict source, size_t count, unsigned to, unsigned from) {
+void plum_convert_colors (void * restrict destination, const void * restrict source, size_t count, unsigned long to, unsigned long from) {
   if (!(source && destination && count)) return;
   if ((from & (PLUM_COLOR_MASK | PLUM_ALPHA_INVERT)) == (to & (PLUM_COLOR_MASK | PLUM_ALPHA_INVERT))) {
     memcpy(destination, source, plum_color_buffer_size(count, to));
@@ -27,7 +27,7 @@ void plum_convert_colors (void * restrict destination, const void * restrict sou
   #undef convert
 }
 
-uint64_t plum_convert_color (uint64_t color, unsigned from, unsigned to) {
+uint64_t plum_convert_color (uint64_t color, unsigned long from, unsigned long to) {
   // here be dragons
   uint64_t result;
   if ((from & PLUM_COLOR_MASK) == PLUM_COLOR_16)
