@@ -29,16 +29,13 @@ void generate_APNG_data (struct context * context) {
     disposal_count = metadata -> size;
   }
   uint32_t chunkID = 0;
-  uint_fast8_t last_disposal = (disposal_count >= context -> source -> frames) ? disposals[context -> source -> frames - 1] : 0;
   unsigned char animation_data[8];
   write_be32_unaligned(animation_data + 4, loops);
   int64_t duration_remainder = 0;
   if ((duration_count && *durations) || context -> source -> frames == 1) {
     write_be32_unaligned(animation_data, context -> source -> frames);
     output_PNG_chunk(context, 0x6163544cu, sizeof animation_data, animation_data); // acTL
-    uint_fast8_t disposal = disposal_count ? *disposals : 0;
-    append_APNG_frame_header(context, duration_count ? *durations : 0, disposal, last_disposal, &chunkID, &duration_remainder, NULL);
-    last_disposal = disposal;
+    append_APNG_frame_header(context, duration_count ? *durations : 0, disposal_count ? *disposals : 0, &chunkID, &duration_remainder, NULL);
   } else {
     write_be32_unaligned(animation_data, context -> source -> frames - 1);
     output_PNG_chunk(context, 0x6163544cu, sizeof animation_data, animation_data); // acTL
@@ -48,9 +45,8 @@ void generate_APNG_data (struct context * context) {
   if (!context -> source -> palette) framesize = plum_color_buffer_size(framesize, context -> source -> color_format);
   for (uint_fast32_t frame = 1; frame < context -> source -> frames; frame ++) {
     const struct plum_rectangle * rectangle = boundaries ? boundaries + frame : NULL;
-    uint_fast8_t disposal = (disposal_count > frame) ? disposals[frame] : 0;
-    append_APNG_frame_header(context, (duration_count > frame) ? durations[frame] : 0, disposal, last_disposal, &chunkID, &duration_remainder, rectangle);
-    last_disposal = disposal;
+    append_APNG_frame_header(context, (duration_count > frame) ? durations[frame] : 0, (disposal_count > frame) ? disposals[frame] : 0, &chunkID,
+                             &duration_remainder, rectangle);
     append_PNG_image_data(context, context -> source -> data8 + framesize * frame, type, &chunkID, rectangle);
   }
   ctxfree(context, boundaries);
@@ -180,8 +176,8 @@ void append_PNG_image_data (struct context * context, const void * restrict data
   ctxfree(context, compressed);
 }
 
-void append_APNG_frame_header (struct context * context, uint64_t duration, uint8_t disposal, uint8_t previous, uint32_t * restrict chunkID,
-                               int64_t * restrict duration_remainder, const struct plum_rectangle * boundaries) {
+void append_APNG_frame_header (struct context * context, uint64_t duration, uint8_t disposal, uint32_t * restrict chunkID, int64_t * restrict duration_remainder,
+                               const struct plum_rectangle * boundaries) {
   if (*chunkID > 0x7fffffffu) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
   uint32_t numerator = 0, denominator = 0;
   if (duration) {
@@ -214,7 +210,7 @@ void append_APNG_frame_header (struct context * context, uint64_t duration, uint
   }
   write_be16_unaligned(data + 20, numerator);
   write_be16_unaligned(data + 22, denominator);
-  bytewrite(data + 24, disposal % PLUM_DISPOSAL_REPLACE, previous < PLUM_DISPOSAL_REPLACE);
+  bytewrite(data + 24, disposal % PLUM_DISPOSAL_REPLACE, disposal < PLUM_DISPOSAL_REPLACE);
   output_PNG_chunk(context, 0x6663544cu, sizeof data, data); // fcTL
 }
 

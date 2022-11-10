@@ -296,7 +296,7 @@ internal void add_PNG_bit_depth_metadata(struct context *, const struct PNG_chun
 internal uint64_t add_PNG_background_metadata(struct context *, const struct PNG_chunk_locations *, const uint64_t *, uint8_t, uint8_t, uint8_t, unsigned long);
 internal uint64_t load_PNG_transparent_color(struct context *, size_t, uint8_t, uint8_t);
 internal bool check_PNG_reduced_frames(struct context *, const struct PNG_chunk_locations *);
-internal bool load_PNG_animation_frame_metadata(struct context *, size_t, uint64_t * restrict, uint8_t * restrict);
+internal void load_PNG_animation_frame_metadata(struct context *, size_t, uint64_t * restrict, uint8_t * restrict);
 
 // pngreadframe.c
 internal void load_PNG_frame(struct context *, const size_t *, uint32_t, const uint64_t *, uint8_t, uint8_t, uint8_t, bool, uint64_t, uint64_t);
@@ -316,7 +316,7 @@ internal void append_PNG_header_chunks(struct context *, unsigned, uint32_t);
 internal void append_PNG_palette_data(struct context *, bool);
 internal void append_PNG_background_chunk(struct context *, const void * restrict, unsigned);
 internal void append_PNG_image_data(struct context *, const void * restrict, unsigned, uint32_t * restrict, const struct plum_rectangle *);
-internal void append_APNG_frame_header(struct context *, uint64_t, uint8_t, uint8_t, uint32_t * restrict, int64_t * restrict, const struct plum_rectangle *);
+internal void append_APNG_frame_header(struct context *, uint64_t, uint8_t, uint32_t * restrict, int64_t * restrict, const struct plum_rectangle *);
 internal void output_PNG_chunk(struct context *, uint32_t, uint32_t, const void * restrict);
 internal unsigned char * generate_PNG_frame_data(struct context *, const void * restrict, unsigned, size_t * restrict, const struct plum_rectangle *);
 internal void generate_PNG_row_data(struct context *, const void * restrict, unsigned char * restrict, size_t, unsigned);

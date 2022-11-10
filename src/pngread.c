@@ -57,7 +57,6 @@ void load_PNG_data (struct context * context, unsigned long flags, size_t limit)
   const size_t * frameinfo = chunks -> frameinfo;
   const size_t * const * framedata = (const size_t * const *) chunks -> framedata;
   // handle the first frame's metadata, which is special and may or may not be part of the animation (the frame data will have already been loaded)
-  bool replace_last = false;
   if (!*frameinfo) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   if (*frameinfo < *chunks -> data) {
     if (
@@ -66,7 +65,7 @@ void load_PNG_data (struct context * context, unsigned long flags, size_t limit)
       !bytematch(context -> data + *frameinfo + 12, 0, 0, 0, 0, 0, 0, 0, 0)
     ) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
     if (**framedata) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-    replace_last = load_PNG_animation_frame_metadata(context, *frameinfo, durations, disposals);
+    load_PNG_animation_frame_metadata(context, *frameinfo, durations, disposals);
     frameinfo ++;
     framedata ++;
   } else {
@@ -77,8 +76,7 @@ void load_PNG_data (struct context * context, unsigned long flags, size_t limit)
   // actually load animation frames
   if (*frameinfo && *frameinfo < *chunks -> data) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
   for (uint_fast32_t frame = 1; frame < context -> image -> frames; frame ++) {
-    bool replace = load_PNG_animation_frame_metadata(context, *frameinfo, durations + frame, disposals + frame);
-    if (replace) disposals[frame - 1] += PLUM_DISPOSAL_REPLACE;
+    load_PNG_animation_frame_metadata(context, *frameinfo, durations + frame, disposals + frame);
     uint_fast32_t width = read_be32_unaligned(context -> data + *frameinfo + 4);
     uint_fast32_t height = read_be32_unaligned(context -> data + *frameinfo + 8);
     uint_fast32_t left = read_be32_unaligned(context -> data + *frameinfo + 12);
@@ -118,8 +116,7 @@ void load_PNG_data (struct context * context, unsigned long flags, size_t limit)
     frameinfo ++;
     framedata ++;
   }
-  if (replace_last || (*chunks -> frameinfo >= *chunks -> data && *disposals >= PLUM_DISPOSAL_REPLACE))
-    disposals[context -> image -> frames - 1] += PLUM_DISPOSAL_REPLACE;
+  if (*chunks -> frameinfo >= *chunks -> data && disposals[context -> image -> frames - 1] >= PLUM_DISPOSAL_REPLACE) *disposals += PLUM_DISPOSAL_REPLACE;
   // we're done; a few things will be leaked here (chunk data, palette data...), but they are small and will be collected later
 }
 
@@ -400,16 +397,18 @@ bool check_PNG_reduced_frames (struct context * context, const struct PNG_chunk_
   return false;
 }
 
-bool load_PNG_animation_frame_metadata (struct context * context, size_t offset, uint64_t * restrict duration, uint8_t * restrict disposal) {
+void load_PNG_animation_frame_metadata (struct context * context, size_t offset, uint64_t * restrict duration, uint8_t * restrict disposal) {
   // returns if the previous frame should be replaced
   uint_fast16_t numerator = read_be16_unaligned(context -> data + offset + 20), denominator = read_be16_unaligned(context -> data + offset + 22);
   if ((*disposal = context -> data[offset + 24]) > 2) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  uint_fast8_t blend = context -> data[offset + 25];
-  if (blend > 1) throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
-  if (numerator) {
-    if (!denominator) denominator = 100;
-    *duration = ((uint64_t) numerator * 1000000000 + denominator / 2) / denominator;
-  } else
-    *duration = 1;
-  return !blend;
+  switch (context -> data[offset + 25]) {
+    case 1:
+      *disposal += PLUM_DISPOSAL_REPLACE;
+    case 0:
+      break;
+    default:
+      throw(context, PLUM_ERR_INVALID_FILE_FORMAT);
+  }
+  if (!denominator) denominator = 100;
+  *duration = numerator ? ((uint64_t) numerator * 1000000000 + denominator / 2) / denominator : 1;
 }

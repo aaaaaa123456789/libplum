@@ -149,7 +149,7 @@ It is an error for the size to not be a multiple of `sizeof(uint64_t)`.
 
 ### `PLUM_METADATA_FRAME_DISPOSAL`
 
-This metadata node determines what will happen to a frame once its display time expires.
+This metadata node determines what will happen to a frame when rendered and once its display time expires.
 Each frame is assigned a disposal method, which must be one of the [frame disposal constants][disposal-constants].
 
 This node contains an array of `uint8_t` values; it may contain any number of them, as determined by the node's size.

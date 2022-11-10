@@ -4,6 +4,8 @@ Note: releases are listed from latest to oldest.
 
 ## Version 2.0 (in development)
 
+- **Break:** modified frame disposal values so that `PLUM_DISPOSAL_REPLACE` now applies to the frame declaring it, not
+  the previous frame (i.e., the frame declaring it replaces the previous one)
 - **Break:** removed support for undocumented legacy constants `PLUM_FILENAME`, `PLUM_BUFFER` and `PLUM_CALLBACK` (now
   only accepting the documented `PLUM_MODE_FILENAME`, `PLUM_MODE_BUFFER` and `PLUM_MODE_CALLBACK`)
 - **Break:** `flags` arguments in functions that accept them (like `plum_load_image` or `plum_convert_color`) are now

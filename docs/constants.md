@@ -93,20 +93,20 @@ For more information, see the [Metadata][metadata] page.
 
 **Type:** `enum plum_frame_disposal_methods`
 
-These constants are used to specify the action that will be taken once an animation frame has been rendered for the
-required length of time.
+These constants are used to specify the actions that will be taken when replacing one animation frame with the next:
+both when replacing the framebuffer's contents with the frame in question, and after the frame has been rendered for
+the required length of time.
 
 Not all animation file formats support all actions listed here; if some aren't supported, the best available
-equivalent will be used writing out the image data.
+equivalent will be used when writing out the image data.
 
 - `PLUM_DISPOSAL_NONE` (zero): default action: do nothing.
 - `PLUM_DISPOSAL_BACKGROUND`: once the frame has been displayed, replace it with background-color pixels.
 - `PLUM_DISPOSAL_PREVIOUS`: once the frame has been displayed, revert its pixels to their previous state.
-- `PLUM_DISPOSAL_REPLACE`: once the frame has been displayed, replace its pixels with the next frame's pixels (instead
-  of merging them according to transparency).
-  This is often indicated as an action on the next frame in the underlying file formats.
-- `PLUM_DISPOSAL_BACKGROUND_REPLACE`: `PLUM_DISPOSAL_BACKGROUND`, then `PLUM_DISPOSAL_REPLACE`.
-- `PLUM_DISPOSAL_PREVIOUS_REPLACE`: `PLUM_DISPOSAL_PREVIOUS`, then `PLUM_DISPOSAL_REPLACE`.
+- `PLUM_DISPOSAL_REPLACE`: when displaying the current frame, after disposing of the last frame's pixels (if any),
+  replace the framebuffer's pixels with this frame's pixels (instead of merging them according to transparency).
+- `PLUM_DISPOSAL_BACKGROUND_REPLACE`: `PLUM_DISPOSAL_REPLACE` plus `PLUM_DISPOSAL_BACKGROUND`.
+- `PLUM_DISPOSAL_PREVIOUS_REPLACE`: `PLUM_DISPOSAL_REPLACE` plus `PLUM_DISPOSAL_PREVIOUS`.
 
 Note that it is possible to construct the last two constants by addition: `PLUM_DISPOSAL_BACKGROUND_REPLACE` is equal
 to `PLUM_DISPOSAL_BACKGROUND + PLUM_DISPOSAL_REPLACE`, and likewise for `PLUM_DISPOSAL_PREVIOUS_REPLACE`.
