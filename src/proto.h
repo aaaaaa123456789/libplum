@@ -14,6 +14,12 @@
 #include "data.h"
 #include "multibyte.h"
 
+#ifdef PLUM_DEBUG
+  #define internal
+#else
+  #define internal static
+#endif
+
 // allocator.c
 internal void * attach_allocator_node(struct allocator_node **, struct allocator_node *);
 internal void * allocate(struct allocator_node **, size_t);
@@ -353,5 +359,7 @@ internal void write_generated_image_data_to_file(struct context *, const char *)
 internal void write_generated_image_data_to_callback(struct context *, const struct plum_callback *);
 internal void write_generated_image_data(void * restrict, const struct data_node *);
 internal size_t get_total_output_size(struct context *);
+
+#undef internal
 
 #include "inline.h"

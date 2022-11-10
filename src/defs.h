@@ -21,12 +21,6 @@
 #endif
 #define noreturn _Noreturn void
 
-#ifdef PLUM_DEBUG
-  #define internal
-#else
-  #define internal static
-#endif
-
 #define alignto(amount) alignas(((amount) < alignof(max_align_t)) ? (amount) : alignof(max_align_t))
 
 #define bytematch(address, ...) (!memcmp((address), (unsigned char []) {__VA_ARGS__}, sizeof (unsigned char []) {__VA_ARGS__}))
