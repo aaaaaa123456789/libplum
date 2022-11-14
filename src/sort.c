@@ -88,7 +88,7 @@ void merge_sorted_values (uint64_t * restrict data, uint64_t count, uint64_t * r
 #define comparepairs(first, op, second) (((first).index == (second).index) ? ((first).value op (second).value) : ((first).index op (second).index))
 
 void sort_pairs (struct pair * restrict data, uint64_t count) {
-  // this function and its helpers implement essentially the same algorithm as above, but adapter for index/value pairs instead of just values
+  // this function and its helpers implement essentially the same algorithm as above, but adapted for index/value pairs instead of just values
   #define THRESHOLD 16
   struct pair * buffer;
   if (count < THRESHOLD || !(buffer = malloc(count * sizeof *buffer))) {
