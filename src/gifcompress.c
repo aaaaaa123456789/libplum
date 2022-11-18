@@ -1,6 +1,6 @@
 #include "proto.h"
 
-unsigned char * compress_GIF_data (struct context * context, const unsigned char * restrict data, size_t count, size_t * length, unsigned codesize) {
+unsigned char * compress_GIF_data (struct context * context, const unsigned char * restrict data, size_t count, size_t * restrict length, unsigned codesize) {
   struct compressed_GIF_code * codes = ctxmalloc(context, sizeof *codes * 4097);
   initialize_GIF_compression_codes(codes, codesize);
   *length = 0;

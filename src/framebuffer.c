@@ -50,7 +50,7 @@ void allocate_framebuffers (struct context * context, unsigned long flags, bool 
   context -> image -> color_format = flags & (PLUM_COLOR_MASK | PLUM_ALPHA_INVERT);
 }
 
-void write_framebuffer_to_image (struct plum_image * image, const uint64_t * restrict framebuffer, uint32_t frame, unsigned long flags) {
+void write_framebuffer_to_image (struct plum_image * restrict image, const uint64_t * restrict framebuffer, uint32_t frame, unsigned long flags) {
   size_t pixels = (size_t) image -> width * image -> height, framesize = plum_color_buffer_size(pixels, flags);
   plum_convert_colors(image -> data8 + framesize * frame, framebuffer, pixels, flags, PLUM_COLOR_64);
 }

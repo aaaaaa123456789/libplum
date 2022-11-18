@@ -72,7 +72,7 @@ internal bool image_rectangles_have_transparency(const struct plum_image *, cons
 // framebuffer.c
 internal void validate_image_size(struct context *, size_t);
 internal void allocate_framebuffers(struct context *, unsigned long, bool);
-internal void write_framebuffer_to_image(struct plum_image *, const uint64_t * restrict, uint32_t, unsigned long);
+internal void write_framebuffer_to_image(struct plum_image * restrict, const uint64_t * restrict, uint32_t, unsigned long);
 internal void write_palette_framebuffer_to_image(struct context *, const uint8_t * restrict, const uint64_t * restrict, uint32_t, unsigned long, uint8_t);
 internal void write_palette_to_image(struct context *, const uint64_t * restrict, unsigned long);
 internal void rotate_frame_8(uint8_t * restrict, uint8_t * restrict, size_t, size_t, size_t (*) (size_t, size_t, size_t, size_t));
@@ -93,7 +93,7 @@ internal void update_frame_duration_remainder(uint64_t, uint64_t, int64_t * rest
 internal void calculate_frame_duration_fraction(uint64_t, uint32_t, uint32_t * restrict, uint32_t * restrict);
 
 // gifcompress.c
-internal unsigned char * compress_GIF_data(struct context *, const unsigned char * restrict, size_t, size_t *, unsigned);
+internal unsigned char * compress_GIF_data(struct context *, const unsigned char * restrict, size_t, size_t * restrict, unsigned);
 internal void decompress_GIF_data(struct context *, unsigned char * restrict, const unsigned char * restrict, size_t, size_t, unsigned);
 internal void initialize_GIF_compression_codes(struct compressed_GIF_code * restrict, unsigned);
 internal uint8_t find_leading_GIF_code(const struct compressed_GIF_code * restrict, unsigned);
