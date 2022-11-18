@@ -37,6 +37,10 @@ void generate_BMP_bitmasked_data (struct context * context, uint32_t depth, unsi
       if (greendepth > 2 && totaldepth > 32) totaldepth --, greendepth --;
     }
   }
+  if (totaldepth > 16 && totaldepth < 32 && alphadepth == 1) {
+    alphadepth += 32 - totaldepth;
+    totaldepth = 32;
+  }
   uint8_t blueshift = reddepth + greendepth, alphashift = blueshift + bluedepth;
   unsigned char * attributes = append_output_node(context, 108);
   memset(attributes, 0, 108);
