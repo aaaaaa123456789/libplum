@@ -66,6 +66,7 @@ image used (when loading it) or will use (when storing it).
 - `PLUM_IMAGE_JPEG`: JPEG (Joint Photographers Expert Group) file.
 - `PLUM_IMAGE_PNM`: netpbm's PNM (Portable Anymap) format.
   When loading, it represents any possible PNM file; however, only PPM and PAM files will be written.
+- `PLUM_IMAGE_QOI`: QOI (Quite OK Image) file.
 
 For more information, see the [Supported file formats][formats] page.
 

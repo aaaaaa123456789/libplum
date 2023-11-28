@@ -60,6 +60,8 @@ void load_image_buffer_data (struct context * context, unsigned long flags, size
   else if (bytematch(context -> data, 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a))
     // APNG files disguise as PNG files, so handle them all as PNG and split them later
     load_PNG_data(context, flags, limit);
+  else if (bytematch(context -> data, 0x71, 0x6f, 0x69, 0x66))
+    load_QOI_data(context, flags, limit);
   else if (*context -> data == 0x50 && context -> data[1] >= 0x31 && context -> data[1] <= 0x37)
     load_PNM_data(context, flags, limit);
   else if (bytematch(context -> data, 0xef, 0xbb, 0xbf, 0x50) && context -> data[4] >= 0x31 && context -> data[4] <= 0x37)

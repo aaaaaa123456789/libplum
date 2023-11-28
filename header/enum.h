@@ -33,6 +33,7 @@ enum plum_image_types {
   PLUM_IMAGE_APNG,
   PLUM_IMAGE_JPEG,
   PLUM_IMAGE_PNM,
+  PLUM_IMAGE_QOI,
   PLUM_NUM_IMAGE_TYPES
 };
 
