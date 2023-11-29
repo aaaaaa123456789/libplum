@@ -28,11 +28,11 @@ size_t plum_store_image (const struct plum_image * image, void * restrict buffer
         write_generated_image_data_to_file(context, buffer);
         break;
       case PLUM_MODE_BUFFER: {
-        void * out = malloc(output_size);
-        if (!out) throw(context, PLUM_ERR_OUT_OF_MEMORY);
+        void * output = malloc(output_size);
+        if (!output) throw(context, PLUM_ERR_OUT_OF_MEMORY);
         // the function must succeed after reaching this point (otherwise, memory would be leaked)
-        *(struct plum_buffer *) buffer = (struct plum_buffer) {.size = output_size, .data = out};
-        write_generated_image_data(out, context -> output);
+        *(struct plum_buffer *) buffer = (struct plum_buffer) {.size = output_size, .data = output};
+        write_generated_image_data(output, context -> output);
       } break;
       case PLUM_MODE_CALLBACK:
         write_generated_image_data_to_callback(context, buffer);
@@ -90,17 +90,17 @@ void write_generated_image_data_to_callback (struct context * context, const str
 void write_generated_image_data (void * restrict buffer, const struct data_node * data) {
   const struct data_node * node;
   for (node = data; node -> previous; node = node -> previous);
-  for (unsigned char * out = buffer; node; node = node -> next) {
-    memcpy(out, node -> data, node -> size);
-    out += node -> size;
+  for (unsigned char * output = buffer; node; node = node -> next) {
+    memcpy(output, node -> data, node -> size);
+    output += node -> size;
   }
 }
 
 size_t get_total_output_size (struct context * context) {
-  size_t result = 0;
+  size_t output_size = 0;
   for (const struct data_node * node = context -> output; node; node = node -> previous) {
-    if (result + node -> size < result) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
-    result += node -> size;
+    if (output_size + node -> size < output_size) throw(context, PLUM_ERR_IMAGE_TOO_LARGE);
+    output_size += node -> size;
   }
-  return result;
+  return output_size;
 }

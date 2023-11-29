@@ -12,14 +12,57 @@ void generate_GIF_data (struct context * context) {
   if ((uint8_t) (depth >> 8) > overall) overall = depth >> 8;
   if ((uint8_t) (depth >> 16) > overall) overall = depth >> 16;
   if (overall > 8) overall = 8;
-  header[4] = (overall - 1) << 4;
-  header[5] = header[6] = 0;
+  bytewrite(header + 4, (overall - 1) << 4, 0, 0);
   if (context -> source -> palette)
     generate_GIF_data_with_palette(context, header);
   else
     generate_GIF_data_from_raw(context, header);
   byteoutput(context, 0x3b);
 }
+
+#define checkboundaries(buffertype, buffer, frame) do {                                                                          \
+  size_t index = 0;                                                                                                              \
+  if (boundaries) {                                                                                                              \
+    while (index < context -> source -> width * boundaries[frame].top) if (buffer[index ++] != transparent) goto findbounds;     \
+    for (uint_fast16_t row = 0; row < boundaries[frame].height; row ++) {                                                        \
+      for (uint_fast16_t col = 0; col < boundaries[frame].left; col ++) if (buffer[index ++] != transparent) goto findbounds;    \
+      index += boundaries[frame].width;                                                                                          \
+      for (uint_fast16_t col = boundaries[frame].left + boundaries[frame].width; col < context -> source -> width; col ++)       \
+        if (buffer[index ++] != transparent) goto findbounds;                                                                    \
+    }                                                                                                                            \
+    while (index < framesize) if (buffer[index ++] != transparent) goto findbounds;                                              \
+    left = boundaries[frame].left;                                                                                               \
+    top = boundaries[frame].top;                                                                                                 \
+    width = boundaries[frame].width;                                                                                             \
+    height = boundaries[frame].height;                                                                                           \
+  } else {                                                                                                                       \
+    findbounds:                                                                                                                  \
+    for (index = 0; index < framesize; index ++) if (buffer[index] != transparent) break;                                        \
+    if (index == framesize)                                                                                                      \
+      width = height = 1;                                                                                                        \
+    else {                                                                                                                       \
+      top = index / width;                                                                                                       \
+      height -= top;                                                                                                             \
+      for (index = 0; index < framesize; index ++) if (buffer[framesize - 1 - index] != transparent) break;                      \
+      height -= index / width;                                                                                                   \
+      for (left = 0; left < width; left ++) for (index = top; index < top + height; index ++)                                    \
+        if (buffer[index * context -> source -> width + left] != transparent) goto leftdone;                                     \
+      leftdone:                                                                                                                  \
+      width -= left;                                                                                                             \
+      uint_fast16_t col;                                                                                                         \
+      for (col = 0; col < width; col ++) for (index = top; index < top + height; index ++)                                       \
+        if (buffer[(index + 1) * context -> source -> width - 1 - col] != transparent) goto rightdone;                           \
+      rightdone:                                                                                                                 \
+      width -= col;                                                                                                              \
+    }                                                                                                                            \
+  }                                                                                                                              \
+  if (left || width != context -> source -> width) {                                                                             \
+    buffertype * target = buffer;                                                                                                \
+    for (uint_fast16_t row = 0; row < height; row ++) for (uint_fast16_t col = 0; col < width; col ++)                           \
+      *(target ++) = buffer[context -> source -> width * (row + top) + col + left];                                              \
+  } else if (top)                                                                                                                \
+    memmove(buffer, buffer + context -> source -> width * top, sizeof *buffer * context -> source -> width * height);            \
+} while (false)
 
 void generate_GIF_data_with_palette (struct context * context, unsigned char * header) {
   uint_fast16_t colors = context -> source -> max_palette_index + 1;
@@ -66,50 +109,7 @@ void generate_GIF_data_with_palette (struct context * context, unsigned char * h
     else
       memcpy(framebuffer, context -> source -> data8 + frame * framesize, framesize);
     uint_fast16_t left = 0, top = 0, width = context -> source -> width, height = context -> source -> height;
-    if (transparent >= 0) {
-      size_t index = 0;
-      if (boundaries) {
-        while (index < context -> source -> width * boundaries[frame].top) if (framebuffer[index ++] != transparent) goto findbounds;
-        for (uint_fast16_t row = 0; row < boundaries[frame].height; row ++) {
-          for (uint_fast16_t col = 0; col < boundaries[frame].left; col ++) if (framebuffer[index ++] != transparent) goto findbounds;
-          index += boundaries[frame].width;
-          for (uint_fast16_t col = boundaries[frame].left + boundaries[frame].width; col < context -> source -> width; col ++)
-            if (framebuffer[index ++] != transparent) goto findbounds;
-        }
-        while (index < framesize) if (framebuffer[index ++] != transparent) goto findbounds;
-        left = boundaries[frame].left;
-        top = boundaries[frame].top;
-        width = boundaries[frame].width;
-        height = boundaries[frame].height;
-        goto gotbounds;
-      }
-      findbounds:
-      for (index = 0; index < framesize; index ++) if (framebuffer[index] != transparent) break;
-      if (index == framesize)
-        width = height = 1;
-      else {
-        top = index / width;
-        height -= top;
-        for (index = 0; index < framesize; index ++) if (framebuffer[framesize - 1 - index] != transparent) break;
-        height -= index / width;
-        for (left = 0; left < width; left ++) for (index = top; index < top + height; index ++)
-          if (framebuffer[index * context -> source -> width + left] != transparent) goto leftdone;
-        leftdone:
-        width -= left;
-        uint_fast16_t col;
-        for (col = 0; col < width; col ++) for (index = top; index < top + height; index ++)
-          if (framebuffer[(index + 1) * context -> source -> width - 1 - col] != transparent) goto rightdone;
-        rightdone:
-        width -= col;
-      }
-      gotbounds:
-      if (left || width != context -> source -> width) {
-        unsigned char * target = framebuffer;
-        for (uint_fast16_t row = 0; row < height; row ++) for (uint_fast16_t col = 0; col < width; col ++)
-          *(target ++) = framebuffer[context -> source -> width * (row + top) + col + left];
-      } else if (top)
-        memmove(framebuffer, framebuffer + context -> source -> width * top, context -> source -> width * height);
-    }
+    if (transparent >= 0) checkboundaries(unsigned char, framebuffer, frame);
     write_GIF_frame(context, framebuffer, NULL, colorcount, transparent, frame, left, top, width, height, durations, disposals, &duration_remainder);
   }
   ctxfree(context, boundaries);
@@ -153,50 +153,7 @@ void generate_GIF_frame_data (struct context * context, uint32_t * restrict pixe
     } else
       pixels[index] &= 0xffffffu;
   uint_fast16_t left = 0, top = 0, width = context -> source -> width, height = context -> source -> height;
-  if (transparent) {
-    size_t index = 0;
-    if (boundaries) {
-      while (index < context -> source -> width * boundaries -> top) if (pixels[index ++] != transparent) goto findbounds;
-      for (uint_fast16_t row = 0; row < boundaries -> height; row ++) {
-        for (uint_fast16_t col = 0; col < boundaries -> left; col ++) if (pixels[index ++] != transparent) goto findbounds;
-        index += boundaries -> width;
-        for (uint_fast16_t col = boundaries -> left + boundaries -> width; col < context -> source -> width; col ++)
-          if (pixels[index ++] != transparent) goto findbounds;
-      }
-      while (index < framesize) if (pixels[index ++] != transparent) goto findbounds;
-      left = boundaries -> left;
-      top = boundaries -> top;
-      width = boundaries -> width;
-      height = boundaries -> height;
-      goto gotbounds;
-    }
-    findbounds:
-    for (index = 0; index < framesize; index ++) if (pixels[index] != transparent) break;
-    if (index == framesize)
-      width = height = 1;
-    else {
-      top = index / width;
-      height -= top;
-      for (index = 0; index < framesize; index ++) if (pixels[framesize - 1 - index] != transparent) break;
-      height -= index / width;
-      for (left = 0; left < width; left ++) for (index = top; index < top + height; index ++)
-        if (pixels[index * context -> source -> width + left] != transparent) goto leftdone;
-      leftdone:
-      width -= left;
-      uint_fast16_t col;
-      for (col = 0; col < width; col ++) for (index = top; index < top + height; index ++)
-        if (pixels[(index + 1) * context -> source -> width - 1 - col] != transparent) goto rightdone;
-      rightdone:
-      width -= col;
-    }
-    gotbounds:
-    if (left || width != context -> source -> width) {
-      uint32_t * target = pixels;
-      for (uint_fast16_t row = 0; row < height; row ++) for (uint_fast16_t col = 0; col < width; col ++)
-        *(target ++) = pixels[context -> source -> width * (row + top) + col + left];
-    } else if (top)
-      memmove(pixels, pixels + context -> source -> width * top, sizeof *pixels * context -> source -> width * height);
-  }
+  if (transparent) checkboundaries(uint32_t, pixels, 0);
   uint32_t * palette = ctxcalloc(context, 256 * sizeof *palette);
   int colorcount = plum_convert_colors_to_indexes(framebuffer, pixels, palette, (size_t) width * height, PLUM_COLOR_32);
   if (colorcount < 0) throw(context, -colorcount);
@@ -209,6 +166,8 @@ void generate_GIF_frame_data (struct context * context, uint32_t * restrict pixe
   write_GIF_frame(context, framebuffer, palette, colorcount + 1, transparent_index, frame, left, top, width, height, durations, disposals, duration_remainder);
   ctxfree(context, palette);
 }
+
+#undef checkboundaries
 
 int_fast32_t get_GIF_background_color (struct context * context) {
   const struct plum_metadata * metadata = plum_find_metadata(context -> source, PLUM_METADATA_BACKGROUND);
