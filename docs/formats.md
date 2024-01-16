@@ -13,6 +13,7 @@ All supported formats are documented here, along with their restrictions and som
 - [APNG](#apng)
 - [JPEG](#jpeg)
 - [PNM](#pnm)
+- [QOI](#qoi)
 
 ## Definitions
 
@@ -67,8 +68,8 @@ The maximum width and height for an image is `0x7fffffff`; larger dimensions wil
 Images using [indexed-color mode][indexed] are fully supported, but they cannot contain transparency.
 Therefore, if an image uses transparency, the file will be generated without a palette.
 
-If an image has a [true bit depth](#definitions) of 8 or less and it doesn't use transparency, the usual RGB888 format
-is used for output.
+If an image has a [true bit depth](#definitions) of 8 or less and it doesn't use transparency, 8-bit RGB components
+are used for output.
 Otherwise, variable bit masks are used, with each component having the width determined by its true bit depth.
 Variable bit width files are limited to a total of 32 bits per color, so if the sum of the true bit depths for all
 components exceeds 32, they are proportionally reduced to fit.
@@ -340,6 +341,15 @@ While PNM files can contain multiple frames, they cannot contain animations.
 All [animation-related metadata][animation] will be ignored when generating a PNM file.
 
 PNM files don't support palettes; [indexed-color mode images][indexed] will be converted when a PNM file is generated.
+
+## QOI
+
+The Quite OK Image (QOI) format version 1.0 is supported.
+
+QOI files only support a single frame; attempting to generate a file with two or more frames will fail with
+[`PLUM_ERR_NO_MULTI_FRAME`][errors].
+
+QOI files don't support palettes; [indexed-color mode images][indexed] will be converted when a QOI file is generated.
 
 * * *
 

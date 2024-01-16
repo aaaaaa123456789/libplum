@@ -346,6 +346,12 @@ internal size_t write_PNM_number(unsigned char * restrict, uint32_t);
 internal void generate_PNM_frame_data(struct context *, const uint64_t *, uint32_t, uint32_t, unsigned, bool);
 internal void generate_PNM_frame_data_from_palette(struct context *, const uint8_t *, const uint64_t *, uint32_t, uint32_t, unsigned, bool);
 
+// qoiread.c
+internal void load_QOI_data(struct context *, unsigned, size_t);
+
+// qoiwrite.c
+internal void generate_QOI_data(struct context *);
+
 // sort.c
 internal void sort_values(uint64_t * restrict, uint64_t);
 internal void quicksort_values(uint64_t * restrict, uint64_t);

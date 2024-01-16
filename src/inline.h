@@ -51,6 +51,16 @@ static inline void * append_output_node (struct context * context, size_t size) 
   return node -> data;
 }
 
+static inline void * resize_output_node (struct context * context, void * data, size_t size) {
+  struct data_node * node = (struct data_node *) ((char *) data - offsetof(struct data_node, data));
+  if (node -> size != size) {
+    node = ctxrealloc(context, node, sizeof *node + size);
+    node -> size = size;
+    if (node -> previous) node -> previous -> next = node;
+  }
+  return node -> data;
+}
+
 static inline bool bit_depth_less_than (uint32_t depth, uint32_t target) {
   // formally "less than or equal to", but that would be a very long name
   return !((target - depth) & 0x80808080u);
