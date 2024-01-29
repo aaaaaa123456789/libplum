@@ -21,6 +21,26 @@ struct plum_rectangle * get_frame_boundaries (struct context * context, bool anc
 
 void adjust_frame_boundaries (const struct plum_image * image, struct plum_rectangle * restrict boundaries) {
   uint64_t empty_color = get_empty_color(image);
+  #define checkframe(type) do                                                                                                                             \
+    for (uint_fast32_t frame = 0; frame < image -> frames; frame ++) {                                                                                    \
+      for (size_t remaining = (size_t) boundaries[frame].top * image -> width; remaining; remaining --)                                                   \
+        if (notempty(type)) goto done ## type;                                                                                                            \
+      if (boundaries[frame].left || boundaries[frame].width != image -> width)                                                                            \
+        for (uint_fast32_t row = 0; row < boundaries[frame].height; row ++) {                                                                             \
+          for (uint_fast32_t col = 0; col < boundaries[frame].left; col ++) if (notempty(type)) goto done ## type;                                        \
+          index += boundaries[frame].width;                                                                                                               \
+          for (uint_fast32_t col = boundaries[frame].left + boundaries[frame].width; col < image -> width; col ++)                                        \
+            if (notempty(type)) goto done ## type;                                                                                                        \
+        }                                                                                                                                                 \
+      else                                                                                                                                                \
+        index += (size_t) boundaries[frame].height * image -> width;                                                                                      \
+      for (size_t remaining = (size_t) (image -> height - boundaries[frame].top - boundaries[frame].height) * image -> width; remaining; remaining --)    \
+        if (notempty(type)) goto done ## type;                                                                                                            \
+      continue;                                                                                                                                           \
+      done ## type:                                                                                                                                       \
+      boundaries[frame] = (struct plum_rectangle) {.left = 0, .top = 0, .width = image -> width, .height = image -> height};                              \
+    }                                                                                                                                                     \
+  while (false)
   if (image -> palette) {
     bool empty[256];
     switch (image -> color_format & PLUM_COLOR_MASK) {
@@ -34,55 +54,20 @@ void adjust_frame_boundaries (const struct plum_image * image, struct plum_recta
         for (size_t p = 0; p <= image -> max_palette_index; p ++) empty[p] = image -> palette32[p] == empty_color;
     }
     size_t index = 0;
-    for (uint_fast32_t frame = 0; frame < image -> frames; frame ++) {
-      bool adjust = true;
-      for (size_t remaining = (size_t) boundaries[frame].top * image -> width; remaining; remaining --)
-        if (!empty[image -> data8[index ++]]) goto paldone;
-      if (boundaries[frame].left || boundaries[frame].width != image -> width)
-        for (uint_fast32_t row = 0; row < boundaries[frame].height; row ++) {
-          for (uint_fast32_t col = 0; col < boundaries[frame].left; col ++) if (!empty[image -> data8[index ++]]) goto paldone;
-          index += boundaries[frame].width;
-          for (uint_fast32_t col = boundaries[frame].left + boundaries[frame].width; col < image -> width; col ++)
-            if (!empty[image -> data8[index ++]]) goto paldone;
-        }
-      else
-        index += (size_t) boundaries[frame].height * image -> width;
-      for (size_t remaining = (size_t) (image -> height - boundaries[frame].top - boundaries[frame].height) * image -> width; remaining; remaining --)
-        if (!empty[image -> data8[index ++]]) goto paldone;
-      adjust = false;
-      paldone:
-      if (adjust) boundaries[frame] = (struct plum_rectangle) {.left = 0, .top = 0, .width = image -> width, .height = image -> height};
-    }
+    #define notempty(...) (!empty[image -> data8[index ++]])
+    checkframe(pal);
   } else {
     size_t index = 0;
-    #define checkframe(bits) do                                                                                                                             \
-      for (uint_fast32_t frame = 0; frame < image -> frames; frame ++) {                                                                                    \
-        bool adjust = true;                                                                                                                                 \
-        for (size_t remaining = (size_t) boundaries[frame].top * image -> width; remaining; remaining --)                                                   \
-          if (image -> data ## bits[index ++] != empty_color) goto done ## bits;                                                                            \
-        if (boundaries[frame].left || boundaries[frame].width != image -> width)                                                                            \
-          for (uint_fast32_t row = 0; row < boundaries[frame].height; row ++) {                                                                             \
-            for (uint_fast32_t col = 0; col < boundaries[frame].left; col ++) if (image -> data ## bits[index ++] != empty_color) goto done ## bits;        \
-            index += boundaries[frame].width;                                                                                                               \
-            for (uint_fast32_t col = boundaries[frame].left + boundaries[frame].width; col < image -> width; col ++)                                        \
-              if (image -> data ## bits[index ++] != empty_color) goto done ## bits;                                                                        \
-          }                                                                                                                                                 \
-        else                                                                                                                                                \
-          index += (size_t) boundaries[frame].height * image -> width;                                                                                      \
-        for (size_t remaining = (size_t) (image -> height - boundaries[frame].top - boundaries[frame].height) * image -> width; remaining; remaining --)    \
-          if (image -> data ## bits[index ++] != empty_color) goto done ## bits;                                                                            \
-        adjust = false;                                                                                                                                     \
-        done ## bits:                                                                                                                                       \
-        if (adjust) boundaries[frame] = (struct plum_rectangle) {.left = 0, .top = 0, .width = image -> width, .height = image -> height};                  \
-      }                                                                                                                                                     \
-    while (false)
+    #undef notempty
+    #define notempty(bits) (image -> data ## bits[index ++] != empty_color)
     switch (image -> color_format & PLUM_COLOR_MASK) {
       case PLUM_COLOR_16: checkframe(16); break;
       case PLUM_COLOR_64: checkframe(64); break;
       default: checkframe(32);
     }
-    #undef checkframe
   }
+  #undef notempty
+  #undef checkframe
 }
 
 bool image_rectangles_have_transparency (const struct plum_image * image, const struct plum_rectangle * rectangles) {

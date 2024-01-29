@@ -109,7 +109,7 @@ size_t compute_uncompressed_PNG_block_size (const unsigned char * restrict data,
     if (length) {
       score += length - 1;
       if (score >= 16) break;
-    } else if (score > 0)
+    } else if (score)
       score --;
     append_PNG_reference(data, current_offset, references);
   }

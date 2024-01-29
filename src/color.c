@@ -1,28 +1,26 @@
 #include "proto.h"
 
+#define formatpair(from, to) (((from) << 2) & (PLUM_COLOR_MASK << 2) | (to) & PLUM_COLOR_MASK)
+
 void plum_convert_colors (void * restrict destination, const void * restrict source, size_t count, unsigned long to, unsigned long from) {
   if (!(source && destination && count)) return;
-  if ((from & (PLUM_COLOR_MASK | PLUM_ALPHA_INVERT)) == (to & (PLUM_COLOR_MASK | PLUM_ALPHA_INVERT))) {
-    memcpy(destination, source, plum_color_buffer_size(count, to));
-    return;
-  }
-  #define convert(sp) do                                                                                       \
-    if ((to & PLUM_COLOR_MASK) == PLUM_COLOR_16)                                                               \
-      for (uint16_t * dp = destination; count; count --) *(dp ++) = plum_convert_color(*(sp ++), from, to);    \
-    else if ((to & PLUM_COLOR_MASK) == PLUM_COLOR_64)                                                          \
-      for (uint64_t * dp = destination; count; count --) *(dp ++) = plum_convert_color(*(sp ++), from, to);    \
-    else                                                                                                       \
-      for (uint32_t * dp = destination; count; count --) *(dp ++) = plum_convert_color(*(sp ++), from, to);    \
-  while (false)
-  if ((from & PLUM_COLOR_MASK) == PLUM_COLOR_16) {
-    const uint16_t * sp = source;
-    convert(sp);
-  } else if ((from & PLUM_COLOR_MASK) == PLUM_COLOR_64) {
-    const uint64_t * sp = source;
-    convert(sp);
-  } else {
-    const uint32_t * sp = source;
-    convert(sp);
+  #define convert(frombits, tobits) do {                                   \
+    const uint ## frombits ## _t * sp = source;                            \
+    uint ## tobits ## _t * dp = destination;                               \
+    while (count --) *(dp ++) = plum_convert_color(*(sp ++), from, to);    \
+  } while (false)
+  switch (formatpair(from, to)) {
+    case formatpair(PLUM_COLOR_16, PLUM_COLOR_64): convert(16, 64); break;
+    case formatpair(PLUM_COLOR_64, PLUM_COLOR_16): convert(64, 16); break;
+    case formatpair(PLUM_COLOR_16, PLUM_COLOR_32X):
+    case formatpair(PLUM_COLOR_16, PLUM_COLOR_32): convert(16, 32); break;
+    case formatpair(PLUM_COLOR_64, PLUM_COLOR_32):
+    case formatpair(PLUM_COLOR_64, PLUM_COLOR_32X): convert(64, 32); break;
+    case formatpair(PLUM_COLOR_32, PLUM_COLOR_16):
+    case formatpair(PLUM_COLOR_32X, PLUM_COLOR_16): convert(32, 16); break;
+    case formatpair(PLUM_COLOR_32, PLUM_COLOR_64):
+    case formatpair(PLUM_COLOR_32X, PLUM_COLOR_64): convert(32, 64); break;
+    default: memcpy(destination, source, plum_color_buffer_size(count, to));
   }
   #undef convert
 }
@@ -34,7 +32,6 @@ uint64_t plum_convert_color (uint64_t color, unsigned long from, unsigned long t
     from &= 0xffffu;
   else if ((from & PLUM_COLOR_MASK) != PLUM_COLOR_64)
     from &= 0xffffffffu;
-  #define formatpair(from, to) (((from) << 2) & (PLUM_COLOR_MASK << 2) | (to) & PLUM_COLOR_MASK)
   switch (formatpair(from, to)) {
     case formatpair(PLUM_COLOR_32, PLUM_COLOR_32):
     case formatpair(PLUM_COLOR_64, PLUM_COLOR_64):
@@ -82,10 +79,11 @@ uint64_t plum_convert_color (uint64_t color, unsigned long from, unsigned long t
     case formatpair(PLUM_COLOR_32X, PLUM_COLOR_16):
       result = ((color >> 5) & 0x1f) | ((color >> 10) & 0x3e0) | ((color >> 15) & 0x7c00) | ((color >> 16) & 0x8000u);
   }
-  #undef formatpair
   if ((to ^ from) & PLUM_ALPHA_INVERT) result ^= alpha_component_masks[to & PLUM_COLOR_MASK];
   return result;
 }
+
+#undef formatpair
 
 void plum_remove_alpha (struct plum_image * image) {
   if (!(image && image -> data && plum_check_valid_image_size(image -> width, image -> height, image -> frames))) return;
