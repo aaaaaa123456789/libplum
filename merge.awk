@@ -29,7 +29,7 @@ function include(path) {
 		if (/^\s*#\s*include\s*".+"/) {
 			if (!($2 in files)) {
 				include_dir = path
-				if (!sub(/\/[^/]*$/, "/", include_dir)) {
+				if (!sub(/\/[^\/]*$/, "/", include_dir)) {
 					include_dir = "./"
 				}
 				include(include_dir $2)
