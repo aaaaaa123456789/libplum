@@ -26,7 +26,7 @@ function include(path) {
 			exit 2
 		}
 
-		if (/^\s*#\s*include\s*".+"/) {
+		if (/^[[:space:]]*#[[:space]]*include[[:space:]]*".+"/) {
 			if (!($2 in files)) {
 				include_dir = path
 				if (!sub(/\/[^\/]*$/, "/", include_dir)) {
