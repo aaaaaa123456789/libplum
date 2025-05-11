@@ -1,15 +1,23 @@
 #!/bin/bash
 
 set -e
-declare -A files
+files=()
 addblank=false
 
+function already_included {
+  local target="$1"
+  for f in "${files[@]}"; do
+    if [[ "$f" == "$target" ]]; then return 0; fi
+  done
+  return 1
+}
+
 function append_file {
-  local file="`realpath "$1"`"
-  [[ ! -n ${files[$file]} ]] || return 0
-  ! $addblank || echo
+  local file="$(realpath "$1")"
+  if already_included "$file"; then return 0; fi
+  if $addblank; then echo; fi
   addblank=false
-  files["$file"]=true
+  files+=("$file")
   while IFS= read -r line || [[ -n "$line" ]]; do
     if [[ $line =~ ^[[:space:]]*\#[[:space:]]*include[[:space:]]+\"(.*)\" ]]; then
       include="${BASH_REMATCH[1]}"
@@ -22,6 +30,6 @@ function append_file {
   done < "$file"
 }
 
-for inputfile; do
+for inputfile in "$@"; do
   append_file "$inputfile"
 done
