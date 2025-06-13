@@ -71,7 +71,8 @@ const char * plum_get_file_format_name (unsigned format) {
     [PLUM_IMAGE_PNG]  = "PNG",
     [PLUM_IMAGE_APNG] = "APNG",
     [PLUM_IMAGE_JPEG] = "JPEG",
-    [PLUM_IMAGE_PNM]  = "PNM"
+    [PLUM_IMAGE_PNM]  = "PNM",
+    [PLUM_IMAGE_QOI]  = "QOI"
   };
   if (format >= PLUM_NUM_IMAGE_TYPES) format = PLUM_IMAGE_NONE;
   return formats[format];
