@@ -337,22 +337,22 @@ void generate_BMP_RGB_data (struct context * context, unsigned char * offset_poi
   if ((context -> source -> color_format & PLUM_COLOR_MASK) == PLUM_COLOR_32)
     data = context -> source -> data;
   else {
-    data = ctxmalloc(context, sizeof *data * context -> source -> width * context -> source -> height);
-    plum_convert_colors(data, context -> source -> data, (size_t) context -> source -> width * context -> source -> height,
-                        PLUM_COLOR_32, context -> source -> color_format);
+    size_t size = (size_t) context -> source -> width * context -> source -> height;
+    data = ctxmalloc(context, sizeof *data * size);
+    plum_convert_colors(data, context -> source -> data, size, PLUM_COLOR_32, context -> source -> color_format);
   }
   size_t rowsize = (size_t) context -> source -> width * 3, padding = 0;
   if (rowsize & 3) {
     padding = 4 - (rowsize & 3);
     rowsize += padding;
   }
-  unsigned char * out = append_output_node(context, rowsize * context -> source -> height);
+  unsigned char * output = append_output_node(context, rowsize * context -> source -> height);
   uint_fast32_t row = context -> source -> height - 1;
   do {
     size_t pos = (size_t) row * context -> source -> width;
     for (uint_fast32_t remaining = context -> source -> width; remaining; pos ++, remaining --)
-      out += byteappend(out, data[pos] >> 16, data[pos] >> 8, data[pos]);
-    for (uint_fast32_t p = 0; p < padding; p ++) *(out ++) = 0;
+      output += byteappend(output, data[pos] >> 16, data[pos] >> 8, data[pos]);
+    for (uint_fast32_t p = 0; p < padding; p ++) *(output ++) = 0;
   } while (row --);
   if (data != context -> source -> data) ctxfree(context, data);
 }

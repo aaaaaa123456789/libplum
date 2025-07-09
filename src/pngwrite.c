@@ -92,9 +92,7 @@ void append_PNG_header_chunks (struct context * context, unsigned type, uint32_t
   unsigned char header[13];
   write_be32_unaligned(header, context -> image -> width);
   write_be32_unaligned(header + 4, context -> image -> height);
-  header[8] = (type < 4) ? 1 << type : (8 << (type >= 6));
-  header[9] = (type >= 4) ? 2 + 4 * (type & 1) : 3;
-  bytewrite(header + 10, 0, 0, 0);
+  bytewrite(header + 8, (type < 4) ? 1 << type : (8 << (type >= 6)), (type >= 4) ? 2 + 4 * (type & 1) : 3, 0, 0, 0);
   output_PNG_chunk(context, 0x49484452u, sizeof header, header); // IHDR
   unsigned char depthdata[4];
   write_le32_unaligned(depthdata, depth); // this will write each byte of depth in the expected position

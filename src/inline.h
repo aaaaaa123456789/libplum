@@ -46,7 +46,7 @@ static inline uint16_t bitextend16 (uint16_t value, unsigned width) {
 static inline void * append_output_node (struct context * context, size_t size) {
   struct data_node * node = ctxmalloc(context, sizeof *node + size);
   *node = (struct data_node) {.size = size, .previous = context -> output, .next = NULL};
-  if (context -> output) context -> output -> next = node;
+  if (node -> previous) node -> previous -> next = node;
   context -> output = node;
   return node -> data;
 }
