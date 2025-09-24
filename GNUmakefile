@@ -1,16 +1,12 @@
-HAVE_UNAME := $(shell command -v uname >/dev/null 2>&1 && echo 1)
-UNAME_S := $(if $(HAVE_UNAME),$(shell uname -s),)
-
 CC ?= gcc
 OUTPUT ?= libplum.so
 OPTFLAGS = -march=native -mtune=native
 
 DEFAULTCFLAGS := -std=c17 -Ofast -fomit-frame-pointer -fno-asynchronous-unwind-tables -fno-exceptions -Wl,-S -Wl,-x
-ifeq ($(UNAME_S),Darwin)
-	CFLAGS = $(DEFAULTCFLAGS) $(OPTFLAGS)
-else
-	CFLAGS = $(DEFAULTCFLAGS) -Wl,--gc-sections $(OPTFLAGS)
+ifeq ($(shell echo 'int main(){return 0;}' | $(CC) -xc -Wl,--gc-sections - >/dev/null 2>&1 && echo 1),1)
+	DEFAULTCFLAGS += -Wl,--gc-sections
 endif
+CFLAGS = $(DEFAULTCFLAGS) $(OPTFLAGS)
 
 DEBUGFLAGS = -Wall -Wextra -pedantic -Wnull-dereference -Wshadow -Wundef -Wunused -Wwrite-strings -Wno-sign-compare -Wno-implicit-fallthrough \
              -Wno-parentheses -Wno-dangling-else -Wno-type-limits
