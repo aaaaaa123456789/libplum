@@ -11,9 +11,9 @@ It has no dependencies besides what the C standard requires; the source of the l
 
 The build process will generate three files in the `build` directory (creating it if needed): `libplum.c`, `libplum.h`
 and the library's shared binary (`libplum.so` by default).
-To build the library, you will need `make` and a Bash shell; simply run `make`.
+To build the library, you will need GNU `make` and a Bash shell; simply run `make` (or `gmake` if that is its name).
 The default configuration assumes a GCC-like compiler; for a completely different compiler (like MSVC), the flags (and
-perhaps the Makefile itself) will most likely need customization.
+perhaps the GNUmakefile itself) will most likely need customization.
 The following variables can be specified in the `make` command:
 
 - `CC`: C compiler binary; will be read from the environment if it exists.
