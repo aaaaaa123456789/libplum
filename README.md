@@ -63,7 +63,7 @@ Thanks to [nyanpasu64](https://github.com/nyanpasu64) for their help setting up 
 the current setup (available in the [`fuzz`](https://github.com/aaaaaa123456789/libplum/tree/fuzz) branch) was
 implemented.
 
-Thanks to [ISSOtm](https://github.com/ISSOtm) for his help reviewing and correcting the shell script that generates
+Thanks to [ISSOtm](https://codeberg.org/ISSOtm) for his help reviewing and correcting the shell script that generates
 the `libplum.c` and `libplum.h` files.
 
 ## FAQ
