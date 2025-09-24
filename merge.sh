@@ -1,12 +1,17 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
 declare -A files
 addblank=false
 
 function append_file {
-  local file="`realpath "$1"`"
-  [[ ! -n ${files[$file]} ]] || return 0
+  local file
+  if command -v grealpath >/dev/null 2>&1; then
+    file="$(grealpath "$1")"
+  else
+    file="$(realpath "$1")"
+  fi
+  [[ -z ${files[$file]} ]] || return 0
   ! $addblank || echo
   addblank=false
   files["$file"]=true

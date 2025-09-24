@@ -2,7 +2,11 @@ CC ?= gcc
 OUTPUT ?= libplum.so
 OPTFLAGS = -march=native -mtune=native
 
-CFLAGS = -std=c17 -Ofast -fomit-frame-pointer -fno-asynchronous-unwind-tables -fno-exceptions -Wl,-S -Wl,-x -Wl,--gc-sections $(OPTFLAGS)
+DEFAULTCFLAGS := -std=c17 -Ofast -fomit-frame-pointer -fno-asynchronous-unwind-tables -fno-exceptions -Wl,-S -Wl,-x
+ifeq ($(shell echo 'int main(){return 0;}' | $(CC) -xc -Wl,--gc-sections - >/dev/null 2>&1 && echo 1),1)
+	DEFAULTCFLAGS += -Wl,--gc-sections
+endif
+CFLAGS = $(DEFAULTCFLAGS) $(OPTFLAGS)
 
 DEBUGFLAGS = -Wall -Wextra -pedantic -Wnull-dereference -Wshadow -Wundef -Wunused -Wwrite-strings -Wno-sign-compare -Wno-implicit-fallthrough \
              -Wno-parentheses -Wno-dangling-else -Wno-type-limits

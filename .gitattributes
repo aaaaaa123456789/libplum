@@ -7,4 +7,4 @@
 *.sh text
 *.png binary
 LICENSE text
-Makefile text
+GNUmakefile text
